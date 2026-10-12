@@ -39,4 +39,4 @@ Instala em `/usr/local/bin`, `/etc/dbus-1/system.d`, `/usr/local/share/polkit-1/
 
 ## O que ainda falta (ver STATUS.md)
 
-Tecla Nitro por evdev, NVML em vez de `nvidia-smi`, cenários e App Sync, `poll()` no `platform_profile` e udev em vez do ciclo de 2 s, restauração dos fans no resume, testes de integração com tuned-ppd.
+Cenários e App Sync, CLI `nitrosense-cli`, testes de integração com tuned-ppd.

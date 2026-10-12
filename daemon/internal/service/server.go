@@ -76,6 +76,7 @@ type Daemon struct {
 	extras      []string
 	expectPPD   string    // PPD profile the daemon itself asked for
 	ignoreSysfs time.Time // until then, platform_profile changes are tuned's, not the user's
+	resuming    bool      // from PrepareForSleep(true) until onResume is done
 
 	subMu sync.Mutex
 	subs  map[string]*subscriber
@@ -121,6 +122,9 @@ func (d *Daemon) Run(ctx context.Context) error {
 	if d.ppd != nil {
 		go d.watchPPD(ctx)
 	}
+	if !d.cfg.Session {
+		go d.watchSleep(ctx)
+	}
 	if d.hw.NitroKey && d.cfg.Reprobe != nil && !d.cfg.Session && d.cfg.NitroKey == "cycle" {
 		go hw.WatchNitroKey(ctx, func() {
 			if next, err := d.cycle(); err != nil {
@@ -131,6 +135,7 @@ func (d *Daemon) Run(ctx context.Context) error {
 		})
 	}
 	d.restoreMode()
+	d.restoreFans(true)
 
 	<-ctx.Done()
 	d.stopAllSubscribers()
@@ -398,9 +403,11 @@ func (d *Daemon) watchSysfsMode() {
 		return // a concurrent WMI call from another process garbled the answer
 	}
 	d.mu.Lock()
-	cur, ignore, power, allowed := d.current, d.ignoreSysfs, d.power, d.allowed
+	cur, ignore, power, allowed, resuming := d.current, d.ignoreSysfs, d.power, d.allowed, d.resuming
 	d.mu.Unlock()
-	if v == cur || time.Now().Before(ignore) {
+	// The firmware puts platform_profile back to balanced on resume and tuned
+	// follows; neither is the user's choice.
+	if v == cur || resuming || time.Now().Before(ignore) {
 		return
 	}
 	// Garbled reads show up as values outside the firmware list or as a
@@ -436,6 +443,11 @@ func (d *Daemon) watchPPD(ctx context.Context) {
 			if p == d.expectPPD {
 				d.expectPPD = ""
 				d.mu.Unlock()
+				continue
+			}
+			if d.resuming {
+				d.mu.Unlock()
+				slog.Info("PPD changed while resuming; ignored", "ppd", p)
 				continue
 			}
 			d.ignoreSysfs = time.Now().Add(settleTimeout + time.Second)

@@ -83,3 +83,14 @@ func (s *Store) ModeFor(source string) string {
 	}
 	return s.Data.ModeAC
 }
+
+// FansSnapshot returns a copy of the remembered fan settings.
+func (s *Store) FansSnapshot() map[string]Fan {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := make(map[string]Fan, len(s.Data.Fans))
+	for id, f := range s.Data.Fans {
+		out[id] = f
+	}
+	return out
+}
