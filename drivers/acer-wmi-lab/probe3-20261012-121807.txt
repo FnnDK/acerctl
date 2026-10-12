@@ -1,0 +1,70 @@
+### KB timeout GET (before)
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 01 84 08 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 00 08 00 00 1e 00 00
+     as u64: 0x00001e0000080000
+
+### KB timeout SET off  (0x088402)
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 1 instance 0
+in  : len=8: 02 84 08 00 00 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=4: 00 00 00 00
+     as u32: 0x00000000
+
+### KB timeout GET (after off)
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 01 84 08 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 00 08 00 00 00 00 00
+     as u64: 0x0000000000080000
+
+### KB timeout SET on 30s (0x1E0000088402)
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 1 instance 0
+in  : len=8: 02 84 08 00 00 1e 00 00
+status: 0x0 (AE_OK)
+out: buffer len=4: 00 00 00 00
+     as u32: 0x00000000
+
+### KB timeout GET (after on)
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 01 84 08 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 00 08 00 00 1e 00 00
+     as u64: 0x00001e0000080000
+
+### USB charging GET (before)
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 04 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 0f 1e 00 00 00 00 00
+     as u64: 0x00000000001e0f00
+
+### USB charging SET 20% (0x140F04)
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 1 instance 0
+in  : len=8: 04 0f 14 00 00 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=4: 00 00 00 00
+     as u32: 0x00000000
+
+### USB charging GET (after 20%)
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 04 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 0f 14 00 00 00 00 00
+     as u64: 0x0000000000140f00
+
+### USB charging SET 30% (0x1E0F04)
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 1 instance 0
+in  : len=8: 04 0f 1e 00 00 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=4: 00 00 00 00
+     as u32: 0x00000000
+
+### USB charging GET (after 30%)
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 04 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 0f 1e 00 00 00 00 00
+     as u64: 0x00000000001e0f00
+

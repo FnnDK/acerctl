@@ -1,0 +1,15 @@
+[Unit]
+Description=Load Acer WMI companion modules (acer-wmi-battery, acer-wmi-extras)
+# Signed .ko files are installed by packaging/install-modules.sh into a directory
+# labeled modules_object_t (SELinux refuses module_load from user_home_t).
+After=systemd-modules-load.service
+ConditionPathExists=/var/lib/acer-wmi-modules/acer-wmi-extras.ko
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/sh -c 'for m in acer-wmi-battery acer-wmi-extras; do n=$(echo $m | tr - _); [ -d /sys/module/$n ] && { echo "$m already loaded"; continue; }; /usr/sbin/insmod /var/lib/acer-wmi-modules/$m.ko || echo "insmod $m failed"; done'
+ExecStop=/usr/bin/sh -c '/usr/sbin/rmmod acer_wmi_extras acer_wmi_battery || true'
+
+[Install]
+WantedBy=multi-user.target

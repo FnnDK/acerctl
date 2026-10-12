@@ -1,0 +1,502 @@
+### GetGamingSysInfo cmd0 supported sensors
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 5 instance 0
+in  : len=4: 00 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 00 00 27 02 00 00 00
+     as u64: 0x0000000227000000
+
+### GetGamingSysInfo cmd2 AC status
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 5 instance 0
+in  : len=4: 02 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 00 00 00 00 01 00 00
+     as u64: 0x0000010000000000
+
+### GetGamingSysInfo cmd1 sensor1 CPU temp
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 5 instance 0
+in  : len=4: 01 01 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 28 00 00 00 00 00 00
+     as u64: 0x0000000000002800
+
+### GetGamingSysInfo cmd1 sensor2 CPU fan
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 5 instance 0
+in  : len=4: 01 02 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 17 08 00 00 00 00 00
+     as u64: 0x0000000000081700
+
+### GetGamingSysInfo cmd1 sensor6 GPU fan
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 5 instance 0
+in  : len=4: 01 06 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 49 07 00 00 00 00 00
+     as u64: 0x0000000000074900
+
+### GetGamingSysInfo cmd1 sensor10 GPU temp
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 5 instance 0
+in  : len=4: 01 0a 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 00 00 00 00 00 00 00
+     as u64: 0x0000000000000000
+
+### GetGamingProfile(0)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 3 instance 0
+in  : len=4: 00 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 00 00 01 00 00 ff 00
+     as u64: 0x00ff000001000000
+
+### GetGamingProfile(1)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 3 instance 0
+in  : len=4: 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### GetGamingProfileSetting(0)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 9 instance 0
+in  : len=4: 00 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### GetGamingProfileSetting(1)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 9 instance 0
+in  : len=4: 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingLED(0)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 4 instance 0
+in  : len=4: 00 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=16: 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+### GetGamingLED(1)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 4 instance 0
+in  : len=4: 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=16: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+### GetGamingLEDBehavior(0)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 11 instance 0
+in  : len=4: 00 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### GetGamingLEDBehavior(1)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 11 instance 0
+in  : len=4: 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingLEDColor(0)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 13 instance 0
+in  : len=4: 00 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### GetGamingLEDColor(1)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 13 instance 0
+in  : len=4: 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingFanBehavior fan bitmap 1 (CPU)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 15 instance 0
+in  : len=4: 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 01 00 00 00 00 00 00
+     as u64: 0x0000000000000100
+
+### GetGamingFanBehavior fan bitmap 4 (GPU)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 15 instance 0
+in  : len=4: 04 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingFanBehavior 0
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 15 instance 0
+in  : len=4: 00 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### GetGamingFanSpeed fan 1 (CPU)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 17 instance 0
+in  : len=4: 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 00 00 00 00 00 00 00
+     as u64: 0x0000000000000000
+
+### GetGamingFanSpeed fan 4 (GPU)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 17 instance 0
+in  : len=4: 04 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 00 00 00 00 00 00 00
+     as u64: 0x0000000000000000
+
+### GetGamingFanTable (no input)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 19 instance 0
+in  : len=4: 00 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingKBBacklight(1)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 21 instance 0
+in  : len=4: 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=16: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+### GetGamingKBBacklight(0)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 21 instance 0
+in  : len=4: 00 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=16: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+### GetGamingKBBacklight(2)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 21 instance 0
+in  : len=4: 02 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=16: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+### GetGamingRgbKb zone1
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 7 instance 0
+in  : len=4: 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingRgbKb zone2
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 7 instance 0
+in  : len=4: 02 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingRgbKb zone3
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 7 instance 0
+in  : len=4: 04 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingRgbKb zone4
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 7 instance 0
+in  : len=4: 08 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingMiscSetting index 0
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 00 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### GetGamingMiscSetting index 1
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingMiscSetting index 2
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 02 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingMiscSetting index 3
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 03 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingMiscSetting index 4
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 04 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingMiscSetting index 5
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 05 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingMiscSetting index 6
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 06 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingMiscSetting index 7
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 07 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 ff 00 00 00 00 00 00
+     as u64: 0x000000000000ff00
+
+### GetGamingMiscSetting index 8
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 08 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 01 00 00 00 00 00 00
+     as u64: 0x0000000000000100
+
+### GetGamingMiscSetting index 9
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 09 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingMiscSetting index 10
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 0a 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 53 00 00 00 00 00 00
+     as u64: 0x0000000000005300
+
+### GetGamingMiscSetting index 11
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 0b 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 01 00 00 00 00 00 00
+     as u64: 0x0000000000000100
+
+### GetGamingMiscSetting index 12
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 0c 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingMiscSetting index 13
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 0d 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingMiscSetting index 14
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 0e 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### GetGamingMiscSetting index 15
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 0f 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingMiscSetting index 16
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 10 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingMiscSetting index 17
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 11 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### GetGamingMiscSetting index 18
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 12 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### GetGamingMiscSetting index 19
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 13 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### GetGamingMiscSetting index 20
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 14 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### GetCPUOverclockingProfile
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 25 instance 0
+in  : len=4: 00 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=514: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+### APGe GetFunction 0x88401 (backlight timeout)
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 01 84 08 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 00 08 00 00 1e 00 00
+     as u64: 0x00001e0000080000
+
+### APGe GetFunction 0x4 (USB charging)
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 04 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 0f 1e 00 00 00 00 00
+     as u64: 0x00000000001e0f00
+
+### APGe GetFunction 0x1
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e2 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e2
+
+### APGe GetFunction 0x2
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 02 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e2 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e2
+
+### APGe GetFunction 0x3
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 03 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 c0 11 00 00 00 00 00
+     as u64: 0x000000000011c000
+
+### APGe GetFunction 0x5
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 05 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction 0x6
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 06 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction 0x7
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 07 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 00 00 00 00 00 00 00
+     as u64: 0x0000000000000000
+
+### APGe GetFunction 0x8
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 08 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e4 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e4
+
+### Generic GetFunction 0x1
+guid 1EA0BC57-521E-461B-A7A9-5D36F141A82A method 2 instance 0
+in  : len=4: 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e4 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e4
+
+### Generic GetFunction 0x2
+guid 1EA0BC57-521E-461B-A7A9-5D36F141A82A method 2 instance 0
+in  : len=4: 02 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### Battery GetBatteryHealthControlStatus
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 20 instance 0
+in  : len=4: 01 01 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 03 00 00 01 00 00 00 00
+     as u64: 0x0000000001000003
+
+### Battery GetBatteryFunctionData mask 1
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 22 instance 0
+in  : len=4: 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=16: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+### Battery GetBatteryFunctionData mask 2
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 22 instance 0
+in  : len=4: 02 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=16: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+### Battery GetBattInfoInterface idx0 batt1
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 19 instance 0
+in  : len=8: 00 00 00 00 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=4: 01 c0 00 00
+     as u32: 0x0000c001
+
+### Battery GetBattInfoInterface idx1 batt1
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 19 instance 0
+in  : len=8: 01 00 00 00 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=4: 01 00 00 00
+     as u32: 0x00000001
+
+### Battery GetBattInfoInterface idx2 batt1
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 19 instance 0
+in  : len=8: 02 00 00 00 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=4: 01 00 00 00
+     as u32: 0x00000001
+
+### Battery GetBattInfoInterface idx3 batt1
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 19 instance 0
+in  : len=8: 03 00 00 00 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=4: 81 60 00 00
+     as u32: 0x00006081
+
+### Utility GetLedIndicatorSts(0)
+guid FE1DBBDA-3014-4856-870C-5B3A744BF341 method 11 instance 0
+in  : len=4: 00 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 03 00 00 00 00 00 00 00
+     as u64: 0x0000000000000003
+
+### Utility GetLedIndicatorSts(1)
+guid FE1DBBDA-3014-4856-870C-5B3A744BF341 method 11 instance 0
+in  : len=4: 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### Utility GetAcerDiagnosticStatus(0)
+guid FE1DBBDA-3014-4856-870C-5B3A744BF341 method 8 instance 0
+in  : len=2: 00 00
+status: 0x0 (AE_OK)
+out: integer 0x1 (1)
+
+### Utility GetSecondDisplayDeviceStatus
+guid FE1DBBDA-3014-4856-870C-5B3A744BF341 method 14 instance 0
+in  : len=4: 00 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=4: 01 00 00 00
+     as u32: 0x00000001
+

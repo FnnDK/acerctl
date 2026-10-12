@@ -1,0 +1,767 @@
+### FanBehavior bitmap 0x08 (GPU)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 15 instance 0
+in  : len=4: 08 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 40 00 00 00 00 00 00
+     as u64: 0x0000000000004000
+
+### FanBehavior bitmap 0x09 (CPU+GPU)
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 15 instance 0
+in  : len=4: 09 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 41 00 00 00 00 00 00
+     as u64: 0x0000000000004100
+
+### FanBehavior bitmap 0x02
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 15 instance 0
+in  : len=4: 02 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### FanBehavior bitmap 0x10
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 15 instance 0
+in  : len=4: 10 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### FanSpeed fan id 2
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 17 instance 0
+in  : len=4: 02 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### FanSpeed fan id 3
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 17 instance 0
+in  : len=4: 03 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### FanSpeed fan id 5
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 17 instance 0
+in  : len=4: 05 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### FanSpeed fan id 8
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 17 instance 0
+in  : len=4: 08 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingKBBacklight in=00010000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 21 instance 0
+in  : len=4: 00 01 00 00
+status: 0x0 (AE_OK)
+out: buffer len=16: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+### GetGamingKBBacklight in=01010000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 21 instance 0
+in  : len=4: 01 01 00 00
+status: 0x0 (AE_OK)
+out: buffer len=16: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+### GetGamingKBBacklight in=03000000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 21 instance 0
+in  : len=4: 03 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=16: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+### GetGamingKBBacklight in=04000000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 21 instance 0
+in  : len=4: 04 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=16: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+### GetGamingKBBacklight in=10000000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 21 instance 0
+in  : len=4: 10 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=16: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+### GetGamingKBBacklight in=ff000000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 21 instance 0
+in  : len=4: ff 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=16: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+### GetGamingKBBacklight in=00000100
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 21 instance 0
+in  : len=4: 00 00 01 00
+status: 0x0 (AE_OK)
+out: buffer len=16: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+### GetGamingKBBacklight in=01000100
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 21 instance 0
+in  : len=4: 01 00 01 00
+status: 0x0 (AE_OK)
+out: buffer len=16: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+### GetGamingRgbKb in=00000000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 7 instance 0
+in  : len=4: 00 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingRgbKb in=0f000000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 7 instance 0
+in  : len=4: 0f 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingRgbKb in=ff000000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 7 instance 0
+in  : len=4: ff 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingRgbKb in=00010000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 7 instance 0
+in  : len=4: 00 01 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingProfile in=02000000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 3 instance 0
+in  : len=4: 02 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### GetGamingProfile in=03000000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 3 instance 0
+in  : len=4: 03 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### GetGamingProfile in=ff000000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 3 instance 0
+in  : len=4: ff 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### GetGamingProfile in=00010000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 3 instance 0
+in  : len=4: 00 01 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 00 00 01 00 00 ff 00
+     as u64: 0x00ff000001000000
+
+### MiscSetting index 21
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 15 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 22
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 16 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 23
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 17 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 24
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 18 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 25
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 19 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 26
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 1a 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 27
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 1b 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 28
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 1c 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 29
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 1d 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 30
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 1e 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 31
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 1f 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 32
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 20 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 33
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 21 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 34
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 22 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 35
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 23 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 36
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 24 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 37
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 25 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 38
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 26 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 39
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 27 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 40
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 28 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 48
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 30 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 64
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 40 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 80
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 50 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 96
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 60 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 112
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 70 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 128
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 80 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 160
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: a0 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 192
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: c0 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 224
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: e0 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 240
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: f0 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting index 255
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: ff 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 02 00 00 00 00 00 00 00
+     as u64: 0x0000000000000002
+
+### MiscSetting in=08010000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 08 01 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 01 00 00 00 00 00 00
+     as u64: 0x0000000000000100
+
+### MiscSetting in=08020000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 08 02 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 01 00 00 00 00 00 00
+     as u64: 0x0000000000000100
+
+### MiscSetting in=07010000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 23 instance 0
+in  : len=4: 07 01 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 ff 00 00 00 00 00 00
+     as u64: 0x000000000000ff00
+
+### GetGamingFanTable in=01000000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 19 instance 0
+in  : len=4: 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingFanTable in=02000000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 19 instance 0
+in  : len=4: 02 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### GetGamingFanTable in=ff000000
+guid 7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56 method 19 instance 0
+in  : len=4: ff 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 01 00 00 00 00 00 00 00
+     as u64: 0x0000000000000001
+
+### APGe GetFunction fn 9
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 09 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 10
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 0a 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 01 00 00 00 00 00 00
+     as u64: 0x0000000000000100
+
+### APGe GetFunction fn 11
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 0b 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 12
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 0c 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 13
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 0d 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 14
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 0e 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 15
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 0f 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 16
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 10 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 17
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 11 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 18
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 12 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 19
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 13 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 20
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 14 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 21
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 15 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 22
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 16 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 23
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 17 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 24
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 18 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 25
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 19 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 26
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 1a 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 27
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 1b 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 28
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 1c 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 29
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 1d 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 30
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 1e 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 31
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 1f 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction fn 32
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 20 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction in=01840800
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 01 84 08 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 00 08 00 00 1e 00 00
+     as u64: 0x00001e0000080000
+
+### APGe GetFunction in=01840000
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 01 84 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e2 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e2
+
+### APGe GetFunction in=01800800
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 01 80 08 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e2 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e2
+
+### APGe GetFunction in=01000800
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 01 00 08 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e2 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e2
+
+### APGe GetFunction in=01840900
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 01 84 09 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e2 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e2
+
+### APGe GetFunction in=01850800
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 01 85 08 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e2 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e2
+
+### APGe GetFunction in=01840a00
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 01 84 0a 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e2 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e2
+
+### APGe GetFunction in=02840800
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 02 84 08 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e2 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e2
+
+### APGe GetFunction in=03840800
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 03 84 08 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 c0 11 00 00 00 00 00
+     as u64: 0x000000000011c000
+
+### APGe GetFunction in=03010000
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 03 01 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 c0 11 00 00 00 00 00
+     as u64: 0x000000000011c000
+
+### APGe GetFunction in=03020000
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 03 02 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 c0 11 00 00 00 00 00
+     as u64: 0x000000000011c000
+
+### APGe GetFunction in=07010000
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 07 01 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: e1 00 00 00 00 00 00 00
+     as u64: 0x00000000000000e1
+
+### APGe GetFunction in=07020000
+guid 61EF69EA-865C-4BC3-A502-A0DEBA0CB531 method 2 instance 0
+in  : len=4: 07 02 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 00 00 00 00 00 00 00 00
+     as u64: 0x0000000000000000
+
+### Battery GetBattInfoInterface idx 4 batt1
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 19 instance 0
+in  : len=8: 04 00 00 00 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=4: 01 00 00 00
+     as u32: 0x00000001
+
+### Battery GetBattInfoInterface idx 5 batt1
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 19 instance 0
+in  : len=8: 05 00 00 00 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=4: 01 00 00 00
+     as u32: 0x00000001
+
+### Battery GetBattInfoInterface idx 6 batt1
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 19 instance 0
+in  : len=8: 06 00 00 00 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=4: 01 00 00 00
+     as u32: 0x00000001
+
+### Battery GetBattInfoInterface idx 7 batt1
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 19 instance 0
+in  : len=8: 07 00 00 00 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=4: 01 00 00 00
+     as u32: 0x00000001
+
+### Battery GetBattInfoInterface idx 8 batt1
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 19 instance 0
+in  : len=8: 08 00 00 00 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=4: b3 0b 00 00
+     as u32: 0x00000bb3
+
+### Battery GetBattInfoInterface idx 9 batt1
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 19 instance 0
+in  : len=8: 09 00 00 00 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=4: 46 40 00 00
+     as u32: 0x00004046
+
+### Battery GetBattInfoInterface idx 10 batt1
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 19 instance 0
+in  : len=8: 0a 00 00 00 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=4: 00 00 00 00
+     as u32: 0x00000000
+
+### Battery GetBattInfoInterface idx 11 batt1
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 19 instance 0
+in  : len=8: 0b 00 00 00 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=4: 01 00 00 00
+     as u32: 0x00000001
+
+### Battery GetBattInfoInterface idx 12 batt1
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 19 instance 0
+in  : len=8: 0c 00 00 00 01 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=4: 01 00 00 00
+     as u32: 0x00000001
+
+### Battery GetBatteryFunctionData mask 4
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 22 instance 0
+in  : len=4: 04 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=16: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+### Battery GetBatteryFunctionData mask 0
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 22 instance 0
+in  : len=4: 00 00 00 00
+status: 0x0 (AE_OK)
+out: buffer len=16: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+### Battery HealthControlStatus query 2
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 20 instance 0
+in  : len=4: 01 02 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 03 00 00 01 00 00 00 00
+     as u64: 0x0000000001000003
+
+### Battery HealthControlStatus query 3
+guid 79772EC5-04B1-4BFD-843C-61E7F77B6CC9 method 20 instance 0
+in  : len=4: 01 03 00 00
+status: 0x0 (AE_OK)
+out: buffer len=8: 03 00 00 01 00 00 00 00
+     as u64: 0x0000000001000003
+
