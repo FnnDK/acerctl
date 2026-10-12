@@ -36,7 +36,8 @@ const (
 	// Refresh cadences. Reads of fans, keyboard, USB and battery control go
 	// through WMI/SMM and cost 5-10 ms each, so they are spread out; AC and
 	// charge come from power_supply and are free.
-	powerEvery    = 2 * time.Second
+	powerEvery    = 2 * time.Second  // without uevents
+	powerFallback = 30 * time.Second // with uevents
 	fansEvery     = 5 * time.Second
 	slowEvery     = 30 * time.Second // keyboard, USB charging, charge limit, calibration, health
 	modeFallback  = 10 * time.Second // re-read platform_profile even without a poll() event
@@ -225,7 +226,14 @@ func (d *Daemon) readInitial() {
 }
 
 func (d *Daemon) refreshLoop(ctx context.Context) {
-	power := time.NewTicker(powerEvery)
+	var events <-chan struct{}
+	every := powerEvery
+	if d.cfg.Reprobe != nil { // real hardware
+		if events = hw.WatchPowerSupply(ctx); events != nil {
+			every = powerFallback
+		}
+	}
+	power := time.NewTicker(every)
 	fans := time.NewTicker(fansEvery)
 	slow := time.NewTicker(slowEvery)
 	defer power.Stop()
@@ -235,6 +243,13 @@ func (d *Daemon) refreshLoop(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
+		case _, ok := <-events:
+			if !ok {
+				events = nil
+				power.Reset(powerEvery)
+				continue
+			}
+			d.refreshPower()
 		case <-power.C:
 			d.refreshPower()
 		case <-fans.C:
