@@ -14,7 +14,7 @@ VERSION=$(cd "$R" && git describe --tags --always --dirty 2>/dev/null || echo 0.
 
 build() {
   echo "building nitrosensed $VERSION"
-  (cd "$R/daemon" && go build -trimpath -ldflags "-s -w -X main.Version=$VERSION" -o "$R/daemon/nitrosensed" ./cmd/nitrosensed)
+  (cd "$R/daemon" && CGO_CFLAGS="-Wno-deprecated-declarations" go build -trimpath -ldflags "-s -w -X main.Version=$VERSION" -o "$R/daemon/nitrosensed" ./cmd/nitrosensed)
 }
 
 install_all() {

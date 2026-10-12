@@ -46,8 +46,10 @@ Máquina de referência: Acer **Nitro ANV15-52** (i7-13620H, RTX 4060, BIOS V1.3
 
 ## Próximo passo imediato
 
-1. **Instalado (build com mutex/poll/debounce, 2026-10-12): CPU ociosa 0,5 %**; GPU: primeira leitura após acordar dá 590 W (filtrada na amostra; trocar por NVML depois). Ação `settings` confirmada: o gnome-shell abre o diálogo de senha (chamadas via `distrobox-host-exec` caem na sessão gráfica 5 do logind). Pendente do §13: suspend/resume.
-2. **Completar o daemon** (ordem sugerida): NVML (go-nvml) no lugar de `nvidia-smi`; restauração dos fans no resume; cenários + App Sync (`internal/scenarios`, `internal/appsync`); CLI `nitrosense-cli`.
+0. **Retomada (2026-10-12, fim de sessão):** commit `NVML` feito ( `daemon/internal/hw/gpu_nvml.go`, `real.go`, `go.mod`/`go.sum` com `github.com/NVIDIA/go-nvml`, `packaging/install-daemon.sh` com `CGO_CFLAGS`). Build feita em `daemon/nitrosensed`, **não instalada nem validada**. Validar com (no host): `sudo sh packaging/install-daemon.sh >/dev/null; sleep 2; journalctl -u nitrosensed -b --no-pager -o cat --since "-20s" | grep -E "NVML|nvidia|ready"` e três `Monitor.Get` olhando `gpu.power` (~10 W ocioso, presente já na 1ª amostra). Esperado no log: `NVML ready gpu="NVIDIA GeForce RTX 4060 Laptop GPU"`. Se `NVML unavailable` dentro da unit, suspeitar da sandbox (`DeviceAllow`, `ProtectSystem`).
+
+1. **Instalado (build com mutex/poll/debounce, 2026-10-12): CPU ociosa 0,5 %**; GPU agora por NVML (go-nvml, `libnvidia-ml.so` carregada em runtime; `nvidia-smi` só como reserva). Ação `settings` confirmada: o gnome-shell abre o diálogo de senha (chamadas via `distrobox-host-exec` caem na sessão gráfica 5 do logind). Pendente do §13: suspend/resume.
+2. **Completar o daemon** (ordem sugerida): restauração dos fans no resume; cenários + App Sync (`internal/scenarios`, `internal/appsync`); CLI `nitrosense-cli`.
 3. Manutenção da camada de kernel: após atualização de kernel, `distrobox-host-exec sudo sh packaging/build-sign.sh`; `sh packaging/check.sh` para conferir. Depois, akmods/DKMS.
 
 ## Backlog (ordem sugerida)

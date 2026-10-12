@@ -39,8 +39,10 @@ func Probe() *Hardware {
 		h.BatteryCtl = b
 	}
 	h.Battery = probeBatteryInfo()
-	if g := probeGPU(); g != nil {
+	if g := probeNVML(); g != nil {
 		h.GPU = g
+	} else if g := probeGPU(); g != nil {
+		h.GPU = g // nvidia-smi fallback
 	}
 	h.NitroKey = probeNitroKey()
 	slog.Info("probe done", "caps", h.Capabilities())
