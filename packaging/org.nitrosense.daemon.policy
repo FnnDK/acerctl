@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <vendor>NitroSense for Linux</vendor>
+
+  <!-- Everyday controls: thermal mode, fans, lighting, scenarios. No password
+       in an active local session (the Nitro key does the same without one). -->
+  <action id="org.nitrosense.daemon.control">
+    <description>Change the thermal mode, fans and lighting</description>
+    <description xml:lang="pt_BR">Alterar modo térmico, ventoinhas e iluminação</description>
+    <message>Authentication is required to change the thermal mode, fans or lighting</message>
+    <message xml:lang="pt_BR">É necessário autenticar para alterar modo térmico, ventoinhas ou iluminação</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+
+  <!-- Settings that persist in the embedded controller and affect the machine
+       while off: charge limit, calibration, USB charging. -->
+  <action id="org.nitrosense.daemon.settings">
+    <description>Change battery charge limit, calibration and USB charging</description>
+    <description xml:lang="pt_BR">Alterar limite de carga, calibração e carregador USB</description>
+    <message>Authentication is required to change battery or USB charging settings</message>
+    <message xml:lang="pt_BR">É necessário autenticar para alterar configurações de bateria ou carregador USB</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+  </action>
+</policyconfig>

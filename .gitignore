@@ -12,3 +12,5 @@ modules.order
 # python
 __pycache__/
 *.pyc
+# daemon build output
+daemon/nitrosensed

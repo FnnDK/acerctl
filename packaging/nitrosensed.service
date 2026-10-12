@@ -1,0 +1,25 @@
+[Unit]
+Description=NitroSense daemon (org.nitrosense.Daemon1)
+Documentation=file:///usr/share/doc/nitrosense/api-dbus.md
+# Companion modules first; tuned/PPD before us so our profile is applied last.
+After=acer-wmi-modules.service tuned.service power-profiles-daemon.service dbus.service
+Wants=acer-wmi-modules.service
+
+[Service]
+Type=dbus
+BusName=org.nitrosense.Daemon1
+ExecStart=/usr/local/bin/nitrosensed
+Restart=on-failure
+StateDirectory=nitrosense
+# Hardening (root is needed for sysfs writes, RAPL and evdev).
+ProtectSystem=strict
+ReadWritePaths=/sys
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
+DeviceAllow=char-input r
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_SYS_ADMIN CAP_DAC_OVERRIDE
+
+[Install]
+WantedBy=multi-user.target
