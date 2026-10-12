@@ -15,6 +15,9 @@ import (
 	"nitrosense/daemon/internal/hw"
 )
 
+// maxGPUPowerW is the sanity bound for GPU power readings.
+const maxGPUPowerW = 400.0
+
 // Sampler keeps the deltas needed for CPU usage, power and network rates.
 type Sampler struct {
 	hw *hw.Hardware
@@ -70,8 +73,13 @@ func (s *Sampler) Sample() map[string]interface{} {
 
 	if s.hw.GPU != nil {
 		if g, err := s.hw.GPU.Sample(); err == nil {
-			out["gpu"] = map[string]interface{}{"temp": g.Temp, "usage": g.Usage, "clock": g.Clock,
-				"mem_clock": g.MemClock, "power": g.Power}
+			gpu := map[string]interface{}{"temp": g.Temp, "usage": g.Usage, "clock": g.Clock, "mem_clock": g.MemClock}
+			// The first reading after the dGPU wakes from D3cold reports a
+			// bogus power draw (590 W seen on the RTX 4060); drop it.
+			if g.Power > 0 && g.Power < maxGPUPowerW {
+				gpu["power"] = g.Power
+			}
+			out["gpu"] = gpu
 		}
 	}
 

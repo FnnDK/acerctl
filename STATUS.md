@@ -38,18 +38,19 @@ Máquina de referência: Acer **Nitro ANV15-52** (i7-13620H, RTX 4060, BIOS V1.3
 - [x] Módulo de pesquisa `acer-wmi-lab` (sysfs) + 3 lotes de probes: mapa de capacidades do firmware (§4–§7); formatos de Set do APGe validados (§5).
 - [x] Módulo companheiro `acer-wmi-extras` v1 escrito, compilado e **validado no ANV15-52** (`test.sh`, 2026-10-12): `kbd_backlight_timeout`, `kbd_backlight_state`, `usb_charging`, `supported_profiles(_mask)`, hwmon `acer_battery` (temp/tensão/corrente).
 - [x] Conferido que teclas de rádio, teclado, eventos e áudio já têm driver in-tree (§1).
+- [x] **Daemon instalado no host e validado no system bus** (2026-10-12): `install-daemon.sh` (build no container, install no host; polkit reiniciado para ler `/usr/local/share/polkit-1/actions`; `DeviceAllow` para NVIDIA), polkit `control` sem senha na sessão ativa, ida e volta com tuned-ppd sem laço, `pwm=0` → piso de ~1 955 RPM. **Achado:** chamadas WMI concorrentes de métodos diferentes corrompem respostas (§9 do firmware-wmi.md) → mutex no daemon, cadência reduzida (6 % → 1,7 % CPU), `poll()` no `platform_profile`, debounce de mudanças externas. Candidato upstream (4): serializar WMI.
 - [x] **Esqueleto do daemon Go** (`daemon/`, 2026-10-12): módulo `nitrosense/daemon` (godbus v5.2.3), backends reais (`internal/hw/real.go`) e simulado (`sim.go`), regras puras com testes (`internal/rules`), serviço D-Bus completo da API v1 (propriedades + `PropertiesChanged`, métodos com polkit, erros, Monitor com `Subscribe` unicast, PPD sync, estado em JSON), unit + policy D-Bus + polkit + `packaging/install-daemon.sh`. Validado no bus de sessão: simulado (toda a API, erros `NotAllowed`/`NotSupported`/`InvalidArgument`) e hardware real em `--dry-run` (capacidades do ANV15-52 detectadas do firmware, fans, bateria, monitor). **Ainda não instalado no host.**
 - [x] **Persistência validada em reboot** (2026-10-12): `packaging/install-modules.sh` instala os `.ko` assinados em `/var/lib/acer-wmi-modules/` (rótulo `modules_object_t`) e habilita `acer-wmi-modules.service`; `packaging/check.sh` confirma a camada inteira após o boot.
 
 ## Próximo passo imediato
 
-1. **Instalar e validar o daemon no host**: `distrobox-host-exec sudo sh packaging/install-daemon.sh` (compila, instala em `/usr/local/bin`, `/etc/dbus-1/system.d`, `/usr/local/share/polkit-1/actions`, `/etc/systemd/system`, habilita `nitrosensed.service`). Depois conferir no system bus com `busctl`, o polkit (`Mode.Set` sem senha na sessão ativa, `Battery.SetUsbCharging` pede senha) e os testes do §13 de `docs/api-dbus.md` (`pwm=0` em manual; laço com tuned-ppd ao trocar pelo GNOME, tirar/colocar cabo, suspender).
+1. **Instalado (build com mutex/poll/debounce, 2026-10-12): CPU ociosa 0,5 %**; GPU: primeira leitura após acordar dá 590 W (filtrada na amostra; trocar por NVML depois). Ação `settings` confirmada: o gnome-shell abre o diálogo de senha (chamadas via `distrobox-host-exec` caem na sessão gráfica 5 do logind). Pendentes do §13: bateria (tirar/colocar cabo) e suspend/resume. Reinstalar a build com o filtro do GPU (já compilada em `daemon/nitrosensed`).
 2. **Completar o daemon** (ordem sugerida): tecla Nitro por evdev (`KEY_PROG1` → `cycle()`); `poll()` em `platform_profile` e udev em `power_supply` no lugar do ciclo de 2 s; NVML (go-nvml) no lugar de `nvidia-smi`; restauração dos fans no resume; cenários + App Sync (`internal/scenarios`, `internal/appsync`); CLI `nitrosense-cli`.
 3. Manutenção da camada de kernel: após atualização de kernel, `distrobox-host-exec sudo sh packaging/build-sign.sh`; `sh packaging/check.sh` para conferir. Depois, akmods/DKMS.
 
 ## Backlog (ordem sugerida)
 
-1. **Patches upstream `acer_wmi`** (§8): entrada DMI `Nitro ANV15-52` (`predator_v4` + `pwm`); `platform_profile_probe` lendo a máscara 0x0A; battery hook `charge_control_end_threshold`.
+1. **Patches upstream `acer_wmi`** (§8): entrada DMI `Nitro ANV15-52` (`predator_v4` + `pwm`); `platform_profile_probe` lendo a máscara 0x0A; battery hook `charge_control_end_threshold`; **serialização das chamadas WMI** (respostas corrompidas sob concorrência, §9).
 2. **Persistência/empacotamento** dos módulos (akmods ou DKMS + unit systemd), script único de build+sign.
 3. **Daemon `nitrosensed` (Go)** — `daemon/` (esqueleto feito 2026-10-12; itens abaixo são o alvo completo)
    - D-Bus system bus `org.nitrosense.Daemon1` (godbus), polkit para ações privilegiadas, unit systemd `nitrosensed.service`.
@@ -90,7 +91,7 @@ distrobox-host-exec sudo sh -c 'K=/usr/src/kernels/$(uname -r); M=/var/home/klum
 (cd daemon && go test ./... && go build ./cmd/nitrosensed && ./nitrosensed --session --simulate ANV15-52 --state /tmp/ns.json)
 (cd daemon && ./nitrosensed --session --dry-run --state /tmp/ns.json)
 busctl --user introspect org.nitrosense.Daemon1 /org/nitrosense/Daemon1
-# instalar no host (root): distrobox-host-exec sudo sh packaging/install-daemon.sh
+# instalar: sh packaging/install-daemon.sh build  (container)  →  distrobox-host-exec sudo sh packaging/install-daemon.sh  (host)
 ```
 
 ## Mapa de arquivos

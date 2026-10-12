@@ -31,7 +31,8 @@ busctl --user call org.nitrosense.Daemon1 /org/nitrosense/Daemon1 org.nitrosense
 ## Instalar no host (Silverblue)
 
 ```bash
-distrobox-host-exec sudo sh packaging/install-daemon.sh
+sh packaging/install-daemon.sh build                      # no container (tem Go)
+distrobox-host-exec sudo sh packaging/install-daemon.sh   # no host (tem root)
 ```
 
 Instala em `/usr/local/bin`, `/etc/dbus-1/system.d`, `/usr/local/share/polkit-1/actions` e `/etc/systemd/system`, e habilita `nitrosensed.service` (ordenado depois de `acer-wmi-modules.service` e do tuned).

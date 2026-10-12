@@ -1,9 +1,12 @@
 #!/bin/sh
 # Builds nitrosensed and installs binary, D-Bus policy, polkit actions and
 # the systemd unit into paths that are writable on Fedora Silverblue
-# (/usr/local = /var/usrlocal, /etc). Run as root on the host:
-#   distrobox-host-exec sudo sh packaging/install-daemon.sh
-# Build only (no root):  sh packaging/install-daemon.sh build
+# (/usr/local = /var/usrlocal, /etc). Go lives in the distrobox, root on the
+# host, so the two steps run in different places:
+#   sh packaging/install-daemon.sh build                        # in the container
+#   distrobox-host-exec sudo sh packaging/install-daemon.sh     # on the host
+# The default (all) builds when go is available and otherwise installs the
+# binary already built by the first step.
 set -eu
 R=$(cd "$(dirname "$0")/.." && pwd)
 BIN=/usr/local/bin/nitrosensed
@@ -25,8 +28,12 @@ install_all() {
       /usr/local/share/polkit-1/actions/org.nitrosense.daemon.policy /etc/systemd/system/nitrosensed.service || true
   fi
   systemctl daemon-reload
+  # polkitd only watches action directories that existed when it started;
+  # a restart makes it read /usr/local/share/polkit-1/actions.
+  systemctl try-restart polkit.service
   systemctl reload dbus.service 2>/dev/null || systemctl reload dbus-broker.service 2>/dev/null || true
-  systemctl enable --now nitrosensed.service
+  systemctl enable nitrosensed.service
+  systemctl restart nitrosensed.service
   sleep 1
   systemctl --no-pager --lines=5 status nitrosensed.service || true
   echo
@@ -36,6 +43,14 @@ install_all() {
 case "${1:-all}" in
   build) build ;;
   install) install_all ;;
-  all) build; install_all ;;
+  all)
+    if command -v go >/dev/null 2>&1; then
+      build
+    elif [ -x "$R/daemon/nitrosensed" ]; then
+      echo "go not found here; installing the binary built earlier ($("$R/daemon/nitrosensed" --version))"
+    else
+      echo "go not found and no daemon/nitrosensed: run 'sh packaging/install-daemon.sh build' in the container first"; exit 1
+    fi
+    install_all ;;
   *) echo "usage: $0 [build|install|all]"; exit 2 ;;
 esac

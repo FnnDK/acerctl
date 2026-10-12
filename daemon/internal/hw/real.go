@@ -1,6 +1,7 @@
 package hw
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
@@ -8,6 +9,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"golang.org/x/sys/unix"
 )
 
 const (
@@ -112,6 +115,64 @@ func probeProfiles() *sysfsProfiles {
 		return p
 	}
 	return nil
+}
+
+// Watch polls the class attribute and the legacy /sys/firmware/acpi file:
+// writes through either path notify at least one of them. Every poll() wake
+// re-reads the attribute (a WMI call, so under wmiMu) to re-arm it.
+func (p *sysfsProfiles) Watch(ctx context.Context) <-chan struct{} {
+	ch := make(chan struct{}, 1)
+	var fds []unix.PollFd
+	for _, f := range []string{p.path, ppLegacy} {
+		if !exists(f) {
+			continue
+		}
+		fd, err := unix.Open(f, unix.O_RDONLY|unix.O_CLOEXEC, 0)
+		if err != nil {
+			continue
+		}
+		fds = append(fds, unix.PollFd{Fd: int32(fd), Events: unix.POLLPRI | unix.POLLERR})
+	}
+	if len(fds) == 0 {
+		close(ch)
+		return ch
+	}
+	rearm := func() {
+		buf := make([]byte, 64)
+		wmiMu.Lock()
+		for _, fd := range fds {
+			_, _ = unix.Pread(int(fd.Fd), buf, 0)
+		}
+		wmiMu.Unlock()
+	}
+	rearm()
+	go func() {
+		defer func() {
+			for _, fd := range fds {
+				_ = unix.Close(int(fd.Fd))
+			}
+			close(ch)
+		}()
+		for ctx.Err() == nil {
+			n, err := unix.Poll(fds, 1000)
+			if err != nil && err != unix.EINTR {
+				slog.Warn("platform_profile poll failed", "err", err)
+				return
+			}
+			if n <= 0 {
+				continue
+			}
+			for i := range fds {
+				fds[i].Revents = 0
+			}
+			rearm()
+			select {
+			case ch <- struct{}{}:
+			default:
+			}
+		}
+	}()
+	return ch
 }
 
 func (p *sysfsProfiles) Supported() []string      { return p.supported }

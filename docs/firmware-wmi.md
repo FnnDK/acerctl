@@ -87,7 +87,7 @@ Detecção no probe: `kbd timeout: yes, usb charging: yes, profiles: yes (mask 0
 - `acer_predator_v4_platform_profile_probe` faz `set_bit` dos 5 perfis sem consultar `ACER_WMID_MISC_SETTING_SUPPORTED_PROFILES` (0x0A), constante definida e não usada.
 - Mapeamento: `performance`=Turbo 5, `balanced-performance`=Performance 4, `balanced`=1, `quiet`=0, `low-power`=Eco 6.
 - O driver ignora `WMID_AC_EVENT`; `platform_profile_cycle()` percorre todas as escolhas (Eco na tomada, Turbo na bateria). A regra AC/bateria fica no user space.
-- Candidatos upstream: (1) entrada DMI `Nitro ANV15-52` → `predator_v4` + `pwm`; (2) probe de perfis lendo 0x0A; (3) battery hook `charge_control_end_threshold`. Sem flags de marca: a variação é por modelo.
+- Candidatos upstream: (1) entrada DMI `Nitro ANV15-52` → `predator_v4` + `pwm`; (2) probe de perfis lendo 0x0A; (3) battery hook `charge_control_end_threshold`; (4) **serializar as chamadas WMI** (mutex no `acer_wmi` em torno de `WMI_gaming_execute_u64`/`WMID_gaming_*`, ou melhor, no núcleo WMI por dispositivo `PNP0C14`), porque chamadas concorrentes de métodos diferentes corrompem as respostas (§9). Sem flags de marca: a variação é por modelo.
 - Atenção com `tuned`/`tuned-ppd`: `throughput-performance` escreve `performance` (= Turbo); manter `balanced` em modelos sem Turbo.
 
 ## 9. Regras de coexistência para módulos fora da árvore
@@ -95,6 +95,7 @@ Detecção no probe: `kbd timeout: yes, usb charging: yes, profiles: yes (mask 0
 - Usar só a API legada por GUID (`wmi_evaluate_method`, `wmi_has_guid`; `EXPORT_SYMBOL_GPL` → módulo GPL). O núcleo WMI 7.2 não impede que vários módulos chamem o mesmo GUID; o `acer_wmi` usa a mesma API e não vincula driver ao GUID gaming.
 - Não vincular ao GUID de eventos `676AA15E…` nem instalar handler legado nele (já ocupado pelo `acer_wmi`, `AE_ALREADY_ACQUIRED`).
 - Serializar as próprias chamadas (mutex): não há lock entre módulos ao invocar `WMAB`/`WMBH`.
+- **Medido (2026-10-12): chamadas WMI concorrentes corrompem as respostas.** Os métodos AML (`WMAA`, `WMAB`, `WMAE`, `WMBE`, `WMBH`) são `Serialized`, o que só impede duas execuções do *mesmo* método; métodos diferentes rodam em paralelo e compartilham o caminho SMM. Lendo `platform-profile` a cada 5 ms enquanto outro processo lia `kbd_backlight_state` (APGe, `WMAA`), 30 de 578 leituras vieram erradas (`quiet` = valor 0, ou `-EOPNOTSUPP` por valor fora da tabela); com `pwm1` (`WMBH`, mesmo método) ao lado, 8 de 654; sem concorrência explícita, 2 de 333 (colisões com o daemon). Consequências: (a) o daemon serializa todos os seus acessos a sysfs com um mutex e só aceita como "mudança externa" um valor conhecido lido duas vezes; (b) qualquer leitor externo (`sensors`, `cat` no sysfs) pode receber lixo até o patch (4) do §8; (c) `acer-wmi-extras` já tem mutex próprio, mas ele não cobre o `acer_wmi`.
 - Secure Boot: assinar os `.ko` com a MOK do akmods; lockdown `integrity` bloqueia debugfs gravável → interfaces em sysfs.
 
 ## 10. Projetos relacionados

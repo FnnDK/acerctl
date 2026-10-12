@@ -1,6 +1,9 @@
 package hw
 
-import "math"
+import (
+	"context"
+	"math"
+)
 
 // Power is the current power source and battery charge.
 type Power struct {
@@ -37,6 +40,13 @@ type Profiles interface {
 	FromFirmware() bool
 	Current() (string, error)
 	Set(profile string) error
+}
+
+// ProfileWatcher is implemented by profile backends that can signal a
+// change of platform_profile without polling (sysfs_notify + poll()).
+type ProfileWatcher interface {
+	// Watch delivers one token per notification until ctx is done.
+	Watch(ctx context.Context) <-chan struct{}
 }
 
 // Fans is the hwmon fan backend.

@@ -13,16 +13,26 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // DryRun makes every sysfs write a log line instead of a write.
 var DryRun bool
 
+// wmiMu serializes every sysfs access of this package. The firmware answers
+// WMI calls through one shared SMM buffer and the kernel only serializes
+// calls of the same ACPI method, so two different methods in flight at once
+// (say the keyboard state and the thermal profile) return garbage. Within
+// the daemon this lock removes that; other processes can still collide.
+var wmiMu sync.Mutex
+
 // ErrAbsent is returned by backends whose kernel interface is not present.
 var ErrAbsent = errors.New("backend absent")
 
 func readStr(path string) (string, error) {
+	wmiMu.Lock()
 	b, err := os.ReadFile(path)
+	wmiMu.Unlock()
 	if err != nil {
 		return "", err
 	}
@@ -50,7 +60,10 @@ func writeStr(path, value string) error {
 		slog.Info("dry-run: skip write", "path", path, "value", value)
 		return nil
 	}
-	if err := os.WriteFile(path, []byte(value), 0); err != nil {
+	wmiMu.Lock()
+	err := os.WriteFile(path, []byte(value), 0)
+	wmiMu.Unlock()
+	if err != nil {
 		return fmt.Errorf("write %s=%q: %w", path, value, err)
 	}
 	return nil

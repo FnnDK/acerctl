@@ -33,7 +33,14 @@ const (
 	ifBattery   = busName + ".Battery"
 	ifScenarios = busName + ".Scenarios"
 
-	refreshEvery  = 2 * time.Second
+	// Refresh cadences. Reads of fans, keyboard, USB and battery control go
+	// through WMI/SMM and cost 5-10 ms each, so they are spread out; AC and
+	// charge come from power_supply and are free.
+	powerEvery    = 2 * time.Second
+	fansEvery     = 5 * time.Second
+	slowEvery     = 30 * time.Second // keyboard, USB charging, charge limit, calibration, health
+	modeFallback  = 10 * time.Second // re-read platform_profile even without a poll() event
+	modeDebounce  = 150 * time.Millisecond
 	settleTimeout = 2 * time.Second // how long tuned gets to write platform_profile
 	sourceDelay   = 1500 * time.Millisecond
 )
@@ -105,6 +112,7 @@ func (d *Daemon) Run(ctx context.Context) error {
 		"version", d.cfg.Version)
 
 	go d.refreshLoop(ctx)
+	go d.modeLoop(ctx)
 	go d.watchNameOwners(ctx)
 	if d.ppd != nil {
 		go d.watchPPD(ctx)
@@ -205,21 +213,62 @@ func (d *Daemon) readInitial() {
 }
 
 func (d *Daemon) refreshLoop(ctx context.Context) {
-	t := time.NewTicker(refreshEvery)
+	power := time.NewTicker(powerEvery)
+	fans := time.NewTicker(fansEvery)
+	slow := time.NewTicker(slowEvery)
+	defer power.Stop()
+	defer fans.Stop()
+	defer slow.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-power.C:
+			d.refreshPower()
+		case <-fans.C:
+			d.setProp(ifFans, "State", d.fanState())
+		case <-slow.C:
+			d.refreshSlow()
+		}
+	}
+}
+
+// refreshSlow re-reads the EC-backed settings; also called after a resume.
+func (d *Daemon) refreshSlow() {
+	d.setProp(ifLighting, "Keyboard", d.keyboardState())
+	d.setProp(ifBattery, "ChargeLimit", d.chargeLimit())
+	d.setProp(ifBattery, "Calibrating", d.calibrating())
+	d.setProp(ifBattery, "UsbCharging", d.usbCharging())
+	d.setProp(ifBattery, "Health", d.health())
+}
+
+// modeLoop checks platform_profile on sysfs notifications when the backend
+// supports poll(), and on a slow timer otherwise / as a fallback.
+func (d *Daemon) modeLoop(ctx context.Context) {
+	if d.hw.Profiles == nil {
+		return
+	}
+	var events <-chan struct{}
+	every := powerEvery
+	if w, ok := d.hw.Profiles.(hw.ProfileWatcher); ok {
+		events = w.Watch(ctx)
+		every = modeFallback
+	}
+	t := time.NewTicker(every)
 	defer t.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-t.C:
-			d.refreshPower()
 			d.watchSysfsMode()
-			d.setProp(ifFans, "State", d.fanState())
-			d.setProp(ifLighting, "Keyboard", d.keyboardState())
-			d.setProp(ifBattery, "ChargeLimit", d.chargeLimit())
-			d.setProp(ifBattery, "Calibrating", d.calibrating())
-			d.setProp(ifBattery, "UsbCharging", d.usbCharging())
-			d.setProp(ifBattery, "Health", d.health())
+		case _, ok := <-events:
+			if !ok {
+				events = nil
+				t.Reset(powerEvery)
+				continue
+			}
+			d.watchSysfsMode()
 		}
 	}
 }
@@ -319,12 +368,21 @@ func (d *Daemon) watchSysfsMode() {
 	}
 	v, err := d.hw.Profiles.Current()
 	if err != nil {
-		return
+		return // a concurrent WMI call from another process garbled the answer
 	}
 	d.mu.Lock()
 	cur, ignore, power, allowed := d.current, d.ignoreSysfs, d.power, d.allowed
 	d.mu.Unlock()
 	if v == cur || time.Now().Before(ignore) {
+		return
+	}
+	// Garbled reads show up as values outside the firmware list or as a
+	// value that is gone on the next read; only a stable, known value counts.
+	if !rules.Contains(d.hw.Profiles.Supported(), v) && !rules.Contains(platformProfileNames, v) {
+		return
+	}
+	time.Sleep(modeDebounce)
+	if again, err := d.hw.Profiles.Current(); err != nil || again != v {
 		return
 	}
 	resolved := rules.FromExternal(v, power, allowed)
@@ -511,6 +569,10 @@ func (d *Daemon) health() map[string]dbus.Variant {
 	}
 	return out
 }
+
+// platformProfileNames are the values the kernel can hold; a write of
+// performance (Turbo) on a model without it is still a real external write.
+var platformProfileNames = []string{"low-power", "quiet", "balanced", "balanced-performance", "performance"}
 
 // ---- helpers ---------------------------------------------------------------
 
