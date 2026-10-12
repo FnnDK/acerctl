@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -478,9 +477,5 @@ func (g *smiGPU) Sample() (GPUSample, error) {
 
 // ---- Nitro key -------------------------------------------------------------
 
-// probeNitroKey only checks that the internal keyboard exists; the evdev
-// reader is not part of the skeleton.
-func probeNitroKey() bool {
-	b, err := os.ReadFile("/proc/bus/input/devices")
-	return err == nil && strings.Contains(string(b), "AT Translated Set 2 keyboard")
-}
+// probeNitroKey checks that the internal keyboard exists (see nitrokey.go).
+func probeNitroKey() bool { return nitroKeyDevice() != "" }

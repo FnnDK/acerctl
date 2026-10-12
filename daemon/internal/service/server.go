@@ -52,6 +52,9 @@ type Config struct {
 	Version  string
 	// Reprobe rebuilds the hardware view (System.Reload); nil when simulating.
 	Reprobe func() *hw.Hardware
+	// NitroKey is what the daemon does on KEY_PROG1: "cycle" the profile or
+	// "none" (the GUI/tray owns the key, as in the original app it opens the app).
+	NitroKey string
 }
 
 // Daemon is the exported object with its state.
@@ -116,6 +119,15 @@ func (d *Daemon) Run(ctx context.Context) error {
 	go d.watchNameOwners(ctx)
 	if d.ppd != nil {
 		go d.watchPPD(ctx)
+	}
+	if d.hw.NitroKey && d.cfg.Reprobe != nil && !d.cfg.Session && d.cfg.NitroKey == "cycle" {
+		go hw.WatchNitroKey(ctx, func() {
+			if next, err := d.cycle(); err != nil {
+				slog.Warn("nitro key: cycle failed", "err", err)
+			} else {
+				slog.Info("nitro key", "profile", next)
+			}
+		})
 	}
 	d.restoreMode()
 

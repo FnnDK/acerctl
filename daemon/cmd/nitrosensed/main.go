@@ -26,6 +26,7 @@ func main() {
 		dryRun   = flag.Bool("dry-run", false, "log sysfs writes instead of performing them")
 		simulate = flag.String("simulate", "", "simulate a model (ANV15-52) instead of probing the hardware")
 		statePth = flag.String("state", state.DefaultPath, "state file")
+		nitroKey = flag.String("nitro-key", "cycle", "action on the Nitro key: cycle (thermal profile) or none (leave it to the GUI/tray)")
 		debug    = flag.Bool("debug", false, "debug logging")
 		showVer  = flag.Bool("version", false, "print the version and exit")
 	)
@@ -41,7 +42,7 @@ func main() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level})))
 	hw.DryRun = *dryRun
 
-	cfg := service.Config{Session: *session, NoPolkit: *noPolkit || *session, Version: Version}
+	cfg := service.Config{Session: *session, NoPolkit: *noPolkit || *session, Version: Version, NitroKey: *nitroKey}
 	var h *hw.Hardware
 	if *simulate != "" {
 		var err error
