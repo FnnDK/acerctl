@@ -1,0 +1,80 @@
+name: Hardware report
+description: Share what your Acer laptop's firmware exposes so acerctl can support it.
+title: "Hardware report: <model>"
+labels: ["hardware-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping! Run `sudo sh tools/survey.sh` (optionally with `--probes`) as described in
+        [docs/hardware-reports.md](https://github.com/FnnDK/acerctl/blob/main/docs/hardware-reports.md),
+        then fill in this form. The script is read-only and collects no personal data.
+  - type: input
+    id: model
+    attributes:
+      label: Model
+      description: Exact model name, e.g. "Nitro ANV15-52" or "Aspire AG15-71P" (the `model:` line of summary.txt).
+    validations:
+      required: true
+  - type: dropdown
+    id: line
+    attributes:
+      label: Product line
+      options: [Nitro, Predator, Aspire, Swift, TravelMate, Extensa, Other]
+    validations:
+      required: true
+  - type: dropdown
+    id: windows_app
+    attributes:
+      label: Acer app on Windows
+      description: Which control app does this laptop use on Windows?
+      options: [NitroSense, PredatorSense, AcerSense, None, "I don't know / never used Windows on it"]
+    validations:
+      required: true
+  - type: checkboxes
+    id: windows_features
+    attributes:
+      label: Features the Windows app shows on this laptop
+      description: Tick what you have seen in the Windows app (skip if you don't know). This is the part we cannot learn from the firmware alone.
+      options:
+        - label: Operating modes (list their names below)
+        - label: Fan control (auto / max / custom)
+        - label: Keyboard backlight (single color)
+        - label: RGB keyboard (zones or per-key)
+        - label: Keyboard backlight auto-off timeout
+        - label: Battery charge limit (80 %)
+        - label: Battery calibration
+        - label: USB charging while the laptop is off
+        - label: Boot sound / boot animation
+        - label: LCD overdrive
+        - label: CPU or GPU overclocking
+        - label: A dedicated key that opens the app or switches modes
+  - type: textarea
+    id: modes
+    attributes:
+      label: Operating modes and notes
+      description: Mode names as the Windows app shows them, which ones only work on AC or on battery, and anything else worth knowing.
+  - type: textarea
+    id: summary
+    attributes:
+      label: summary.txt
+      description: Paste the contents of summary.txt from the report.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Report archive
+      description: Drag and drop the `acer-report-*.tar.gz` file here.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I ran the script on the laptop itself (not in a VM).
+          required: true
+        - label: I understand the archive contains raw ACPI/WMI firmware tables and no personal data (see docs/hardware-reports.md).
+          required: true

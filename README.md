@@ -12,6 +12,8 @@ Acer ships a different Windows-only app per product line: **NitroSense** (Nitro)
 | AcerSense | Aspire, Swift, TravelMate, Extensa | in progress (Aspire AG15-71P) |
 | PredatorSense | Predator | to do |
 
+Your model is not on the list? Run the read-only [hardware report](docs/hardware-reports.md) and open a *Hardware report* issue: that is all we need to start supporting it.
+
 acerctl works **by complementing the in-tree `acer_wmi` driver** instead of replacing it: what the kernel lacks comes from small companion modules, a daemon applies the rules, and an app and a CLI (`acerctl`) talk to it over D-Bus. The app comes in two flavors built from the same code, differing only in name and colors: `Nitro Control Center` (red) for Nitro/Predator and `Acer Control Center` (green, planned) for the other lines.
 
 > Independent open-source project, not affiliated with Acer. "Acer", "Nitro", "Predator", "Aspire", "NitroSense", "PredatorSense" and "AcerSense" are trademarks of Acer Inc., mentioned only to identify the hardware.

@@ -18,3 +18,5 @@ __pycache__/
 daemon/acerd
 daemon/acerctl
 daemon/acer-tray
+# hardware reports (tools/survey.sh)
+acer-report-*
