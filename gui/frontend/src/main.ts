@@ -105,4 +105,6 @@ onSample(x => { pages.get(current)?.sample?.(x) })
 
 document.documentElement.lang = lang() === 'pt' ? 'pt-BR' : 'en'
 start()
-go((() => { try { return localStorage.getItem('page') ?? 'home' } catch { return 'home' } })())
+// #page in the URL opens that page (and follows later changes).
+window.addEventListener('hashchange', () => go(location.hash.slice(1)))
+go(location.hash.slice(1) || (() => { try { return localStorage.getItem('page') ?? 'home' } catch { return 'home' } })())

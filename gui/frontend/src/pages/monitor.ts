@@ -6,7 +6,11 @@ import type { Page } from '../widgets'
 
 const CPU = '#ff6a0c', GPU = '#4aa8ff', BAT = '#3ecf8e', CPU2 = '#ffa000'
 
-const fmtClock = (s: number) => new Date(s * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+// Axis labels: seconds only when the ticks are less than a minute apart.
+const fmtTicks = (ticks: number[]) => {
+  const secs = ticks.length > 1 && ticks[1] - ticks[0] < 60
+  return ticks.map(s => new Date(s * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', ...(secs ? { second: '2-digit' } : {}) }))
+}
 
 type Key = Exclude<keyof typeof hist, 'ts'>
 interface Chart { title: string, unit: () => string, series: { key: Key, label: string, color: string }[], conv?: (v: number) => number, max?: number }
@@ -56,8 +60,8 @@ export function monitor(): Page {
       cursor: { drag: { x: false, y: false }, points: { size: 6 } },
       legend: { show: true, live: false },
       scales: { x: { time: true }, y: c.max ? { range: [0, c.max] } : { range: (_u, _min, max) => [0, Math.max(10, Math.ceil((max * 1.15) / 10) * 10)] } },
-      axes: [{ ...axis, space: 70, values: (_u, ticks) => ticks.map(fmtClock) }, { ...axis, size: 48 }],
-      series: [{ label: '' }, ...c.series.map(s => ({
+      axes: [{ ...axis, space: 70, values: (_u, ticks) => fmtTicks(ticks) }, { ...axis, size: 48 }],
+      series: [{}, ...c.series.map(s => ({
         label: s.label, stroke: s.color, width: 2, spanGaps: false, points: { show: false },
         fill: s.color + '18', value: (_u: uPlot, v: number | null) => (v == null ? '–' : `${Math.round(v)} ${c.unit()}`),
       }))],
