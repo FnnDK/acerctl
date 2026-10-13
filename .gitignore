@@ -17,3 +17,4 @@ __pycache__/
 # daemon build output
 daemon/nitrod
 daemon/nitroctl
+daemon/nitro-tray

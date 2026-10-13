@@ -34,6 +34,10 @@ export function SetKeyboardTimeout(arg1:number):Promise<void>;
 
 export function SetMode(arg1:string):Promise<void>;
 
+export function SetNitroKey(arg1:string):Promise<void>;
+
+export function SetTrayShown(arg1:boolean):Promise<void>;
+
 export function SetUsbCharging(arg1:number):Promise<void>;
 
 export function StartCalibration():Promise<void>;
@@ -45,3 +49,5 @@ export function StopCalibration():Promise<void>;
 export function Titlebar():Promise<main.Titlebar>;
 
 export function ToggleMaximise():Promise<void>;
+
+export function TrayShown():Promise<boolean>;

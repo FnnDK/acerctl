@@ -56,8 +56,9 @@ type Config struct {
 	Version  string
 	// Reprobe rebuilds the hardware view (System.Reload); nil when simulating.
 	Reprobe func() *hw.Hardware
-	// NitroKey is what the daemon does on KEY_PROG1: "cycle" the profile or
-	// "none" (the GUI/tray owns the key, as in the original app it opens the app).
+	// NitroKey is the default action on KEY_PROG1 until System.SetNitroKey
+	// stores one: "cycle" the profile or "app" (the session agent opens the
+	// app, as the original one does).
 	NitroKey string
 }
 
@@ -139,14 +140,8 @@ func (d *Daemon) Run(ctx context.Context) error {
 	if !d.cfg.Session {
 		go d.watchSleep(ctx)
 	}
-	if d.hw.NitroKey && d.cfg.Reprobe != nil && !d.cfg.Session && d.cfg.NitroKey == "cycle" {
-		go hw.WatchNitroKey(ctx, func() {
-			if next, err := d.cycle(); err != nil {
-				slog.Warn("nitro key: cycle failed", "err", err)
-			} else {
-				slog.Info("nitro key", "profile", next)
-			}
-		})
+	if d.hw.NitroKey && d.cfg.Reprobe != nil && !d.cfg.Session {
+		go hw.WatchNitroKey(ctx, d.onNitroKey)
 	}
 	d.restoreMode()
 	d.restoreFans(true)
@@ -168,6 +163,7 @@ func (d *Daemon) export() error {
 			"Version":      {Value: d.cfg.Version, Emit: prop.EmitTrue},
 			"Capabilities": {Value: variants(d.hw.Capabilities()), Emit: prop.EmitTrue},
 			"Model":        {Value: variants(d.hw.Model), Emit: prop.EmitTrue},
+			"NitroKey":     {Value: d.nitroKey(), Emit: prop.EmitTrue},
 		},
 		ifMode: {
 			"Current":        {Value: d.current, Emit: prop.EmitTrue},
@@ -215,8 +211,11 @@ func (d *Daemon) export() error {
 			return fmt.Errorf("export %s: %w", name, err)
 		}
 		iface := introspect.Interface{Name: name, Methods: introspect.Methods(obj), Properties: d.props.Introspection(name)}
-		if name == ifMonitor {
+		switch name {
+		case ifMonitor:
 			iface.Signals = []introspect.Signal{{Name: "Sample", Args: []introspect.Arg{{Name: "sample", Type: "a{sv}"}}}}
+		case ifSystem:
+			iface.Signals = []introspect.Signal{{Name: "NitroKeyPressed", Args: []introspect.Arg{{Name: "action", Type: "s"}}}}
 		}
 		node.Interfaces = append(node.Interfaces, iface)
 	}

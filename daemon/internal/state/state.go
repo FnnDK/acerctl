@@ -30,6 +30,9 @@ type Data struct {
 	// Scenario is the active scenario ("" once something is changed by hand).
 	Scenario string `json:"scenario,omitempty"`
 	AppSync  bool   `json:"app_sync,omitempty"`
+	// NitroKey is the chosen action of the Nitro key ("app" or "cycle");
+	// empty means the --nitro-key default.
+	NitroKey string `json:"nitro_key,omitempty"`
 	// While App Sync holds a scenario: what to go back to and which
 	// scenario it applied (if Scenario differs, the user took over).
 	SyncRevert  *scenarios.Scenario `json:"app_sync_revert,omitempty"`

@@ -117,6 +117,7 @@ func (a *App) serve(cl *client.Client) {
 	}
 	a.mu.Unlock()
 	a.emitState()
+	a.ensureAgent() // first run after install: no login yet to autostart it
 
 	// PropertiesChanged comes in bursts (one per interface); coalesce them.
 	var pending <-chan time.Time

@@ -10,12 +10,15 @@ export function settings(): Page {
     <div class="card" data-machine>
       <h2>${t('set.machine')}</h2>
       <div class="setting" data-usb-row><div class="label"><b>${t('set.usb')}</b><span>${t('set.usb_hint')}</span></div><div class="seg" data-usb></div></div>
+      <div class="setting" data-key-row><div class="label"><b>${t('set.key')}</b><span>${t('set.key_hint')}</span></div>
+        <div class="seg" data-key><button data-k="app">${t('set.key_app')}</button><button data-k="cycle">${t('set.key_cycle')}</button></div></div>
       <div class="setting"><div class="label"><b>${t('set.reload')}</b><span>${t('set.reload_hint')}</span></div><button class="btn" data-reload>${t('set.reload')}</button></div>
     </div>
     <div class="card mt">
       <h2>${t('set.app')}</h2>
       <div class="setting"><div class="label"><b>${t('set.units')}</b></div><div class="seg" data-units><button data-u="C">°C</button><button data-u="F">°F</button></div></div>
       <div class="setting"><div class="label"><b>${t('set.lang')}</b></div><div class="seg" data-lang><button data-l="">${t('set.lang_auto')}</button><button data-l="pt">Português</button><button data-l="en">English</button></div></div>
+      <div class="setting"><div class="label"><b>${t('set.tray')}</b><span>${t('set.tray_hint')}</span></div>${switchHtml('data-tray', false)}</div>
       <div class="setting"><div class="label"><b>${t('set.autostart')}</b><span>${t('set.autostart_hint')}</span></div>${switchHtml('data-autostart', false)}</div>
     </div>
     <div class="card mt">
@@ -58,6 +61,15 @@ export function settings(): Page {
     location.reload()
   }
 
+  const key = root.querySelector('[data-key]') as HTMLElement
+  key.onclick = e => {
+    const b = (e.target as HTMLElement).closest('button') as HTMLButtonElement | null
+    if (b && !b.classList.contains('on')) act(App.SetNitroKey(b.dataset.k!))
+  }
+  const tray = root.querySelector('[data-tray]') as HTMLInputElement
+  App.TrayShown().then(v => { tray.checked = v })
+  tray.onchange = async () => { const want = tray.checked; if (!(await act(App.SetTrayShown(want)))) tray.checked = !want }
+
   const auto = root.querySelector('[data-autostart]') as HTMLInputElement
   App.Autostart().then(v => { auto.checked = v })
   auto.onchange = async () => { const want = auto.checked; if (!(await act(App.SetAutostart(want)))) auto.checked = !want }
@@ -74,6 +86,9 @@ export function settings(): Page {
         usb.innerHTML = vals.map(v => `<button data-p="${v}">${v === 0 ? t('set.usb_off') : t('set.usb_until', v)}</button>`).join('')
       }
       usb.querySelectorAll<HTMLElement>('button').forEach(b => b.classList.toggle('on', Number(b.dataset.p) === s.battery?.UsbCharging))
+
+      root.querySelector('[data-key-row]')!.classList.toggle('hidden', !caps().nitro_key)
+      key.querySelectorAll<HTMLElement>('button').forEach(b => b.classList.toggle('on', b.dataset.k === s.system?.NitroKey))
 
       const sys = s.system ?? {}, md = sys.Model ?? {}
       setText(root, '[data-version]', sys.Version ? `nitrod ${sys.Version}` : '')

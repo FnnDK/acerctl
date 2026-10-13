@@ -66,6 +66,14 @@ export function SetMode(arg1) {
   return window['go']['main']['App']['SetMode'](arg1);
 }
 
+export function SetNitroKey(arg1) {
+  return window['go']['main']['App']['SetNitroKey'](arg1);
+}
+
+export function SetTrayShown(arg1) {
+  return window['go']['main']['App']['SetTrayShown'](arg1);
+}
+
 export function SetUsbCharging(arg1) {
   return window['go']['main']['App']['SetUsbCharging'](arg1);
 }
@@ -88,4 +96,8 @@ export function Titlebar() {
 
 export function ToggleMaximise() {
   return window['go']['main']['App']['ToggleMaximise']();
+}
+
+export function TrayShown() {
+  return window['go']['main']['App']['TrayShown']();
 }

@@ -28,7 +28,7 @@ func main() {
 		dryRun   = flag.Bool("dry-run", false, "log sysfs writes instead of performing them")
 		simulate = flag.String("simulate", "", "simulate a model (ANV15-52) instead of probing the hardware")
 		statePth = flag.String("state", state.DefaultPath, "state file")
-		nitroKey = flag.String("nitro-key", "cycle", "action on the Nitro key: cycle (thermal profile) or none (leave it to the GUI/tray)")
+		nitroKey = flag.String("nitro-key", "cycle", "default action of the Nitro key until one is chosen over D-Bus: cycle (thermal profile) or app (the session agent opens the app; 'none' is an alias)")
 		debug    = flag.Bool("debug", false, "debug logging")
 		showVer  = flag.Bool("version", false, "print the version and exit")
 	)

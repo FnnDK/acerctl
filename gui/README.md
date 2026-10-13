@@ -6,6 +6,8 @@ GUI do nitroctl em Go + Wails v2: uma janela sobre a API D-Bus do `nitrod` (`doc
 
 ```
 main.go             opções da janela, instância única, ícone; --session, --minimized
+agent.go            agente da sessão (daemon/cmd/nitro-tray): opções "Ícone na bandeja" e
+                    "Tecla Nitro", Reload do agente ou início dele quando passa a ser preciso
 titlebar.go         janela sem moldura: ordem dos botões (button-layout do GNOME, pelo portal
                     de configurações ou gsettings) e ícones window-*-symbolic do tema, lidos do sistema
 app.go              ponte D-Bus ↔ frontend: State() (todas as propriedades), métodos de escrita,

@@ -1,6 +1,8 @@
 package service
 
 import (
+	"log/slog"
+
 	"github.com/godbus/dbus/v5"
 
 	"nitroctl/daemon/internal/rules"
@@ -26,6 +28,55 @@ func (s *systemIface) Reload(sender dbus.Sender) *dbus.Error {
 	d.readInitial()
 	d.setProp(ifMode, "Current", d.current)
 	return nil
+}
+
+// SetNitroKey chooses what the Nitro key does: "cycle" the thermal profile
+// or "app" (the session agent opens the app on NitroKeyPressed).
+func (s *systemIface) SetNitroKey(sender dbus.Sender, action string) *dbus.Error {
+	d := s.d
+	if !d.hw.NitroKey {
+		return errNotSupported("Nitro key")
+	}
+	if action != "app" && action != "cycle" {
+		return errInvalid("nitro key action %q: use app or cycle", action)
+	}
+	if err := d.authorize(sender, actionControl); err != nil {
+		return err
+	}
+	d.st.Update(func(s *state.Data) { s.NitroKey = action })
+	d.setProp(ifSystem, "NitroKey", action)
+	return nil
+}
+
+// nitroKey is the effective action: the stored choice, else the flag.
+func (d *Daemon) nitroKey() string {
+	var k string
+	d.st.View(func(s state.Data) { k = s.NitroKey })
+	if k == "" {
+		k = d.cfg.NitroKey
+	}
+	if k == "none" {
+		k = "app"
+	}
+	return k
+}
+
+// onNitroKey runs on every press: the signal always goes out (the session
+// agent decides with NitroKey), the cycle only in "cycle" mode.
+func (d *Daemon) onNitroKey() {
+	action := d.nitroKey()
+	if err := d.conn.Emit(objPath, ifSystem+".NitroKeyPressed", action); err != nil {
+		slog.Warn("nitro key: signal", "err", err)
+	}
+	if action != "cycle" {
+		slog.Info("nitro key", "action", action)
+		return
+	}
+	if next, err := d.cycle(); err != nil {
+		slog.Warn("nitro key: cycle failed", "err", err)
+	} else {
+		slog.Info("nitro key", "profile", next)
+	}
 }
 
 // ---- io.github.fnndk.Nitrod1.Mode -------------------------------------------
