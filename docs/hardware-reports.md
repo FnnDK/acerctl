@@ -22,7 +22,7 @@ With `--probes` the script also asks the firmware what it supports, by calling a
 
 - `make`, a C compiler and the headers of the running kernel (`kernel-devel` on Fedora, `linux-headers-$(uname -r)` on Debian/Ubuntu, `linux-headers` on Arch);
 - **Secure Boot off**, or a module signed with a key you have enrolled (MOK). With Secure Boot on, the script says so and skips the probes; the rest of the report is still useful;
-- the acerctl daemon stopped, if you have it installed (`sudo systemctl stop acerd`): concurrent WMI calls can corrupt each other's results on some firmware.
+- the acerctl daemon stopped, if you have it installed (`sudo systemctl stop acerd`), and no other Acer WMI module loaded (`linuwu_sense`, `facer`): concurrent WMI calls can corrupt each other's results on some firmware. The script checks both and skips the probes otherwise.
 
 On image-based systems without a compiler on the host (Fedora Silverblue, Bluefin, Kinoite…), build the module in a toolbox and pass it to the script:
 
@@ -35,7 +35,7 @@ sudo sh tools/survey.sh --lab-module drivers/acer-wmi-lab/acer-wmi-lab.ko
 
 | File | Contents |
 |---|---|
-| `summary.txt` | Model, BIOS/EC version, CPU/GPU, distribution, Secure Boot, what the kernel already exposes, list of WMI devices, probe result |
+| `summary.txt` | Model, BIOS/EC version, CPU/GPU, distribution, Secure Boot, what the kernel already exposes, other Acer tools found (Linuwu-Sense, Div-Acer-Manager-Max, acer-predator-turbo), list of WMI devices, probe result |
 | `dmi.txt` | Model and BIOS identification, including the Acer OEM DMI tables (types 170–172) |
 | `wmi.txt`, `bmof-*.bin` | WMI devices and the firmware's own WMI class definitions (binary MOF) |
 | `acpi/*.dat` | DSDT and SSDT tables (where the WMI methods are implemented) |

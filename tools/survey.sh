@@ -78,6 +78,26 @@ have lspci && sec system.txt lspci -nnk
 have lsusb && sec system.txt lsusb
 sec system.txt sh -c 'lsmod | grep -iE "acer|wmi|platform_profile|nvidia|nouveau|amdgpu|i915|xe"'
 sec system.txt sh -c 'grep -rsn -iE "acer|wmi" /etc/modprobe.d /usr/lib/modprobe.d /run/modprobe.d'
+# Other Acer tools (Linuwu-Sense, Div-Acer-Manager-Max, acer-predator-turbo):
+# they blacklist acer_wmi or make their own WMI calls, which can corrupt ours.
+other_tools() {
+  for m in linuwu_sense facer; do
+    [ -d /sys/module/$m ] && printf 'module %s loaded; ' "$m"
+  done
+  if have dkms; then
+    d=$(dkms status 2>/dev/null | grep -iE 'linuwu|facer|damx|predator' | cut -d, -f1 | sort -u | paste -sd ' ' -)
+    [ -n "$d" ] && printf 'dkms: %s; ' "$d"
+  fi
+  if have systemctl; then
+    u=$(systemctl list-unit-files --no-legend 2>/dev/null | awk '{print $1}' | grep -iE 'damx|linuwu|facer|predator|nitrosense' | paste -sd ' ' -)
+    [ -n "$u" ] && printf 'units: %s; ' "$u"
+  fi
+  f=$(for x in /etc/modprobe.d/* /etc/modules-load.d/* /usr/lib/modules-load.d/*; do
+        [ -f "$x" ] && grep -qiE 'linuwu|facer' "$x" && printf '%s\n' "$x"; done | paste -sd ' ' -)
+  [ -n "$f" ] && printf 'files: %s; ' "$f"
+  return 0
+}
+sec system.txt other_tools
 have powerprofilesctl && sec system.txt powerprofilesctl
 have tuned-adm && sec system.txt tuned-adm active
 
@@ -238,6 +258,8 @@ if [ "$PROBES" = 1 ]; then
   if pgrep -x acerd >/dev/null 2>&1; then
     # Concurrent WMI calls corrupt each other's results on some firmware.
     PROBE_NOTE="skipped: acerd is running (stop it with 'systemctl stop acerd' and run again)"
+  elif [ -d /sys/module/linuwu_sense ] || [ -d /sys/module/facer ]; then
+    PROBE_NOTE="skipped: another Acer WMI module is loaded (linuwu_sense/facer); unload it or its service and run again"
   else
     if [ ! -w "$CALL" ] && [ -z "$LAB_KO" ]; then
       KDIR=/lib/modules/$(uname -r)/build
@@ -330,6 +352,8 @@ guid_name() {
   echo "Acer HID:     ${hid:-none}"
   if have dmidecode && dmidecode -t 170 2>/dev/null | grep -q 'Handle'; then t170=present; else t170=absent; fi
   echo "DMI type 170: $t170"
+  ot=$(other_tools)
+  echo "other tools:  ${ot:-none found}"
   echo
   echo "WMI devices:"
   for d in /sys/bus/wmi/devices/*; do
