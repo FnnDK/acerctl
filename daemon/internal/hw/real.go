@@ -419,9 +419,13 @@ func (p *psBattery) Health() (Health, error) {
 	}
 	h.Full, _ = readUint(filepath.Join(p.bat, "energy_full"))
 	h.Design, _ = readUint(filepath.Join(p.bat, "energy_full_design"))
-	if h.Full == 0 { // charge_* devices report µAh instead of µWh
-		h.Full, _ = readUint(filepath.Join(p.bat, "charge_full"))
-		h.Design, _ = readUint(filepath.Join(p.bat, "charge_full_design"))
+	if h.Full == 0 {
+		// charge_* devices (the ANV15-52) report µAh: convert at the
+		// nominal voltage, as UPower does (3 733 000 µAh × 15.4 V = 57.5 Wh).
+		full, _ := readUint(filepath.Join(p.bat, "charge_full"))
+		design, _ := readUint(filepath.Join(p.bat, "charge_full_design"))
+		uv, _ := readUint(filepath.Join(p.bat, "voltage_min_design"))
+		h.Full, h.Design = full*uv/1e6, design*uv/1e6
 	}
 	h.Status, _ = readStr(filepath.Join(p.bat, "status"))
 	if p.hwmon != "" {

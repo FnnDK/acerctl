@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds nitrosensed and installs binary, D-Bus policy, polkit actions and
+# Builds nitrosensed and nitrosense-cli and installs the binaries, D-Bus policy, polkit actions and
 # the systemd unit into paths that are writable on Fedora Silverblue
 # (/usr/local = /var/usrlocal, /etc). Go lives in the distrobox, root on the
 # host, so the two steps run in different places:
@@ -15,16 +15,18 @@ VERSION=$(cd "$R" && git describe --tags --always --dirty 2>/dev/null || echo 0.
 build() {
   echo "building nitrosensed $VERSION"
   (cd "$R/daemon" && CGO_CFLAGS="-Wno-deprecated-declarations" go build -trimpath -ldflags "-s -w -X main.Version=$VERSION" -o "$R/daemon/nitrosensed" ./cmd/nitrosensed)
+  (cd "$R/daemon" && go build -trimpath -ldflags "-s -w" -o "$R/daemon/nitrosense-cli" ./cmd/nitrosense-cli)
 }
 
 install_all() {
   [ "$(id -u)" -eq 0 ] || { echo "run as root (distrobox-host-exec sudo ...)"; exit 1; }
   install -D -m 0755 "$R/daemon/nitrosensed" "$BIN"
+  install -D -m 0755 "$R/daemon/nitrosense-cli" /usr/local/bin/nitrosense-cli
   install -D -m 0644 "$R/packaging/org.nitrosense.Daemon1.conf" /etc/dbus-1/system.d/org.nitrosense.Daemon1.conf
   install -D -m 0644 "$R/packaging/org.nitrosense.daemon.policy" /usr/local/share/polkit-1/actions/org.nitrosense.daemon.policy
   install -D -m 0644 "$R/packaging/nitrosensed.service" /etc/systemd/system/nitrosensed.service
   if command -v restorecon >/dev/null 2>&1; then
-    restorecon -v "$BIN" /etc/dbus-1/system.d/org.nitrosense.Daemon1.conf \
+    restorecon -v "$BIN" /usr/local/bin/nitrosense-cli /etc/dbus-1/system.d/org.nitrosense.Daemon1.conf \
       /usr/local/share/polkit-1/actions/org.nitrosense.daemon.policy /etc/systemd/system/nitrosensed.service || true
   fi
   systemctl daemon-reload
@@ -37,7 +39,7 @@ install_all() {
   sleep 1
   systemctl --no-pager --lines=5 status nitrosensed.service || true
   echo
-  echo "check: busctl get-property org.nitrosense.Daemon1 /org/nitrosense/Daemon1 org.nitrosense.Daemon1.System Capabilities"
+  echo "check: nitrosense-cli status"
 }
 
 case "${1:-all}" in
