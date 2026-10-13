@@ -23,6 +23,10 @@ var icon []byte
 
 const appID = "io.github.fnndk.NitroControlCenter"
 
+// winMargin is the transparent border around the page where the frontend
+// draws the window shadow (--win-margin in style.css); window sizes include it.
+const winMargin = 18
+
 func main() {
 	// NITROCTL_SESSION=1 does the same as --session under `wails dev`, whose
 	// own flag parser rejects unknown flags.
@@ -42,21 +46,24 @@ func main() {
 		single = &options.SingleInstanceLock{UniqueId: appID, OnSecondInstanceLaunch: app.secondInstance}
 	}
 	err := wails.Run(&options.App{
-		Title:              "Nitro Control Center",
-		Width:              1180,
-		Height:             760,
-		MinWidth:           960,
-		MinHeight:          640,
-		WindowStartState:   start,
-		AssetServer:        &assetserver.Options{Assets: assets},
-		BackgroundColour:   &options.RGBA{R: 16, G: 14, B: 18, A: 255},
+		Title:            "Nitro Control Center",
+		Width:            1180 + 2*winMargin,
+		Height:           760 + 2*winMargin,
+		MinWidth:         960 + 2*winMargin,
+		MinHeight:        640 + 2*winMargin,
+		WindowStartState: start,
+		Frameless:        true, // title bar drawn by the frontend (titlebar.go)
+		AssetServer:      &assetserver.Options{Assets: assets},
+		// Transparent behind the page so the frontend can round the corners.
+		BackgroundColour:   &options.RGBA{R: 0, G: 0, B: 0, A: 0},
 		OnStartup:          app.startup,
 		OnShutdown:         app.shutdown,
 		SingleInstanceLock: single,
 		Linux: &linux.Options{
-			Icon:             icon,
-			ProgramName:      appID, // Wayland app_id = .desktop file name
-			WebviewGpuPolicy: linux.WebviewGpuPolicyOnDemand,
+			Icon:                icon,
+			WindowIsTranslucent: true,
+			ProgramName:         appID, // Wayland app_id = .desktop file name
+			WebviewGpuPolicy:    linux.WebviewGpuPolicyOnDemand,
 		},
 		Bind: []interface{}{app},
 	})

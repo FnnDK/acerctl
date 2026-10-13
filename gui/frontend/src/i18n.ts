@@ -82,6 +82,7 @@ const pt = {
   'err.InvalidArgument': 'Valor inválido', 'err.Hardware': 'Erro do hardware', 'err.AccessDenied': 'Não autorizado',
   'err.Disconnected': 'Sem conexão com o nitrod', 'err.Other': 'Erro',
   'ok': 'OK', 'cancel': 'Cancelar', 'done': 'Feito',
+  'win.minimize': 'Minimizar', 'win.maximize': 'Maximizar', 'win.close': 'Fechar',
 }
 
 type Key = keyof typeof pt
@@ -168,6 +169,7 @@ const en: Record<Key, string> = {
   'err.InvalidArgument': 'Invalid value', 'err.Hardware': 'Hardware error', 'err.AccessDenied': 'Not authorized',
   'err.Disconnected': 'Cannot reach nitrod', 'err.Other': 'Error',
   'ok': 'OK', 'cancel': 'Cancel', 'done': 'Done',
+  'win.minimize': 'Minimize', 'win.maximize': 'Maximize', 'win.close': 'Close',
 }
 
 export const langs = { pt, en } as const

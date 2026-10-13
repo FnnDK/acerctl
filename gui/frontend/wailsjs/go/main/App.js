@@ -10,8 +10,20 @@ export function Autostart() {
   return window['go']['main']['App']['Autostart']();
 }
 
+export function Close() {
+  return window['go']['main']['App']['Close']();
+}
+
 export function DeleteScenario(arg1) {
   return window['go']['main']['App']['DeleteScenario'](arg1);
+}
+
+export function IsMaximised() {
+  return window['go']['main']['App']['IsMaximised']();
+}
+
+export function Minimise() {
+  return window['go']['main']['App']['Minimise']();
 }
 
 export function Monitor(arg1) {
@@ -68,4 +80,12 @@ export function State() {
 
 export function StopCalibration() {
   return window['go']['main']['App']['StopCalibration']();
+}
+
+export function Titlebar() {
+  return window['go']['main']['App']['Titlebar']();
+}
+
+export function ToggleMaximise() {
+  return window['go']['main']['App']['ToggleMaximise']();
 }

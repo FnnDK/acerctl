@@ -3,6 +3,7 @@ import { App, el, esc, onSample, onState, profileName, start, state, type State 
 import { lang, setLang, t } from './i18n'
 import { icon, mark } from './icons'
 import type { Page } from './widgets'
+import { titlebar } from './titlebar'
 import { home } from './pages/home'
 import { monitor } from './pages/monitor'
 import { fans } from './pages/fans'
@@ -25,7 +26,6 @@ const NAV: { id: string, icon: string, make: () => Page, show?: () => boolean }[
 
 const app = document.getElementById('app')!
 app.append(el(`<nav class="sidebar">
-  <div class="brand">${mark}<div><b>Nitro</b><span>${t('app.tagline')}</span></div></div>
   ${NAV.map(n => `<button class="nav-item" data-nav="${n.id}">${icon(n.icon)}<span>${t('nav.' + n.id)}</span></button>`).join('')}
   <div class="sidebar-foot">
     <div class="pill" data-mode-pill></div>
@@ -34,6 +34,7 @@ app.append(el(`<nav class="sidebar">
 </nav>`))
 const main = el('<main></main>')
 app.append(main)
+titlebar(app, `<div class="brand">${mark}<div><b>Nitro</b><span>${t('app.tagline')}</span></div></div>`)
 
 const pages = new Map<string, Page>()
 NAV.forEach(n => pages.set(n.id, n.make()))
@@ -67,7 +68,7 @@ document.addEventListener('visibilitychange', monitorPolicy)
 
 // ---- connection overlay ----
 const overlay = el(`<div class="overlay hidden"><div class="box">
-  <svg class="mark" viewBox="0 0 900 990">${mark.replace(/^<svg[^>]*>|<\/svg>$/g, '')}</svg>
+  ${mark}
   <h2 style="margin:6px 0 0">${t('conn.title')}</h2>
   <p class="muted" style="margin:0">${t('conn.hint')} <code>systemctl status nitrod</code></p>
   <p class="small faint" data-err style="margin:0"></p>

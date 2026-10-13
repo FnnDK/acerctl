@@ -39,11 +39,12 @@ export function icon(name: string, cls = ''): string {
   return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[name] ?? ''}</svg>`
 }
 
-// The [N] mark (assets/logo/n-brackets.svg): N in currentColor, brackets in the accent.
-export const mark = `<svg viewBox="0 0 900 990" aria-hidden="true">
-<path fill="currentColor" d="M210,820 L374,820 L374,632 C374,552 358,458 350,384 L354,384 L407,529 L516,820 L690,820 L690,170 L526,170 L526,358 C526,438 542,536 550,606 L546,606 L493,460 L384,170 L210,170Z"/>
-<path style="fill:var(--accent,#ff1b19)" d="M0,990 L304,990 L304,900 L130,900 L130,90 L304,90 L304,0 L0,0ZM900,0 L596,0 L596,90 L770,90 L770,900 L596,900 L596,990 L900,990Z"/>
-</svg>`
+// The [N] mark as in the app icon (assets/logo/n-mark-cut.svg): font brackets
+// beside the N, N in currentColor, brackets in the accent.
+export const mark = `<svg class="mark" viewBox="190 -708 1420 860" aria-hidden="true"><g transform="scale(1 -1)">
+<path fill="currentColor" d="M 660,0 L 824,0 L 824,188 C 824,268 808,362 800,436 L 804,436 L 857,291 L 966,0 L 1140,0 L 1140,650 L 976,650 L 976,462 C 976,382 992,284 1000,214 L 996,214 L 943,360 L 834,650 L 660,650 Z"/>
+<path style="fill:var(--accent,#ff1b19)" d="M190,-152 L494,-152 L494,-62 L320,-62 L320,618 L494,618 L494,708 L190,708Z M1306,-152 L1610,-152 L1610,708 L1306,708 L1306,618 L1480,618 L1480,-62 L1306,-62Z"/>
+</g></svg>`
 
 export const profileIcon: Record<string, string> = {
   'low-power': 'leaf', quiet: 'moon', balanced: 'balance', 'balanced-performance': 'gauge', performance: 'flame',

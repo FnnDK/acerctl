@@ -6,7 +6,13 @@ export function ApplyScenario(arg1:string):Promise<void>;
 
 export function Autostart():Promise<boolean>;
 
+export function Close():Promise<void>;
+
 export function DeleteScenario(arg1:string):Promise<void>;
+
+export function IsMaximised():Promise<boolean>;
+
+export function Minimise():Promise<void>;
 
 export function Monitor(arg1:number):Promise<void>;
 
@@ -35,3 +41,7 @@ export function StartCalibration():Promise<void>;
 export function State():Promise<Record<string, any>>;
 
 export function StopCalibration():Promise<void>;
+
+export function Titlebar():Promise<main.Titlebar>;
+
+export function ToggleMaximise():Promise<void>;

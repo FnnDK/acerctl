@@ -36,6 +36,8 @@ type App struct {
 	monWant uint32 // requested Monitor interval in ms, 0 = off
 	monStop func()
 	quit    chan struct{}
+
+	sessionBus *dbus.Conn // settings portal (title bar)
 }
 
 func NewApp(session bool) *App {
@@ -44,11 +46,15 @@ func NewApp(session bool) *App {
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	a.watchTitlebar()
 	go a.run()
 }
 
 func (a *App) shutdown(ctx context.Context) {
 	close(a.quit)
+	if a.sessionBus != nil {
+		a.sessionBus.Close()
+	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.stopMonitorLocked()

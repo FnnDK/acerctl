@@ -6,12 +6,15 @@ GUI do nitroctl em Go + Wails v2: uma janela sobre a API D-Bus do `nitrod` (`doc
 
 ```
 main.go             opções da janela, instância única, ícone; --session, --minimized
+titlebar.go         janela sem moldura: ordem dos botões (button-layout do GNOME, pelo portal
+                    de configurações ou gsettings) e ícones window-*-symbolic do tema, lidos do sistema
 app.go              ponte D-Bus ↔ frontend: State() (todas as propriedades), métodos de escrita,
                     eventos "state" (PropertiesChanged, com reconexão) e "sample" (Monitor)
 frontend/src/       TypeScript sem framework + CSS próprio; gráficos com uPlot
   core.ts           estado, histórico de amostras, chamadas, formatação, toasts/diálogos
   i18n.ts           textos pt/en (idioma do sistema ou escolhido em Configurações)
   icons.ts          ícones de linha próprios e a marca [N]
+  titlebar.ts       barra de título própria (arrastar, duplo clique, minimizar/maximizar/fechar)
   pages/            home, monitor, fans, lighting, battery, scenarios, settings
 frontend/wailsjs/   bindings gerados pelo Wails (não editar)
 build/appicon.png   gerado de assets/logo/n-icon-cut.svg (rsvg-convert -w 512)

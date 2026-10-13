@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="190 -708 1420 860" width="142" height="86">
+  <!-- Marca [N] do ícone do app (n-icon-cut.svg) sem o fundo: N e colchetes da
+       Source Code Pro Black (SIL OFL 1.1) em contorno, na mesma linha de base.
+       N em currentColor, colchetes em var(--accent, #ff1b19). -->
+  <g transform="scale(1 -1)">
+    <path fill="currentColor" d="M 660,0 L 824,0 L 824,188 C 824,268 808,362 800,436 L 804,436 L 857,291 L 966,0 L 1140,0 L 1140,650 L 976,650 L 976,462 C 976,382 992,284 1000,214 L 996,214 L 943,360 L 834,650 L 660,650 Z"/>
+    <path style="fill:var(--accent,#ff1b19)" d="M190,-152 L494,-152 L494,-62 L320,-62 L320,618 L494,618 L494,708 L190,708Z M1306,-152 L1610,-152 L1610,708 L1306,708 L1306,618 L1480,618 L1480,-62 L1306,-62Z"/>
+  </g>
+</svg>
