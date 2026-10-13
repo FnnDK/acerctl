@@ -1,10 +1,13 @@
-# nitroctl — notas para o assistente
+# nitroctl — notes for the assistant
 
-Projeto: NitroSense/PredatorSense (Acer) para Linux, coexistindo com o `acer_wmi` in-tree. **Leia `STATUS.md` primeiro** (estado, feito, próximo passo, backlog, comandos) e depois as seções citadas de `docs/firmware-wmi.md`.
+Project: Acer NitroSense/PredatorSense features on Linux, coexisting with the in-tree `acer_wmi`. **Read `STATUS.md` first** (state, done, next step, backlog, commands), then the sections of `docs/firmware-wmi.md` it cites.
 
-Ambiente:
-- O shell roda num distrobox Debian (`deb`); o host é Fedora Silverblue. Comandos no host: `distrobox-host-exec ...`; root no host exige senha do usuário → entregue comandos `distrobox-host-exec sudo ...` para ele rodar no terminal.
-- Secure Boot ativo: assinar `.ko` com a MOK do akmods (comando em `STATUS.md`). Lockdown bloqueia debugfs gravável → sysfs.
-- Compilar módulos no host: `distrobox-host-exec make -C drivers/<módulo>`.
+Environment:
+- The shell runs in a Debian distrobox (`deb`); the host is Fedora Silverblue. Host commands: `distrobox-host-exec ...`; root on the host needs the user's password → hand them `distrobox-host-exec sudo ...` commands to run in their terminal.
+- Secure Boot is on: sign `.ko` files with the akmods MOK (command in `STATUS.md`). Lockdown blocks writable debugfs → use sysfs.
+- Build modules on the host: `distrobox-host-exec make -C drivers/<module>`.
 
-Regras do projeto: não substituir o `acer_wmi`; sem flags de marca (capacidades vêm do firmware); probes só com métodos "Get"; "Set" só com formato validado e reversível; manter `tuned` em `balanced`. Atualize `STATUS.md` ao fim de cada bloco de trabalho. Commits só quando o usuário pedir.
+Project rules:
+- **English only in the repository.** Everything tracked by git is written in English: code, identifiers, comments, log and error messages, docs (`README.md`, `STATUS.md`, `docs/`, per-directory READMEs), scripts, packaging files and commit messages. The only exception is user-facing translations: the GUI (`gui/frontend/src/i18n.ts`) and the tray (`daemon/cmd/nitro-tray`) keep their Portuguese texts, and desktop/polkit files may carry `[pt_BR]` translations next to the English strings. Conversation with the user can stay in Portuguese.
+- Do not replace `acer_wmi`; no brand flags (capabilities come from the firmware); probes only with "Get" methods; "Set" only with a validated, reversible format; keep `tuned` on `balanced`.
+- Update `STATUS.md` at the end of each block of work. Commit only when the user asks.
