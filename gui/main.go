@@ -56,8 +56,8 @@ func main() {
 	}
 	err := wails.Run(&options.App{
 		Title:              "Nitro Control Center",
-		Width:              1180 + 2*margin,
-		Height:             760 + 2*margin,
+		Width:              1320 + 2*margin,
+		Height:             780 + 2*margin,
 		MinWidth:           960 + 2*margin,
 		MinHeight:          640 + 2*margin,
 		WindowStartState:   start,
