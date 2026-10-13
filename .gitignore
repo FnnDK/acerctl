@@ -20,3 +20,5 @@ daemon/acerctl
 daemon/acer-tray
 # hardware reports (tools/survey.sh)
 acer-report-*
+# EC HID query output (tools/ec-hid-probe.py)
+ec-hid-probe-*.txt

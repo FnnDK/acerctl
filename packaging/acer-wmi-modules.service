@@ -1,15 +1,21 @@
 [Unit]
 Description=Load Acer WMI companion modules (acer-wmi-battery, acer-wmi-extras)
-# Signed .ko files are installed by packaging/install-modules.sh into a directory
-# labeled modules_object_t (SELinux refuses module_load from user_home_t).
+# The .ko files are installed by packaging/install-modules.sh into a directory
+# labeled modules_object_t (SELinux refuses module_load from user_home_t); they
+# are signed when the kernel enforces module signatures.
 After=systemd-modules-load.service
-ConditionPathExists=/var/lib/acer-wmi-modules/acer-wmi-extras.ko
+# UPower only checks a battery for charge_control_end_threshold when the battery
+# appears, so the battery hook has to be in place before it starts.
+Before=upower.service
+ConditionDirectoryNotEmpty=/var/lib/acer-wmi-modules
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/bin/sh -c 'for m in acer-wmi-battery acer-wmi-extras; do n=$(echo $m | tr - _); [ -d /sys/module/$n ] && { echo "$m already loaded"; continue; }; /usr/sbin/insmod /var/lib/acer-wmi-modules/$m.ko || echo "insmod $m failed"; done'
-ExecStop=/usr/bin/sh -c '/usr/sbin/rmmod acer_wmi_extras acer_wmi_battery || true'
+# insmod does not resolve dependencies: make sure the WMI bus driver is there.
+ExecStartPre=-/usr/sbin/modprobe wmi
+ExecStart=/usr/bin/sh -c 'for m in acer-wmi-battery acer-wmi-extras; do ko=/var/lib/acer-wmi-modules/$m.ko; n=$(echo $m | tr - _); [ -f $ko ] || continue; [ -d /sys/module/$n ] && { echo "$m already loaded"; continue; }; /usr/sbin/insmod $ko || echo "insmod $m failed"; done'
+ExecStop=/usr/bin/sh -c 'for n in acer_wmi_extras acer_wmi_battery; do [ -d /sys/module/$n ] && /usr/sbin/rmmod $n; done; true'
 
 [Install]
 WantedBy=multi-user.target

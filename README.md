@@ -112,9 +112,10 @@ Mainline layer used: `acer_wmi` with `predator_v4=1` (profiles in `platform-prof
 Reference machine: Acer Nitro ANV15-52 with Fedora Silverblue 44. The scripts install to `/usr/local`, `/etc` and `/var/lib` (writable on Silverblue).
 
 ```bash
-# 1. kernel modules (builds and signs with the akmods MOK; Secure Boot)
+# 1. kernel modules (builds; signs with the akmods MOK when Secure Boot/lockdown
+#    requires signed modules, otherwise they are used unsigned)
 sudo sh packaging/build-sign.sh
-sudo sh packaging/install-modules.sh
+sudo sh packaging/install-modules.sh          # or name the modules, e.g. acer-wmi-battery
 
 # 2. acerd daemon + acerctl CLI
 sh packaging/install-daemon.sh build          # needs Go
