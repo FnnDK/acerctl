@@ -2,80 +2,80 @@
 
 <h1 align="center">nitroctl</h1>
 
-<p align="center">Central de controle para notebooks Acer Nitro e Predator no Linux: modos de operação, ventoinhas, bateria, teclado e sensores, com app gráfico, CLI e serviço de sistema.</p>
+<p align="center">Control center for Acer Nitro and Predator laptops on Linux: operating modes, fans, battery, keyboard and sensors, with a graphical app, a CLI and a system service.</p>
 
-O Acer NitroSense/PredatorSense só existe para Windows. O nitroctl traz as mesmas funções para o Linux **complementando o driver in-tree `acer_wmi`** em vez de substituí-lo: o que falta no kernel entra por módulos companheiros pequenos, um daemon aplica as regras e um app (`Nitro Control Center`) e uma CLI (`nitroctl`) falam com ele por D-Bus. Nada depende de marca ou modelo fixos: cada função só aparece se o firmware da máquina a oferecer.
+Acer NitroSense/PredatorSense exists only for Windows. nitroctl brings the same features to Linux **by complementing the in-tree `acer_wmi` driver** instead of replacing it: what the kernel lacks comes from small companion modules, a daemon applies the rules, and an app (`Nitro Control Center`) and a CLI (`nitroctl`) talk to it over D-Bus. Nothing depends on a fixed brand or model: each feature shows up only if the machine's firmware offers it.
 
-> Projeto independente e de código aberto, sem vínculo com a Acer. "Nitro", "Predator", "NitroSense" e "PredatorSense" são marcas da Acer Inc., citadas só para identificar o hardware.
+> Independent open-source project, not affiliated with Acer. "Nitro", "Predator", "NitroSense" and "PredatorSense" are trademarks of Acer Inc., mentioned only to identify the hardware.
 
-## O que faz
+## What it does
 
-- **Modos de operação** (Eco, Silencioso, Equilibrado, Desempenho, Turbo) só com os perfis que o firmware suporta, com as regras de tomada/bateria do app original e sincronia com o `power-profiles-daemon`/`tuned` do desktop.
-- **Ventoinhas** da CPU e da GPU em automático, máximo ou velocidade manual.
-- **Monitor** de temperaturas, uso, clocks, potência, rotação, RAM e rede, sem acordar a GPU dedicada quando ela está desligada.
-- **Bateria:** limite de carga em 80 %, calibração, saúde, ciclos, temperatura, tensão e corrente.
-- **Teclado:** tempo para apagar a luz. **USB:** carregar dispositivos com o notebook desligado.
-- **Cenários** que combinam modo, ventoinhas e teclado, e **App Sync**, que aplica um cenário quando um jogo ou programa abre (inclusive via Wine/Proton) e volta ao estado anterior quando ele fecha.
-- **Tecla Nitro** alternando os modos; estado restaurado no boot e após suspender.
+- **Operating modes** (Eco, Quiet, Balanced, Performance, Turbo), limited to the profiles the firmware supports, with the original app's AC/battery rules and sync with the desktop's `power-profiles-daemon`/`tuned`.
+- **CPU and GPU fans** in auto, max or manual speed.
+- **Monitor** for temperatures, usage, clocks, power, fan speed, RAM and network, without waking the discrete GPU when it is powered off.
+- **Battery:** 80 % charge limit, calibration, health, cycles, temperature, voltage and current.
+- **Keyboard:** backlight auto-off timeout. **USB:** charge devices while the laptop is off.
+- **Scenarios** combining mode, fans and keyboard, and **App Sync**, which applies a scenario when a game or program starts (including through Wine/Proton) and restores the previous state when it exits.
+- **Nitro key** cycling the modes; state restored at boot and after suspend.
 
 ## Nitro Control Center
 
-![Painel](docs/screenshots/home.png)
+![Dashboard](docs/screenshots/home.png)
 
 | | |
 |---|---|
-| ![Monitor](docs/screenshots/monitor.png) | ![Ventoinhas](docs/screenshots/fans.png) |
-| ![Bateria](docs/screenshots/battery.png) | ![Cenários](docs/screenshots/scenarios.png) |
-| ![Iluminação](docs/screenshots/lighting.png) | ![Configurações](docs/screenshots/settings.png) |
+| ![Monitor](docs/screenshots/monitor.png) | ![Fans](docs/screenshots/fans.png) |
+| ![Battery](docs/screenshots/battery.png) | ![Scenarios](docs/screenshots/scenarios.png) |
+| ![Lighting](docs/screenshots/lighting.png) | ![Settings](docs/screenshots/settings.png) |
 
-<sub>Capturas com o daemon em modo simulado (`nitrod --simulate ANV15-52`).</sub>
+<sub>Screenshots taken with the daemon in simulated mode (`nitrod --simulate ANV15-52`).</sub>
 
-O app segue o tema escuro próprio, com barra de título integrada que usa a ordem dos botões e os ícones do GNOME, e textos em português e inglês.
+The app uses its own dark theme, with an integrated title bar that follows GNOME's button order and icons, and texts in Portuguese and English.
 
-## Componentes
+## Components
 
-| Diretório | O que é |
+| Directory | What it is |
 |---|---|
-| `gui/` | **Nitro Control Center** (Go + Wails, WebKitGTK): o app gráfico. Detalhes em `gui/README.md`. |
-| `daemon/` | **`nitrod`** (Go): serviço D-Bus `io.github.fnndk.Nitrod1` no system bus, com polkit; regras de energia, ventoinhas, iluminação, bateria, monitor, cenários e App Sync. API em `docs/api-dbus.md`. Inclui a CLI **`nitroctl`**. |
-| `drivers/acer-wmi-extras/` | Módulo companheiro (GPL): timeout do backlight do teclado, carregamento USB com o notebook desligado, perfis térmicos que o firmware realmente suporta, sensores da bateria. |
-| `drivers/acer-wmi-battery/` | Limite de carga (80 %) e calibração, vendorado do projeto de Frederik Himpe com uma correção (`UPSTREAM.md`). |
-| `drivers/acer-wmi-lab/` | Módulo de pesquisa que chama métodos WMI por `sysfs`; só para mapear firmware. |
-| `packaging/` | Units do systemd, política D-Bus, ações polkit e scripts de instalação. |
+| `gui/` | **Nitro Control Center** (Go + Wails, WebKitGTK): the graphical app. Details in `gui/README.md`. |
+| `daemon/` | **`nitrod`** (Go): D-Bus service `io.github.fnndk.Nitrod1` on the system bus, with polkit; power, fan, lighting, battery, monitor, scenario and App Sync rules. API in `docs/api-dbus.md`. Includes the **`nitroctl`** CLI. |
+| `drivers/acer-wmi-extras/` | Companion module (GPL): keyboard backlight timeout, USB charging while the laptop is off, the thermal profiles the firmware actually supports, battery sensors. |
+| `drivers/acer-wmi-battery/` | Charge limit (80 %) and calibration, vendored from Frederik Himpe's project with one fix (`UPSTREAM.md`). |
+| `drivers/acer-wmi-lab/` | Research module that calls WMI methods through `sysfs`; only for mapping firmware. |
+| `packaging/` | systemd units, D-Bus policy, polkit actions and install scripts. |
 
-Camada mainline usada: `acer_wmi` com `predator_v4=1` (perfis em `platform-profile`, ventoinhas e temperaturas em hwmon) e, até a quirk do modelo chegar upstream, `force_caps=0x1C26` para liberar o controle manual das ventoinhas.
+Mainline layer used: `acer_wmi` with `predator_v4=1` (profiles in `platform-profile`, fans and temperatures in hwmon) and, until the model's quirk lands upstream, `force_caps=0x1C26` to unlock manual fan control.
 
-## Instalação
+## Installation
 
-Máquina de referência: Acer Nitro ANV15-52 com Fedora Silverblue 44. Os scripts instalam em `/usr/local`, `/etc` e `/var/lib` (graváveis no Silverblue).
+Reference machine: Acer Nitro ANV15-52 with Fedora Silverblue 44. The scripts install to `/usr/local`, `/etc` and `/var/lib` (writable on Silverblue).
 
 ```bash
-# 1. módulos de kernel (compila e assina com a MOK do akmods; Secure Boot)
+# 1. kernel modules (builds and signs with the akmods MOK; Secure Boot)
 sudo sh packaging/build-sign.sh
 sudo sh packaging/install-modules.sh
 
-# 2. daemon nitrod + CLI nitroctl
-sh packaging/install-daemon.sh build          # precisa de Go
+# 2. nitrod daemon + nitroctl CLI
+sh packaging/install-daemon.sh build          # needs Go
 sudo sh packaging/install-daemon.sh install
 
-# 3. app Nitro Control Center
-sh packaging/install-gui.sh build             # precisa de Go, Node, Wails e libwebkit2gtk-4.1-dev
-sudo sh packaging/install-gui.sh              # 'uninstall' remove
+# 3. Nitro Control Center app
+sh packaging/install-gui.sh build             # needs Go, Node, Wails and libwebkit2gtk-4.1-dev
+sudo sh packaging/install-gui.sh              # 'uninstall' removes it
 ```
 
-Opções do `acer_wmi` na máquina de referência (`/etc/modprobe.d/acer-wmi.conf`):
+`acer_wmi` options on the reference machine (`/etc/modprobe.d/acer-wmi.conf`):
 
 ```
 options acer_wmi predator_v4=1 force_caps=0x1C26
 ```
 
-Antes de ativar `platform-profile`, confira o perfil do `tuned`/`power-profiles-daemon`: o modo `performance` do Linux corresponde ao Turbo da Acer, que nem todo modelo tem.
+Before enabling `platform-profile`, check the `tuned`/`power-profiles-daemon` profile: Linux's `performance` mode maps to Acer's Turbo, which not every model has.
 
-Depois de instalado: `nitroctl status` mostra o estado; `nitroctl help` lista os comandos.
+Once installed: `nitroctl status` shows the state; `nitroctl help` lists the commands.
 
-### Compilar um módulo à mão
+### Building a module by hand
 
-Requer `kernel-devel` do kernel em uso, `gcc` e `make`. Com Secure Boot, assine com uma MOK registrada (a do akmods no Fedora):
+Requires `kernel-devel` for the running kernel, `gcc` and `make`. With Secure Boot, sign with an enrolled MOK (the akmods one on Fedora):
 
 ```bash
 make -C drivers/acer-wmi-extras
@@ -86,12 +86,12 @@ sudo insmod drivers/acer-wmi-extras/acer-wmi-extras.ko
 ls /sys/devices/platform/acer-wmi-extras/
 ```
 
-## Documentação
+## Documentation
 
-- `STATUS.md`: estado do projeto, o que foi feito e próximos passos.
-- `docs/firmware-wmi.md`: referência técnica do firmware (classes WMI, formatos, capacidades).
-- `docs/api-dbus.md`: API D-Bus do `nitrod`.
+- `STATUS.md`: project state, what has been done and next steps.
+- `docs/firmware-wmi.md`: technical reference for the firmware (WMI classes, formats, capabilities).
+- `docs/api-dbus.md`: `nitrod` D-Bus API.
 
-## Licença
+## License
 
-Módulos de kernel: GPL-2.0. `drivers/acer-wmi-battery/` mantém a licença do projeto de origem.
+Kernel modules: GPL-2.0. `drivers/acer-wmi-battery/` keeps the license of the upstream project.

@@ -1,260 +1,260 @@
-# API D-Bus do daemon `nitrod` (rascunho v1)
+# D-Bus API of the `nitrod` daemon (v1 draft)
 
-Revisado em 2026-10-12 a partir do v0, contra `docs/firmware-wmi.md` (§1, §4–§8) e os atributos reais de `acer_wmi`, `acer-wmi-extras` e `acer-wmi-battery` no ANV15-52. Mudanças em relação ao v0 e pontos em aberto no fim do arquivo.
+Revised on 2026-10-12 from v0, against `docs/firmware-wmi.md` (§1, §4–§8) and the real attributes of `acer_wmi`, `acer-wmi-extras` and `acer-wmi-battery` on the ANV15-52. Changes from v0 and open points at the end of the file.
 
-## 1. Visão geral
+## 1. Overview
 
-- **Bus:** system bus. Nome `io.github.fnndk.Nitrod1`, objeto `/io/github/fnndk/Nitrod1`, um objeto só com várias interfaces.
-- **Leituras são propriedades** D-Bus (`org.freedesktop.DBus.Properties`, com `PropertiesChanged`), para que `busctl`, GUI, CLI e tray usem o mecanismo padrão sem código extra. **Escritas são métodos**, porque precisam validar, aplicar regras e devolver erro com motivo.
-- **Capacidades vêm do firmware** (§3 abaixo). Toda interface expõe só o que `Capabilities` listar; o cliente nunca assume uma função pela marca ou modelo. Uma chamada a algo não listado devolve `NotSupported`.
-- **Autorização** por polkit (§9). O daemon roda como root (precisa escrever em sysfs e ler evdev/RAPL); nunca executa nada vindo do cliente além dos valores validados.
-- Todos os valores numéricos usam unidades naturais em tipos simples: temperatura `d` (°C), frequência `u` (MHz), potência `d` (W), tensão `u` (mV), corrente `i` (mA), RPM `u`, percentuais `u` (0–100), bytes `t`.
+- **Bus:** system bus. Name `io.github.fnndk.Nitrod1`, object `/io/github/fnndk/Nitrod1`, a single object with several interfaces.
+- **Reads are D-Bus properties** (`org.freedesktop.DBus.Properties`, with `PropertiesChanged`), so that `busctl`, GUI, CLI and tray use the standard mechanism with no extra code. **Writes are methods**, because they need to validate, apply rules and return an error with a reason.
+- **Capabilities come from the firmware** (§3 below). Every interface exposes only what `Capabilities` lists; the client never assumes a feature from the brand or model. A call to something not listed returns `NotSupported`.
+- **Authorization** through polkit (§10). The daemon runs as root (it needs to write to sysfs and read evdev/RAPL); it never executes anything coming from the client beyond the validated values.
+- All numeric values use natural units in simple types: temperature `d` (°C), frequency `u` (MHz), power `d` (W), voltage `u` (mV), current `i` (mA), RPM `u`, percentages `u` (0–100), bytes `t`.
 
-### Erros
+### Errors
 
-| Nome | Quando |
+| Name | When |
 |---|---|
-| `io.github.fnndk.Nitrod1.Error.NotSupported` | função ausente em `Capabilities` neste hardware |
-| `io.github.fnndk.Nitrod1.Error.NotAllowed` | regra do daemon (ex.: `performance` na bateria); a mensagem traz o motivo em texto para a GUI exibir |
-| `io.github.fnndk.Nitrod1.Error.InvalidArgument` | valor fora do conjunto aceito (ex.: USB 15 %) |
-| `io.github.fnndk.Nitrod1.Error.Hardware` | sysfs/WMI devolveu erro; mensagem com o `errno` |
-| `org.freedesktop.DBus.Error.AccessDenied` | polkit negou |
+| `io.github.fnndk.Nitrod1.Error.NotSupported` | feature missing from `Capabilities` on this hardware |
+| `io.github.fnndk.Nitrod1.Error.NotAllowed` | daemon rule (e.g. `performance` on battery); the message carries the reason as text for the GUI to show |
+| `io.github.fnndk.Nitrod1.Error.InvalidArgument` | value outside the accepted set (e.g. USB 15 %) |
+| `io.github.fnndk.Nitrod1.Error.Hardware` | sysfs/WMI returned an error; message with the `errno` |
+| `org.freedesktop.DBus.Error.AccessDenied` | polkit denied |
 
-### Fontes de cada dado (host)
+### Source of each piece of data (host)
 
-| Dado | Fonte | Observação |
+| Data | Source | Notes |
 |---|---|---|
-| Modo (perfil térmico) | `/sys/class/platform-profile/platform-profile-0/profile` (`acer_wmi predator_v4`) | mudanças externas detectadas por `poll()` no atributo (`sysfs_notify`) |
-| Perfis suportados | `/sys/devices/platform/acer-wmi-extras/supported_profiles` | o `choices` do `platform-profile` lista os 5 fixos do driver e **não** serve (§8 do firmware-wmi) |
-| RPM, temperaturas CPU/GPU/externa | hwmon `acer` (`fan1`, `fan2`, `temp1..3`) | GPU lê 0 com a dGPU desligada |
-| Modo e velocidade dos fans | hwmon `acer` `pwmN_enable` (0 máx, 1 manual, 2 auto) e `pwmN` (0–255) | só existem com a quirk `.pwm` ou `force_caps` |
-| Timeout e estado do backlight | `acer-wmi-extras/kbd_backlight_timeout` (RW, só 0 ou 30), `kbd_backlight_state` (RO) | ligar/desligar é pela tecla Fn (`acer_wmi`); não há Set de estado |
+| Mode (thermal profile) | `/sys/class/platform-profile/platform-profile-0/profile` (`acer_wmi predator_v4`) | external changes detected by `poll()` on the attribute (`sysfs_notify`) |
+| Supported profiles | `/sys/devices/platform/acer-wmi-extras/supported_profiles` | the `platform-profile` `choices` lists the driver's 5 fixed ones and is **not** usable (§8 of firmware-wmi) |
+| RPM, CPU/GPU/external temperatures | hwmon `acer` (`fan1`, `fan2`, `temp1..3`) | GPU reads 0 while the dGPU is powered off |
+| Fan mode and speed | hwmon `acer` `pwmN_enable` (0 max, 1 manual, 2 auto) and `pwmN` (0–255) | only exist with the `.pwm` quirk or `force_caps` |
+| Backlight timeout and state | `acer-wmi-extras/kbd_backlight_timeout` (RW, only 0 or 30), `kbd_backlight_state` (RO) | on/off is via the Fn key (`acer_wmi`); there is no state Set |
 | USB charging | `acer-wmi-extras/usb_charging` (0/10/20/30) | — |
-| Limite 80 %, calibração | `/sys/bus/wmi/drivers/acer-wmi-battery/{health_mode,calibration_mode}` | atributos de driver, não de device; se um dia `BAT1/charge_control_end_threshold` existir (patch upstream), preferir ele |
-| Temperatura, tensão, corrente da bateria | hwmon `acer_battery` (`temp1`, `in0`, `curr1`) | — |
-| Carga, status, ciclos, capacidade | `/sys/class/power_supply/BAT1` (`capacity`, `status`, `cycle_count`, `energy_full`, `energy_full_design`) | fonte de `health` |
-| AC | `/sys/class/power_supply/ACAD/online` + udev (`power_supply` uevent) | sem depender do UPower |
-| GPU (temp, uso, clocks, potência) | NVML (go-nvml); fallback `nvidia-smi --query-gpu` | ausente ⇒ `gpu.nvml=false` e campos omitidos |
-| CPU (uso, freq, potência) | `/proc/stat`, `/sys/devices/system/cpu/*/cpufreq/scaling_cur_freq`, RAPL `/sys/class/powercap/intel-rapl:0/energy_uj` (só root) | — |
-| RAM, rede | `/proc/meminfo`, `/proc/net/dev` (soma das interfaces físicas) | — |
-| Tecla Nitro | evdev `KEY_PROG1` (148) no teclado interno (`AT Translated Set 2 keyboard`) | sem `EVIOCGRAB`: o desktop continua recebendo a tecla |
+| 80 % limit, calibration | `/sys/bus/wmi/drivers/acer-wmi-battery/{health_mode,calibration_mode}` | driver attributes, not device ones; if `BAT1/charge_control_end_threshold` ever exists (upstream patch), prefer it |
+| Battery temperature, voltage, current | hwmon `acer_battery` (`temp1`, `in0`, `curr1`) | — |
+| Charge, status, cycles, capacity | `/sys/class/power_supply/BAT1` (`capacity`, `status`, `cycle_count`, `energy_full`, `energy_full_design`) | source of `health` |
+| AC | `/sys/class/power_supply/ACAD/online` + udev (`power_supply` uevent) | without depending on UPower |
+| GPU (temp, usage, clocks, power) | NVML (go-nvml); fallback `nvidia-smi --query-gpu` | missing ⇒ `gpu.nvml=false` and fields omitted |
+| CPU (usage, freq, power) | `/proc/stat`, `/sys/devices/system/cpu/*/cpufreq/scaling_cur_freq`, RAPL `/sys/class/powercap/intel-rapl:0/energy_uj` (root only) | — |
+| RAM, network | `/proc/meminfo`, `/proc/net/dev` (sum of the physical interfaces) | — |
+| Nitro key | evdev `KEY_PROG1` (148) on the internal keyboard (`AT Translated Set 2 keyboard`) | no `EVIOCGRAB`: the desktop still receives the key |
 
 ## 2. Interface `io.github.fnndk.Nitrod1.System`
 
-| Membro | Tipo | Descrição |
+| Member | Type | Description |
 |---|---|---|
-| prop `Version` | `s` | versão do daemon |
-| prop `Capabilities` | `a{sv}` | ver §3; muda só em recarga de módulos (sinal `PropertiesChanged`) |
-| prop `Model` | `a{sv}` | `vendor`, `product`, `bios` (DMI), `kernel`, `modules: a{ss}` (nome → versão/“absent”), `acer_wmi_caps: u` (`force_caps` efetivo, se legível) |
-| prop `NitroKey` | `s` | ação da tecla Nitro: `app` (o agente da sessão abre o app, como no original) ou `cycle` (o daemon alterna o perfil); persistida em `state.json`, padrão da opção `--nitro-key` |
-| método `SetNitroKey(s action)` | | `app` ou `cycle`; `NotSupported` sem `capabilities.nitro_key`; polkit `control` |
-| sinal `NitroKeyPressed` | `s` | a cada toque, com a ação em vigor; o agente da sessão (`nitro-tray`) abre o app quando é `app` e só aceita o sinal vindo do dono do nome `io.github.fnndk.Nitrod1` |
-| método `Reload()` | | reprobe de módulos e capacidades (após `insmod`/update); polkit `control` |
+| prop `Version` | `s` | daemon version |
+| prop `Capabilities` | `a{sv}` | see §3; changes only on a module reload (`PropertiesChanged` signal) |
+| prop `Model` | `a{sv}` | `vendor`, `product`, `bios` (DMI), `kernel`, `modules: a{ss}` (name → version/“absent”), `acer_wmi_caps: u` (effective `force_caps`, if readable) |
+| prop `NitroKey` | `s` | Nitro key action: `app` (the session agent opens the app, as in the original) or `cycle` (the daemon cycles the profile); persisted in `state.json`, default from the `--nitro-key` option |
+| method `SetNitroKey(s action)` | | `app` or `cycle`; `NotSupported` without `capabilities.nitro_key`; polkit `control` |
+| signal `NitroKeyPressed` | `s` | on every press, with the action in effect; the session agent (`nitro-tray`) opens the app when it is `app` and only accepts the signal from the owner of the name `io.github.fnndk.Nitrod1` |
+| method `Reload()` | | reprobe of modules and capabilities (after `insmod`/update); polkit `control` |
 
-## 3. Capacidades (`System.Capabilities`)
+## 3. Capabilities (`System.Capabilities`)
 
-Cada chave só aparece quando o backend foi detectado. Detecção é por **presença e leitura com sucesso** do arquivo, nunca por DMI.
+Each key appears only when the backend was detected. Detection is by **presence and a successful read** of the file, never by DMI.
 
-| Chave | Tipo | Detecção | ANV15-52 |
+| Key | Type | Detection | ANV15-52 |
 |---|---|---|---|
-| `profiles` | `as` | `acer-wmi-extras/supported_profiles`; se o módulo faltar, `platform-profile/choices` **com** `profiles_from_firmware=false` | `low-power quiet balanced balanced-performance` |
-| `profiles_from_firmware` | `b` | ver acima | `true` |
-| `fans` | `a{sv}` | hwmon `acer` com `pwmN_enable`; `ids: as` (`cpu`, `gpu`), `modes: as` (`auto max manual`), `range: a{s(uu)}` (mín/máx em % por fan; 0–100 quando não há tabela por modelo), `curve: b` (sempre `false` até existir módulo para `GetGamingFanTable`) | `cpu gpu`, `0–100`, sem curva |
+| `profiles` | `as` | `acer-wmi-extras/supported_profiles`; if the module is missing, `platform-profile/choices` **with** `profiles_from_firmware=false` | `low-power quiet balanced balanced-performance` |
+| `profiles_from_firmware` | `b` | see above | `true` |
+| `fans` | `a{sv}` | hwmon `acer` with `pwmN_enable`; `ids: as` (`cpu`, `gpu`), `modes: as` (`auto max manual`), `range: a{s(uu)}` (min/max in % per fan; 0–100 when there is no per-model table), `curve: b` (always `false` until there is a module for `GetGamingFanTable`) | `cpu gpu`, `0–100`, no curve |
 | `kbd_backlight` | `a{sv}` | `acer-wmi-extras/kbd_backlight_timeout`; `timeouts: au` (`0 30`), `rgb: b`, `zones: u` | timeout, `rgb=false` |
-| `usb_charging` | `au` | `acer-wmi-extras/usb_charging`; valores aceitos | `0 10 20 30` |
-| `battery` | `a{sv}` | `charge_limit: b` (`health_mode` ≥ 0), `calibration: b` (`calibration_mode` ≥ 0), `sensors: b` (hwmon `acer_battery`) | tudo `true` |
-| `gpu` | `a{sv}` | `nvml: b` (NVML inicializou), `oc: b` (sempre `false` na v1) | `nvml=true` |
-| `cpu_power_limit` | `b` | RAPL gravável; `false` na v1 | `false` |
-| `nitro_key` | `b` | evdev encontrou o teclado interno | `true` |
+| `usb_charging` | `au` | `acer-wmi-extras/usb_charging`; accepted values | `0 10 20 30` |
+| `battery` | `a{sv}` | `charge_limit: b` (`health_mode` ≥ 0), `calibration: b` (`calibration_mode` ≥ 0), `sensors: b` (hwmon `acer_battery`) | all `true` |
+| `gpu` | `a{sv}` | `nvml: b` (NVML initialized), `oc: b` (always `false` in v1) | `nvml=true` |
+| `cpu_power_limit` | `b` | writable RAPL; `false` in v1 | `false` |
+| `nitro_key` | `b` | evdev found the internal keyboard | `true` |
 
-Sem Turbo (`performance`) em `profiles` ⇒ a GUI nem mostra o botão. Isso vale para qualquer modelo: a lista é a do firmware.
+No Turbo (`performance`) in `profiles` ⇒ the GUI does not even show the button. This holds for any model: the list is the firmware's.
 
-**Convenção para funções extras.** Tudo o que o daemon permite além do comportamento do app original (hoje só Performance na bateria) é exposto separadamente (`Mode.Extras`) para a GUI marcar como extra, nunca misturado em silêncio com o comportamento 1:1.
+**Convention for extra features.** Everything the daemon allows beyond the original app's behavior (today only Performance on battery) is exposed separately (`Mode.Extras`) so the GUI can mark it as extra, never silently mixed with the 1:1 behavior.
 
 ## 4. Interface `io.github.fnndk.Nitrod1.Mode`
 
-Nomes são os do `platform_profile` (o que o daemon escreve). Mapeamento Acer: `quiet`=Quiet, `balanced`=Balanced, `balanced-performance`=Performance, `performance`=Turbo, `low-power`=Eco.
+Names are the `platform_profile` ones (what the daemon writes). Acer mapping: `quiet`=Quiet, `balanced`=Balanced, `balanced-performance`=Performance, `performance`=Turbo, `low-power`=Eco.
 
-| Membro | Tipo | Descrição |
+| Member | Type | Description |
 |---|---|---|
-| prop `Current` | `s` | perfil atual; reflete também mudanças externas (tuned, outro cliente) |
+| prop `Current` | `s` | current profile; also reflects external changes (tuned, another client) |
 | prop `PowerSource` | `s` | `ac` / `battery` |
 | prop `BatteryPercent` | `u` | — |
-| prop `Allowed` | `as` | perfis permitidos **agora** (capacidades ∩ regras de energia); é o que a GUI habilita |
-| prop `Extras` | `as` | itens de `Allowed` que só existem por regra estendida do daemon (hoje: `balanced-performance` na bateria); a GUI sinaliza como função extra |
-| método `Set(s profile)` | | `NotSupported` se fora de `profiles`; `NotAllowed` se fora de `Allowed` |
-| método `Cycle()` | `→ s` | próximo em `Allowed`, na ordem de `profiles`; usado pela tecla Nitro |
+| prop `Allowed` | `as` | profiles allowed **now** (capabilities ∩ power rules); this is what the GUI enables |
+| prop `Extras` | `as` | items of `Allowed` that exist only because of an extended daemon rule (today: `balanced-performance` on battery); the GUI flags them as an extra feature |
+| method `Set(s profile)` | | `NotSupported` if outside `profiles`; `NotAllowed` if outside `Allowed` |
+| method `Cycle()` | `→ s` | next one in `Allowed`, in `profiles` order; used by the Nitro key |
 
-**Regras de energia** (do daemon, aplicadas em `Set`, `Cycle` e em toda troca AC↔bateria):
+**Power rules** (from the daemon, applied in `Set`, `Cycle` and on every AC↔battery switch):
 
-- Na tomada: `quiet`, `balanced`, `balanced-performance`; `performance` (Turbo) só com carga ≥ 40 %.
-- Na bateria: `balanced` e `low-power`; **extra (além do app original):** `balanced-performance` também, com carga ≥ 40 %. Ao cair abaixo de 40 % o daemon volta para `balanced` e emite `PropertiesChanged`.
-- `low-power` nunca na tomada.
-- O daemon guarda o último perfil escolhido **por fonte** (`mode_ac`, `mode_battery`) e reaplica na troca. Se o perfil atual ficar proibido (ex.: Turbo e o cabo sai), troca para o guardado da outra fonte, ou `balanced`.
+- On AC: `quiet`, `balanced`, `balanced-performance`; `performance` (Turbo) only with charge ≥ 40 %.
+- On battery: `balanced` and `low-power`; **extra (beyond the original app):** `balanced-performance` too, with charge ≥ 40 %. When it drops below 40 % the daemon goes back to `balanced` and emits `PropertiesChanged`.
+- `low-power` never on AC.
+- The daemon keeps the last chosen profile **per source** (`mode_ac`, `mode_battery`) and reapplies it on a switch. If the current profile becomes forbidden (e.g. Turbo and the cable is unplugged), it switches to the one saved for the other source, or `balanced`.
 
 ## 5. Interface `io.github.fnndk.Nitrod1.Fans`
 
-| Membro | Tipo | Descrição |
+| Member | Type | Description |
 |---|---|---|
-| prop `State` | `a{sa{sv}}` | por id (`cpu`, `gpu`): `rpm: u`, `mode: s` (`auto`/`max`/`manual`), `speed: u` (%; só significativo em `manual`) |
-| método `SetMode(s fan, s mode)` | | `fan` = id ou `all`. `max` ⇒ `pwmN_enable=0`; `auto` ⇒ 2; `manual` ⇒ 1 mantendo o `pwmN` atual |
-| método `SetSpeed(s fan, u percent)` | | grava `pwmN = percent·255/100`; muda para `manual` se preciso. Sem piso fixo no daemon: aceita a faixa de `capabilities.fans.range` (0–100 por padrão) e o firmware aplica o mínimo real da ventoinha; fora da faixa ⇒ `InvalidArgument` |
+| prop `State` | `a{sa{sv}}` | per id (`cpu`, `gpu`): `rpm: u`, `mode: s` (`auto`/`max`/`manual`), `speed: u` (%; only meaningful in `manual`) |
+| method `SetMode(s fan, s mode)` | | `fan` = id or `all`. `max` ⇒ `pwmN_enable=0`; `auto` ⇒ 2; `manual` ⇒ 1 keeping the current `pwmN` |
+| method `SetSpeed(s fan, u percent)` | | writes `pwmN = percent·255/100`; switches to `manual` if needed. No fixed floor in the daemon: accepts the range from `capabilities.fans.range` (0–100 by default) and the firmware enforces the fan's real minimum; outside the range ⇒ `InvalidArgument` |
 
-`rpm` é relido a cada 5 s (leitura do EC, ~0,2 ms). `mode`/`speed` custam chamadas WMI (`pwmN_enable` ~16 ms, `pwmN` ~7 ms por fan no ANV15-52), então são relidos só após cada escrita, no resume e a cada 60 s (para pegar outro processo escrevendo no hwmon). As amostras do Monitor leem só o RPM.
+`rpm` is reread every 5 s (EC read, ~0.2 ms). `mode`/`speed` cost WMI calls (`pwmN_enable` ~16 ms, `pwmN` ~7 ms per fan on the ANV15-52), so they are reread only after each write, on resume and every 60 s (to catch another process writing to hwmon). Monitor samples read only the RPM.
 
 ## 6. Interface `io.github.fnndk.Nitrod1.Monitor`
 
-| Membro | Tipo | Descrição |
+| Member | Type | Description |
 |---|---|---|
-| método `Get()` | `→ a{sv}` | uma amostra, formato abaixo |
-| método `Subscribe(u interval_ms)` | | registra o chamador (nome único do sender); mínimo 500 ms |
-| método `Unsubscribe()` | | — |
-| sinal `Sample` | `a{sv}` | emitido **a cada assinante** (sinal unicast, `destination` = sender) no intervalo pedido; o daemon amostra no menor intervalo ativo. Assinantes que saem do bus (`NameOwnerChanged`) são removidos |
+| method `Get()` | `→ a{sv}` | one sample, format below |
+| method `Subscribe(u interval_ms)` | | registers the caller (sender's unique name); minimum 500 ms |
+| method `Unsubscribe()` | | — |
+| signal `Sample` | `a{sv}` | emitted **to each subscriber** (unicast signal, `destination` = sender) at the requested interval; the daemon samples at the shortest active interval. Subscribers that leave the bus (`NameOwnerChanged`) are removed |
 
-Formato da amostra (chaves ausentes quando o backend não existe):
+Sample format (keys missing when the backend does not exist):
 
 ```
 cpu:     {temp: d, usage: u, freq: u, power: d}
-gpu:     {active: b, temp: d, usage: u, clock: u, mem_clock: u, power: d}  # só active=false com a dGPU suspensa
-fans:    {cpu: u, gpu: u}                     # RPM, mesma leitura de Fans.State
+gpu:     {active: b, temp: d, usage: u, clock: u, mem_clock: u, power: d}  # only active=false while the dGPU is suspended
+fans:    {cpu: u, gpu: u}                     # RPM, same read as Fans.State
 ram:     {used: t, total: t}
-net:     {rx: t, tx: t}                       # bytes/s desde a amostra anterior
+net:     {rx: t, tx: t}                       # bytes/s since the previous sample
 battery: {percent: u, status: s, voltage: u, current: i, temp: d}
-ts:      t                                    # CLOCK_MONOTONIC em ms
+ts:      t                                    # CLOCK_MONOTONIC in ms
 ```
 
-Sem assinantes o daemon **não** amostra (NVML e RAPL custam CPU).
+With no subscribers the daemon does **not** sample (NVML and RAPL cost CPU).
 
-**A dGPU nunca é acordada para ser monitorada.** Com runtime PM (Optimus), qualquer consulta NVML/`nvidia-smi` tira a GPU do D3cold: no ANV15-52 isso leva ~2 s, gasta ~1,4 s de CPU de kernel no driver e deixa a placa ligada (1–10 W) enquanto as consultas continuarem. O daemon lê `power/runtime_status` do dispositivo PCI NVIDIA antes de cada amostra; fora de `active`, a amostra traz só `gpu: {active: false}`. Com a GPU já acordada por outro processo, consulta normalmente. Fans e bateria nas amostras: só RPM (EC) e `power_supply`; a temperatura da bateria (WMI) é relida no máximo a cada 30 s.
+**The dGPU is never woken up to be monitored.** With runtime PM (Optimus), any NVML/`nvidia-smi` query takes the GPU out of D3cold: on the ANV15-52 this takes ~2 s, spends ~1.4 s of kernel CPU in the driver and leaves the card on (1–10 W) for as long as the queries continue. The daemon reads `power/runtime_status` of the NVIDIA PCI device before each sample; outside `active`, the sample carries only `gpu: {active: false}`. With the GPU already woken by another process, it queries normally. Fans and battery in the samples: only RPM (EC) and `power_supply`; the battery temperature (WMI) is reread at most every 30 s.
 
 ## 7. Interface `io.github.fnndk.Nitrod1.Lighting`
 
-| Membro | Tipo | Descrição |
+| Member | Type | Description |
 |---|---|---|
-| prop `Keyboard` | `a{sv}` | `on: b` (RO, estado do firmware), `timeout_s: u`; em modelos RGB (futuro): `zones`, `effect`, `brightness`, `speed` |
-| método `SetKeyboardTimeout(u seconds)` | | só valores de `capabilities.kbd_backlight.timeouts` (hoje 0 ou 30); outros ⇒ `InvalidArgument` |
-| método `SetKeyboardZones(...)` / `SetKeyboardEffect(...)` | | assinatura a definir quando houver módulo RGB; `NotSupported` até lá |
+| prop `Keyboard` | `a{sv}` | `on: b` (RO, firmware state), `timeout_s: u`; on RGB models (future): `zones`, `effect`, `brightness`, `speed` |
+| method `SetKeyboardTimeout(u seconds)` | | only values from `capabilities.kbd_backlight.timeouts` (today 0 or 30); others ⇒ `InvalidArgument` |
+| method `SetKeyboardZones(...)` / `SetKeyboardEffect(...)` | | signature to be defined when there is an RGB module; `NotSupported` until then |
 
-`on` muda pela tecla Fn; o daemon relê `kbd_backlight_state` a cada 2 s enquanto a GUI está na tela de iluminação (o cliente chama `Subscribe` do Monitor) e emite `PropertiesChanged`.
+`on` changes via the Fn key; the daemon rereads `kbd_backlight_state` every 2 s while the GUI is on the lighting screen (the client calls the Monitor's `Subscribe`) and emits `PropertiesChanged`.
 
 ## 8. Interface `io.github.fnndk.Nitrod1.Battery`
 
-| Membro | Tipo | Descrição |
+| Member | Type | Description |
 |---|---|---|
-| prop `ChargeLimit` | `b` | limite de 80 % (`health_mode`); o estado vive no EC e **sobrevive a reboot** — o daemon lê, não restaura |
+| prop `ChargeLimit` | `b` | 80 % limit (`health_mode`); the state lives in the EC and **survives a reboot** — the daemon reads it, does not restore it |
 | prop `Calibrating` | `b` | `calibration_mode` |
-| prop `UsbCharging` | `u` | 0 (desligado) / 10 / 20 / 30 |
+| prop `UsbCharging` | `u` | 0 (off) / 10 / 20 / 30 |
 | prop `Health` | `a{sv}` | `cycles: u`, `full: t`, `design: t` (µWh), `health_pct: u` (= full/design), `temp: d` |
-| método `SetChargeLimit(b)` | com a extensão `power_supply` do `acer-wmi-battery`, via `EnableChargeThreshold` do UPower (mantém o GNOME em acordo); senão, ou se o UPower falhar, escreve `health_mode` | polkit `settings` |
-| método `StartCalibration()` | | `NotAllowed` sem AC; polkit `settings`. Não há evento de fim na API legada (o `acer_wmi` ocupa o handler): o daemon faz **polling** de `calibration_mode` a cada 30 s enquanto `Calibrating` e emite `PropertiesChanged` ao terminar |
-| método `StopCalibration()` | | — |
-| método `SetUsbCharging(u percent)` | | só valores de `capabilities.usb_charging`; polkit `settings` |
+| method `SetChargeLimit(b)` | with the `acer-wmi-battery` `power_supply` extension, through UPower's `EnableChargeThreshold` (keeps GNOME in agreement); otherwise, or if UPower fails, writes `health_mode` | polkit `settings` |
+| method `StartCalibration()` | | `NotAllowed` without AC; polkit `settings`. There is no end event in the legacy API (`acer_wmi` holds the handler): the daemon **polls** `calibration_mode` every 30 s while `Calibrating` and emits `PropertiesChanged` when it ends |
+| method `StopCalibration()` | | — |
+| method `SetUsbCharging(u percent)` | | only values from `capabilities.usb_charging`; polkit `settings` |
 
 ## 9. Interface `io.github.fnndk.Nitrod1.Scenarios`
 
-Renomeada de `Profiles` para não colidir com os perfis térmicos (`platform_profile`).
+Renamed from `Profiles` to avoid clashing with the thermal profiles (`platform_profile`).
 
-| Membro | Tipo | Descrição |
+| Member | Type | Description |
 |---|---|---|
-| prop `List` | `aa{sv}` | cenários salvos |
-| prop `Active` | `s` | nome ou `""` |
-| prop `AppSync` | `b` | watcher ligado |
-| método `Apply(s name)` | | aplica cada campo pelos métodos acima (mesmas regras e erros) |
-| método `Save(a{sv})` | | cria/substitui pelo `name` |
-| método `Delete(s name)` | | — |
-| método `SetAppSync(b)` | | — |
+| prop `List` | `aa{sv}` | saved scenarios |
+| prop `Active` | `s` | name or `""` |
+| prop `AppSync` | `b` | watcher on |
+| method `Apply(s name)` | | applies each field through the methods above (same rules and errors) |
+| method `Save(a{sv})` | | creates/replaces by `name` |
+| method `Delete(s name)` | | — |
+| method `SetAppSync(b)` | | — |
 
-Formato de um cenário (todas as chaves opcionais exceto `name`):
+Scenario format (all keys optional except `name`):
 
 ```
 name: s
 mode_ac: s            mode_battery: s
 fans: a{sa{sv}}       # id → {mode, speed}
 kbd_timeout_s: u
-apps: as              # basenames de executáveis (App Sync)
+apps: as              # executable basenames (App Sync)
 ```
 
-Armazenamento em `/var/lib/nitrod/scenarios.json` (global ao sistema, já que o daemon é do sistema). `Save` valida contra o hardware (perfis do firmware, ids e faixa dos fans, timeouts do teclado; chave desconhecida ⇒ `InvalidArgument`) e normaliza `apps` para basenames em minúsculas (`C:\Games\Foo.exe` → `foo.exe`).
+Stored in `/var/lib/nitrod/scenarios.json` (system-wide, since the daemon is a system one). `Save` validates against the hardware (firmware profiles, fan ids and range, keyboard timeouts; unknown key ⇒ `InvalidArgument`) and normalizes `apps` to lowercase basenames (`C:\Games\Foo.exe` → `foo.exe`).
 
-**Semântica (implementada 2026-10-12).**
-- `Apply` grava os modos e os fans do cenário no estado guardado (§11), então troca de fonte, resume e boot seguem o cenário; o modo aplicado agora é o da fonte atual (com `Fallback` se não for permitido). `Active` passa ao nome.
-- Qualquer mudança manual de algo que um cenário controla (`Mode.Set/Cycle`, tecla Nitro, PPD/sysfs externos, `Fans.*`, `SetKeyboardTimeout`) zera `Active`. `Delete` do cenário ativo também.
-- **App Sync** (`SetAppSync`, persistido; retomado na partida): proc connector (`NETLINK_CONNECTOR`, `CAP_NET_ADMIN`; no kernel ≥ 6.6 com filtro só `exec`/`exit`). A cada `exec` lê `/proc/<pid>/comm`; `cmdline` só quando o `comm` está truncado (15 caracteres) ou é Wine/Proton (`argv[0]` e, após um loader Wine, `argv[1]`). Processos Wine que não casaram são relidos após 2 s (o Wine troca `comm`/argv depois do `exec`). Casamento sem maiúsculas, `.exe` opcional, `comm` truncado por prefixo. Só processos do usuário ativo do seat0 (`ACTIVE_UID` em `/run/systemd/seats/seat0`). `/proc/<pid>/exe` não é usado: exigiria `CAP_SYS_PTRACE`.
-- O app aberto mais recentemente decide o cenário. No primeiro, o daemon guarda um retrato do estado (modos, fans, timeout, `Active`) e aplica o cenário; quando o último sai, aplica o retrato de volta — **a menos que o usuário tenha mudado algo nesse meio tempo** (`Active` ≠ cenário do App Sync), caso em que só descarta o retrato. Desligar o App Sync também reverte. O retrato fica no `state.json`: se o daemon cair com o jogo aberto, na partida ele reverte quando não houver app casado rodando.
-- Custo: ~0,1–0,2 ms de CPU do daemon por `exec` no sistema (medido com 2 000 `exec`s); nada sem `exec`s.
+**Semantics (implemented 2026-10-12).**
+- `Apply` writes the scenario's modes and fans into the saved state (§11), so source switches, resume and boot follow the scenario; the mode applied now is the one for the current source (with `Fallback` if it is not allowed). `Active` becomes the name.
+- Any manual change to something a scenario controls (`Mode.Set/Cycle`, Nitro key, external PPD/sysfs, `Fans.*`, `SetKeyboardTimeout`) clears `Active`. So does `Delete` of the active scenario.
+- **App Sync** (`SetAppSync`, persisted; resumed at startup): proc connector (`NETLINK_CONNECTOR`, `CAP_NET_ADMIN`; on kernel ≥ 6.6 with an `exec`/`exit`-only filter). On each `exec` it reads `/proc/<pid>/comm`; `cmdline` only when `comm` is truncated (15 characters) or is Wine/Proton (`argv[0]` and, after a Wine loader, `argv[1]`). Wine processes that did not match are reread after 2 s (Wine changes `comm`/argv after the `exec`). Case-insensitive matching, optional `.exe`, truncated `comm` matched by prefix. Only processes of seat0's active user (`ACTIVE_UID` in `/run/systemd/seats/seat0`). `/proc/<pid>/exe` is not used: it would require `CAP_SYS_PTRACE`.
+- The most recently started app decides the scenario. On the first one, the daemon saves a snapshot of the state (modes, fans, timeout, `Active`) and applies the scenario; when the last one exits, it applies the snapshot back — **unless the user changed something in the meantime** (`Active` ≠ App Sync scenario), in which case it just discards the snapshot. Turning App Sync off also reverts. The snapshot lives in `state.json`: if the daemon crashes with the game open, at startup it reverts when no matched app is running.
+- Cost: ~0.1–0.2 ms of daemon CPU per `exec` on the system (measured with 2 000 `exec`s); nothing without `exec`s.
 
-## 10. Autorização (polkit)
+## 10. Authorization (polkit)
 
-Duas ações, em `/usr/share/polkit-1/actions/io.github.fnndk.nitrod.policy`:
+Two actions, in `/usr/share/polkit-1/actions/io.github.fnndk.nitrod.policy`:
 
-| Ação | Cobre | Padrão |
+| Action | Covers | Default |
 |---|---|---|
 | `io.github.fnndk.nitrod.control` | `Mode.Set/Cycle`, `Fans.*`, `Lighting.*`, `Scenarios.*`, `System.Reload` | `allow_active=yes`, `allow_inactive=no`, `allow_any=auth_admin` |
-| `io.github.fnndk.nitrod.settings` | `Battery.SetChargeLimit`, `Start/StopCalibration`, `SetUsbCharging` | `allow_active=auth_admin_keep`, demais `auth_admin` |
+| `io.github.fnndk.nitrod.settings` | `Battery.SetChargeLimit`, `Start/StopCalibration`, `SetUsbCharging` | `allow_active=auth_admin_keep`, others `auth_admin` |
 
-Motivo da divisão: trocar modo e fan é ação corriqueira (a tecla Nitro faz isso sem senha); limite de carga, calibração e USB charging persistem no EC e afetam a máquina desligada. Leituras e `Monitor.Subscribe` não passam por polkit. Política D-Bus em `/usr/share/dbus-1/system.d/io.github.fnndk.Nitrod1.conf`: só root possui o nome; qualquer usuário pode enviar.
+Reason for the split: switching mode and fan is an everyday action (the Nitro key does it without a password); charge limit, calibration and USB charging persist in the EC and affect the machine while it is off. Reads and `Monitor.Subscribe` do not go through polkit. D-Bus policy in `/usr/share/dbus-1/system.d/io.github.fnndk.Nitrod1.conf`: only root owns the name; any user can send.
 
-## 11. Comportamento do daemon
+## 11. Daemon behavior
 
-- **Boot/resume.** Restaura só o que não vive no EC: perfil térmico (por fonte de energia) e o modo dos fans. Timeout, USB charging e limite de carga ficam no EC e são apenas lidos. Fans em `manual` **não** são restaurados no boot (risco de ventoinha baixa sob carga); voltam a `auto` e o daemon registra no log. No resume, reaplica o perfil e relê tudo. Estado em `/var/lib/nitrod/state.json`.
-- **AC/bateria.** uevents do kernel por netlink (`NETLINK_KOBJECT_UEVENT`, grupo 1, filtro `SUBSYSTEM=power_supply`; sem libudev) com releitura de segurança a cada 30 s; a cada evento recalcula `Allowed`, reaplica o perfil guardado da fonte e emite `PropertiesChanged` em `Mode`.
-- **Tecla Nitro.** No app original a tecla **abre o app**; ciclar modos é do "Mode Switch Key" de outros modelos. O daemon lê `KEY_PROG1` por evdev (teclado interno, sem grab, reabre se o dispositivo sumir), emite `System.NitroKeyPressed` e, em `cycle`, chama `Mode.Cycle()` sem polkit. Abrir um app não cabe a um serviço de sistema: em `app`, quem abre é o agente da sessão `nitro-tray` (autostart XDG; a GUI tem instância única, então abrir de novo só traz a janela). A escolha é `System.SetNitroKey` (GUI: Configurações → Tecla Nitro); `--nitro-key` só dá o padrão (`cycle`; `none` é sinônimo de `app`).
-- **Agente da sessão (`nitro-tray`).** Ícone na bandeja (StatusNotifierItem; no GNOME, extensão AppIndicator) com modos rápidos, ventoinhas no máximo, cenários e App Sync, e o "abrir o app" da tecla Nitro. Inicia no login e sai sozinho quando o ícone está desligado (`~/.config/nitroctl/settings.json`, `tray_hidden`) e a tecla está em `cycle`; a GUI o avisa das mudanças (`io.github.fnndk.NitroTray.Reload` no bus de sessão) e o inicia quando passa a ser preciso.
-- **Convivência com `tuned-ppd`/`power-profiles-daemon` (decidido 2026-10-12).** O daemon escreve **direto** em `platform_profile` e mantém o PPD sincronizado nos dois sentidos. A seleção completa (5 modos) fica no nosso app; o PPD só tem 3 perfis, então o mapeamento é muitos-para-um na ida e resolvido pela fonte de energia na volta.
+- **Boot/resume.** Restores only what does not live in the EC: thermal profile (per power source) and fan mode. Timeout, USB charging and charge limit live in the EC and are only read. Fans in `manual` are **not** restored at boot (risk of a slow fan under load); they go back to `auto` and the daemon logs it. On resume, it reapplies the profile and rereads everything. State in `/var/lib/nitrod/state.json`.
+- **AC/battery.** Kernel uevents via netlink (`NETLINK_KOBJECT_UEVENT`, group 1, filter `SUBSYSTEM=power_supply`; no libudev) with a safety reread every 30 s; on each event it recalculates `Allowed`, reapplies the profile saved for the source and emits `PropertiesChanged` on `Mode`.
+- **Nitro key.** In the original app the key **opens the app**; cycling modes belongs to the "Mode Switch Key" of other models. The daemon reads `KEY_PROG1` via evdev (internal keyboard, no grab, reopens if the device disappears), emits `System.NitroKeyPressed` and, in `cycle`, calls `Mode.Cycle()` without polkit. Opening an app is not a system service's job: in `app`, the session agent `nitro-tray` opens it (XDG autostart; the GUI is single-instance, so opening it again only brings the window forward). The choice is `System.SetNitroKey` (GUI: Settings → Nitro key); `--nitro-key` only sets the default (`cycle`; `none` is a synonym for `app`).
+- **Session agent (`nitro-tray`).** Tray icon (StatusNotifierItem; on GNOME, the AppIndicator extension) with quick modes, fans at max, scenarios and App Sync, and the Nitro key's "open the app". It starts at login and exits on its own when the icon is off (`~/.config/nitroctl/settings.json`, `tray_hidden`) and the key is set to `cycle`; the GUI notifies it of changes (`io.github.fnndk.NitroTray.Reload` on the session bus) and starts it when it becomes needed.
+- **Coexistence with `tuned-ppd`/`power-profiles-daemon` (decided 2026-10-12).** The daemon writes **directly** to `platform_profile` and keeps PPD in sync both ways. The full selection (5 modes) lives in our app; PPD has only 3 profiles, so the mapping is many-to-one going out and resolved by the power source coming back.
 
-  Fatos do tuned-ppd 2.28 (Fedora 44): PPD `power-saver` → tuned `powersave` → `platform_profile=low-power|quiet` (o primeiro que existir em `choices`); `balanced` → `balanced`; `performance` → `throughput-performance` → `performance` (= Turbo) e ainda governor etc. Na bateria o PPD `balanced` vira `balanced-battery`, sem seção `[acpi]`; ao trocar de perfil o tuned **restaura** o valor lido ao aplicar o anterior. Com `sysfs_acpi_monitor=true` ele observa o arquivo por inotify e, se outro processo escrever `low-power`/`balanced`/`performance`, troca o `ActiveProfile` para acompanhar; `quiet` e `balanced-performance` ele ignora.
+  Facts about tuned-ppd 2.28 (Fedora 44): PPD `power-saver` → tuned `powersave` → `platform_profile=low-power|quiet` (the first one present in `choices`); `balanced` → `balanced`; `performance` → `throughput-performance` → `performance` (= Turbo) plus governor etc. On battery, PPD `balanced` becomes `balanced-battery`, with no `[acpi]` section; when switching profiles tuned **restores** the value it read when applying the previous one. With `sysfs_acpi_monitor=true` it watches the file through inotify and, if another process writes `low-power`/`balanced`/`performance`, switches `ActiveProfile` to follow; it ignores `quiet` and `balanced-performance`.
 
-  **Ida (nosso app → PPD).** Após `Mode.Set`/`Cycle`, o daemon ajusta `net.hadess.PowerProfiles.ActiveProfile` para o mais próximo:
+  **Outgoing (our app → PPD).** After `Mode.Set`/`Cycle`, the daemon sets `net.hadess.PowerProfiles.ActiveProfile` to the closest one:
 
-  | Modo escolhido | PPD |
+  | Chosen mode | PPD |
   |---|---|
   | `low-power`, `quiet` | `power-saver` |
   | `balanced` | `balanced` |
   | `balanced-performance`, `performance` | `performance` |
 
-  Ordem: primeiro o PPD (o tuned vai escrever o `platform_profile` dele), o daemon marca a transição como **esperada** e ignora essa escrita no `poll()`, espera o tuned terminar (`PropertiesChanged` de `ActiveProfile` ou até 2 s) e só então escreve o modo real no sysfs. O tuned-ppd ignora `quiet`/`balanced-performance` e, para os outros, só confirma o `ActiveProfile` já definido: sem laço. Se o PPD estiver igual, não toca nele. Sem PPD no bus, pula a sincronização.
+  Order: PPD first (tuned will write its own `platform_profile`), the daemon marks the transition as **expected** and ignores that write in `poll()`, waits for tuned to finish (`PropertiesChanged` on `ActiveProfile` or up to 2 s) and only then writes the real mode to sysfs. tuned-ppd ignores `quiet`/`balanced-performance` and, for the others, only confirms the `ActiveProfile` already set: no loop. If PPD already matches, it is left alone. With no PPD on the bus, syncing is skipped.
 
-  **Volta (GNOME/PPD → nosso app).** O daemon assina `PropertiesChanged` de `ActiveProfile`; uma mudança que não foi iniciada por ele é intenção do usuário e vira o melhor modo para a fonte atual:
+  **Incoming (GNOME/PPD → our app).** The daemon subscribes to `PropertiesChanged` on `ActiveProfile`; a change it did not initiate is the user's intent and becomes the best mode for the current source:
 
-  | PPD | Na tomada | Na bateria |
+  | PPD | On AC | On battery |
   |---|---|---|
   | `power-saver` | `quiet` | `low-power` |
   | `balanced` | `balanced` | `balanced` |
-  | `performance` | `performance` se em `Allowed` (Turbo, ≥ 40 %), senão `balanced-performance` | `balanced-performance` se ≥ 40 % (extra), senão `balanced` |
+  | `performance` | `performance` if in `Allowed` (Turbo, ≥ 40 %), otherwise `balanced-performance` | `balanced-performance` if ≥ 40 % (extra), otherwise `balanced` |
 
-  O daemon deixa o tuned escrever, depois grava o modo escolhido e atualiza `mode_ac`/`mode_battery`. Escritas diretas de terceiros no sysfs (fora do PPD) seguem a mesma regra: aplicar as regras de energia e sincronizar o PPD na ida.
+  The daemon lets tuned write, then writes the chosen mode and updates `mode_ac`/`mode_battery`. Direct writes to sysfs by third parties (outside PPD) follow the same rule: apply the power rules and sync PPD outgoing.
 
-  **Eventos de energia e resume.** O daemon aplica o perfil guardado da fonte com atraso de 1–2 s, depois de o tuned ter trocado/restaurado o seu, e refaz a ida. Unit: `After=tuned.service power-profiles-daemon.service`; o daemon nunca desliga nem reconfigura esses serviços.
+  **Power events and resume.** The daemon applies the profile saved for the source with a 1–2 s delay, after tuned has switched/restored its own, and redoes the outgoing sync. Unit: `After=tuned.service power-profiles-daemon.service`; the daemon never stops or reconfigures those services.
 
-  **Ressalva a validar:** ao pedir PPD `performance` num modelo sem Turbo, o tuned escreve `performance` (5) no firmware antes de o daemon corrigir; conferir se o firmware rejeita (status 1/2, o `acer_wmi` devolve erro e o tuned só loga) ou aceita um Turbo transitório. Se aceitar, a ida para `balanced-performance` passa a escrever o sysfs primeiro e o PPD depois.
+  **Caveat to validate:** when PPD `performance` is requested on a model without Turbo, tuned writes `performance` (5) to the firmware before the daemon corrects it; check whether the firmware rejects it (status 1/2, `acer_wmi` returns an error and tuned only logs) or accepts a transient Turbo. If it accepts it, the outgoing sync for `balanced-performance` switches to writing sysfs first and PPD afterwards.
 
-- **Cadência de leitura (medida 2026-10-12).** Cada leitura via WMI custa 5–10 ms de CPU (`pwm1` 11 ms, `pwm1_enable` 8 ms, `usb_charging` 8 ms, `kbd_backlight_*` 6 ms, `platform_profile` 6 ms); `fan*_input`, `temp*_input`, `power_supply` e `acer-wmi-battery` custam ~0. Por isso: AC/carga por uevent (2 s só sem netlink); `Fans.State` a cada 5 s; teclado, USB, limite, calibração e saúde a cada 30 s (e logo após cada escrita); `platform_profile` por `poll()` (sysfs_notify) nos dois arquivos (classe e `/sys/firmware/acpi`) com releitura de segurança a cada 10 s; AC/carga por uevent com releitura a cada 30 s. Resultado: ~1,7 % de CPU ocioso, contra 6 % lendo tudo a cada 2 s.
-- **Leituras corrompidas.** Chamadas WMI concorrentes de processos diferentes corrompem respostas (ver `firmware-wmi.md` §9). O daemon serializa as suas com um mutex e, numa mudança externa de perfil, só age se o valor for um nome conhecido e se repetir numa segunda leitura 150 ms depois.
-- **Mudanças externas** nos fans (outro programa no hwmon) aparecem em `Fans.State` em até 5 s.
-- **Log** em journald; `--dry-run` (não escreve) e `--simulate <modelo>` (backends falsos com capacidades fixas, para desenvolver GUI sem hardware).
-- Unit `nitrod.service`: `Type=dbus`, `BusName=io.github.fnndk.Nitrod1`, `After=acer-wmi-modules.service`, `ProtectSystem=strict` com `ReadWritePaths=/sys /var/lib/nitrod`, `DeviceAllow=/dev/input/event* r`, `CapabilityBoundingSet=CAP_NET_ADMIN` (connector) — a refinar quando o esqueleto existir.
+- **Read cadence (measured 2026-10-12).** Each WMI read costs 5–10 ms of CPU (`pwm1` 11 ms, `pwm1_enable` 8 ms, `usb_charging` 8 ms, `kbd_backlight_*` 6 ms, `platform_profile` 6 ms); `fan*_input`, `temp*_input`, `power_supply` and `acer-wmi-battery` cost ~0. Hence: AC/charge via uevent (2 s only without netlink); `Fans.State` every 5 s; keyboard, USB, limit, calibration and health every 30 s (and right after each write); `platform_profile` via `poll()` (sysfs_notify) on both files (class and `/sys/firmware/acpi`) with a safety reread every 10 s; AC/charge via uevent with a reread every 30 s. Result: ~1.7 % CPU idle, versus 6 % reading everything every 2 s.
+- **Corrupted reads.** Concurrent WMI calls from different processes corrupt responses (see `firmware-wmi.md` §9). The daemon serializes its own with a mutex and, on an external profile change, only acts if the value is a known name and repeats in a second read 150 ms later.
+- **External changes** to the fans (another program on hwmon) show up in `Fans.State` within 5 s.
+- **Logging** to journald; `--dry-run` (does not write) and `--simulate <model>` (fake backends with fixed capabilities, for developing the GUI without hardware).
+- Unit `nitrod.service`: `Type=dbus`, `BusName=io.github.fnndk.Nitrod1`, `After=acer-wmi-modules.service`, `ProtectSystem=strict` with `ReadWritePaths=/sys /var/lib/nitrod`, `DeviceAllow=/dev/input/event* r`, `CapabilityBoundingSet=CAP_NET_ADMIN` (connector) — to be refined once the skeleton exists.
 
-## 12. Mudanças em relação ao v0
+## 12. Changes from v0
 
-1. Leituras viraram **propriedades** com `PropertiesChanged`; sinais `Changed` próprios removidos. Métodos ficaram só para escritas.
-2. **Regras de energia** completadas: na bateria `balanced`, `low-power` e, como extensão sinalizada, `balanced-performance` com carga ≥ 40 %; `quiet` passa a exigir AC. O v0 só proibia `low-power` na tomada e `performance` na bateria. Novas propriedades `Allowed` e `Extras` evitam que cada cliente reimplemente a regra.
-3. `profiles` em `Capabilities` vem de `acer-wmi-extras/supported_profiles`, não do `choices` do `platform-profile` (que lista Turbo mesmo sem suporte).
-4. **Tabela de detecção** de cada capacidade (sysfs → chave), em vez de descrição solta.
-5. Conjunto de **erros** definido (v0 só tinha `NotAllowed`).
-6. **Monitor:** unidades/tipos fixados; `Subscribe` especificado (unicast por assinante, limpeza por `NameOwnerChanged`, sem amostragem sem assinantes).
-7. **Lighting:** `on` é só leitura (não há Set de estado no APGe); timeout limitado aos valores que o firmware aceita.
-8. **Battery:** limite, calibração e USB não são "restaurados" (vivem no EC); calibração termina por polling, pois não há como capturar o evento WMI sem tirar o handler do `acer_wmi`.
-9. `Profiles` → **`Scenarios`**; formato do cenário e armazenamento definidos; App Sync restrito ao usuário da sessão ativa.
-10. **polkit** dividido em `control` (sem senha na sessão ativa) e `settings` (`auth_admin_keep`).
-11. Fans `manual` não são restaurados no boot.
-12. Coexistência com `tuned-ppd` definida a partir do código dele: escrita direta no sysfs, sincronização do `ActiveProfile` nos dois sentidos (muitos-para-um na ida, escolha pela fonte de energia na volta), reaplicação com atraso após eventos de energia.
-13. Fan manual sem piso fixo: faixa por fan em `capabilities.fans.range` (0–100 por padrão), o firmware é o árbitro.
+1. Reads became **properties** with `PropertiesChanged`; custom `Changed` signals removed. Methods are only for writes.
+2. **Power rules** completed: on battery `balanced`, `low-power` and, as a flagged extension, `balanced-performance` with charge ≥ 40 %; `quiet` now requires AC. v0 only forbade `low-power` on AC and `performance` on battery. New `Allowed` and `Extras` properties keep each client from reimplementing the rule.
+3. `profiles` in `Capabilities` comes from `acer-wmi-extras/supported_profiles`, not from the `platform-profile` `choices` (which lists Turbo even without support).
+4. **Detection table** for each capability (sysfs → key), instead of a loose description.
+5. Set of **errors** defined (v0 only had `NotAllowed`).
+6. **Monitor:** units/types fixed; `Subscribe` specified (unicast per subscriber, cleanup on `NameOwnerChanged`, no sampling without subscribers).
+7. **Lighting:** `on` is read-only (there is no state Set in APGe); timeout limited to the values the firmware accepts.
+8. **Battery:** limit, calibration and USB are not "restored" (they live in the EC); calibration ends by polling, since there is no way to catch the WMI event without taking the handler away from `acer_wmi`.
+9. `Profiles` → **`Scenarios`**; scenario format and storage defined; App Sync restricted to the active session's user.
+10. **polkit** split into `control` (no password in the active session) and `settings` (`auth_admin_keep`).
+11. `manual` fans are not restored at boot.
+12. Coexistence with `tuned-ppd` defined from its code: direct sysfs write, `ActiveProfile` sync both ways (many-to-one outgoing, choice by power source incoming), delayed reapply after power events.
+13. Manual fan with no fixed floor: per-fan range in `capabilities.fans.range` (0–100 by default), the firmware is the arbiter.
 
-## 13. Pontos em aberto
+## 13. Open points
 
-- **Cenários por usuário** (`~/.config`) além dos globais: possível pela GUI guardar o JSON e chamar `Apply` com o dicionário; decidir se o daemon precisa saber disso.
-- ~~Validar `pwm=0` em manual~~ **Feito (2026-10-12):** com `pwm1_enable=1` e `pwm1=0` a ventoinha da CPU ficou em ~1 955 RPM por 8 s; o firmware impõe um piso e não a para. A faixa 0–100 fica como está.
-- **Validação com tuned-ppd (2026-10-12), tomada:** `Set quiet` → PPD `power-saver`; `Set balanced-performance` → PPD `performance`; `Set balanced` → `balanced`; estável 5 s depois, sem laço. Pelo PPD: `power-saver` → `quiet`, `performance` → `balanced-performance`, `balanced` → `balanced`. Observando `platform_profile` a cada 20 ms durante a ida para `performance`, o valor nunca mostrou `performance`: o tuned escreve (há `sysfs_notify`), mas o valor lido continua o anterior, ou seja, o firmware/driver recusa o Turbo inexistente. A ordem "PPD primeiro, sysfs depois" fica. Bateria (tirar/colocar o cabo) validada depois (ver STATUS).
-- **Suspend/resume (S3) no ANV15-52, validado 2026-10-12.** O firmware **zera o perfil**: ~0,8 s após `suspend exit` o `platform_profile` volta a `balanced` e o tuned acompanha (PPD → `balanced`). Os **fans sobrevivem**: `pwm*_enable` 0 (max) e 1 com o PWM (40 % = 102) ficam como estavam. O daemon ouve `PrepareForSleep` do logind (sem inibidor) e, de `true` até terminar o resume, ignora as escritas em `platform_profile` e as trocas do PPD (senão gravaria `balanced` como escolha do usuário). No resume espera 3 s, relê fonte e perfil, reaplica o perfil guardado da fonte e os fans guardados (manual inclusive) e relê o resto. Na partida do daemon, fan guardado em `manual` volta a `auto` e o estado passa a `auto`.
-- **GPU:** a primeira leitura do `nvidia-smi` depois de a dGPU acordar (D3cold) devolve `power.draw` = 590,01 W; a seguinte, ~10 W. O daemon omite `power` quando o valor passa de 400 W. O probe inicial (`nvidia-smi`) acorda a GPU e leva ~1,5 s; com NVML (go-nvml) dá para evitar os dois problemas.
-- **Tecla Nitro no GNOME:** `KEY_PROG1` pode estar ligada a um atalho do desktop; checar se precisa de `hwdb` próprio ou se o desktop ignora.
+- **Per-user scenarios** (`~/.config`) in addition to the global ones: possible by having the GUI store the JSON and call `Apply` with the dictionary; decide whether the daemon needs to know about it.
+- ~~Validate `pwm=0` in manual~~ **Done (2026-10-12):** with `pwm1_enable=1` and `pwm1=0` the CPU fan stayed at ~1 955 RPM for 8 s; the firmware enforces a floor and does not stop it. The 0–100 range stays as is.
+- **Validation with tuned-ppd (2026-10-12), on AC:** `Set quiet` → PPD `power-saver`; `Set balanced-performance` → PPD `performance`; `Set balanced` → `balanced`; stable 5 s later, no loop. Through PPD: `power-saver` → `quiet`, `performance` → `balanced-performance`, `balanced` → `balanced`. Watching `platform_profile` every 20 ms during the outgoing switch to `performance`, the value never showed `performance`: tuned writes (there is a `sysfs_notify`), but the value read stays the previous one, i.e. the firmware/driver rejects the nonexistent Turbo. The "PPD first, sysfs after" order stays. Battery (unplugging/plugging the cable) validated later (see STATUS).
+- **Suspend/resume (S3) on the ANV15-52, validated 2026-10-12.** The firmware **resets the profile**: ~0.8 s after `suspend exit` `platform_profile` goes back to `balanced` and tuned follows (PPD → `balanced`). The **fans survive**: `pwm*_enable` 0 (max) and 1 with the PWM (40 % = 102) stay as they were. The daemon listens to logind's `PrepareForSleep` (no inhibitor) and, from `true` until the resume finishes, ignores writes to `platform_profile` and PPD switches (otherwise it would save `balanced` as the user's choice). On resume it waits 3 s, rereads source and profile, reapplies the profile saved for the source and the saved fans (manual included) and rereads the rest. At daemon startup, a fan saved as `manual` goes back to `auto` and the state becomes `auto`.
+- **GPU:** the first `nvidia-smi` read after the dGPU wakes up (D3cold) returns `power.draw` = 590.01 W; the next one, ~10 W. The daemon omits `power` when the value exceeds 400 W. The initial probe (`nvidia-smi`) wakes the GPU and takes ~1.5 s; with NVML (go-nvml) both problems can be avoided.
+- **Nitro key on GNOME:** `KEY_PROG1` may be bound to a desktop shortcut; check whether it needs its own `hwdb` or whether the desktop ignores it.
