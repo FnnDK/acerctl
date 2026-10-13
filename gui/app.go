@@ -29,6 +29,7 @@ const (
 type App struct {
 	ctx     context.Context
 	session bool
+	csd     bool // client-side decorations: frameless window, own title bar
 
 	mu      sync.Mutex
 	cl      *client.Client
@@ -40,13 +41,15 @@ type App struct {
 	sessionBus *dbus.Conn // settings portal (title bar)
 }
 
-func NewApp(session bool) *App {
-	return &App{session: session, quit: make(chan struct{})}
+func NewApp(session, csd bool) *App {
+	return &App{session: session, csd: csd, quit: make(chan struct{})}
 }
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	a.watchTitlebar()
+	if a.csd {
+		a.watchTitlebar()
+	}
 	go a.run()
 }
 

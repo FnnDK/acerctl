@@ -8,8 +8,9 @@ GUI do nitroctl em Go + Wails v2: uma janela sobre a API D-Bus do `nitrod` (`doc
 main.go             opções da janela, instância única, ícone; --session, --minimized
 agent.go            agente da sessão (daemon/cmd/nitro-tray): opções "Ícone na bandeja" e
                     "Tecla Nitro", Reload do agente ou início dele quando passa a ser preciso
-titlebar.go         janela sem moldura: ordem dos botões (button-layout do GNOME, pelo portal
-                    de configurações ou gsettings) e ícones window-*-symbolic do tema, lidos do sistema
+titlebar.go         decoração da janela por desktop; sem moldura: ordem dos botões (button-layout
+                    do GNOME, pelo portal de configurações ou gsettings) e ícones window-*-symbolic
+                    do tema, lidos do sistema
 app.go              ponte D-Bus ↔ frontend: State() (todas as propriedades), métodos de escrita,
                     eventos "state" (PropertiesChanged, com reconexão) e "sample" (Monitor)
 frontend/src/       TypeScript sem framework + CSS próprio; gráficos com uPlot
@@ -21,6 +22,8 @@ frontend/src/       TypeScript sem framework + CSS próprio; gráficos com uPlot
 frontend/wailsjs/   bindings gerados pelo Wails (não editar)
 build/appicon.png   gerado de assets/logo/n-icon-cut.svg (rsvg-convert -w 512)
 ```
+
+**Decoração da janela.** No GNOME e em outros desktops GTK a janela não tem moldura: a barra de título é do app, com cantos arredondados e sombra numa margem transparente. No KDE e no LXQt (`XDG_CURRENT_DESKTOP`) quem desenha a moldura é o compositor, então tema, ordem dos botões e encaixe ficam iguais aos das outras janelas, e a linha de cima da GUI mostra só a marca. Para forçar um dos dois: `NITROCTL_DECORATIONS=client` ou `server`. No GNOME, `server` mostra a barra padrão do GTK, já que o Mutter não decora janelas Wayland.
 
 Telas e controles aparecem só para o que `System.Capabilities` lista (ex.: sem Turbo no ANV15-52). O Monitor só é assinado com a janela visível numa tela que mostra dados ao vivo; sem assinantes o daemon não amostra.
 

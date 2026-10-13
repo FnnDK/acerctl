@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,10 +11,13 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-// The window is frameless; the frontend draws its own title bar and takes
-// from the desktop what a native GNOME title bar would use: the button
-// layout (org.gnome.desktop.wm.preferences button-layout) and the
-// window-*-symbolic icons of the current icon theme, read at runtime.
+// Where apps draw their own title bar (GNOME and other GTK desktops) the
+// window is frameless; the frontend draws the title bar and takes from the
+// desktop what a native GNOME title bar would use: the button layout
+// (org.gnome.desktop.wm.preferences button-layout) and the window-*-symbolic
+// icons of the current icon theme, read at runtime. Where the compositor
+// decorates windows (KDE, LXQt) the window keeps its system frame, which
+// brings the desktop's own theme, button order and window snapping.
 
 const (
 	evTitlebar = "titlebar"
@@ -25,17 +29,43 @@ const (
 	ifNamespace = "org.gnome.desktop.interface"
 )
 
+// clientDecorations tells whether the app draws its own title bar.
+// NITROCTL_DECORATIONS=client|server overrides the guess from
+// XDG_CURRENT_DESKTOP (a colon-separated list, e.g. "KDE" or "ubuntu:GNOME").
+func clientDecorations() bool {
+	switch v := os.Getenv("NITROCTL_DECORATIONS"); v {
+	case "client":
+		return true
+	case "server":
+		return false
+	case "":
+	default:
+		fmt.Fprintf(os.Stderr, "nitro-control-center: ignoring NITROCTL_DECORATIONS=%q (client or server)\n", v)
+	}
+	for _, d := range strings.Split(os.Getenv("XDG_CURRENT_DESKTOP"), ":") {
+		switch strings.ToUpper(strings.TrimSpace(d)) {
+		case "KDE", "LXQT":
+			return false
+		}
+	}
+	return true
+}
+
 // Titlebar is the button layout (left and right of the title) and the SVG
 // of each button icon found in the icon theme (missing ones are left out;
 // the frontend has its own fallback).
 type Titlebar struct {
-	Left  []string          `json:"left"`
-	Right []string          `json:"right"`
-	Icons map[string]string `json:"icons"`
+	Client bool              `json:"client"` // false: system frame, no own title bar
+	Left   []string          `json:"left"`
+	Right  []string          `json:"right"`
+	Icons  map[string]string `json:"icons"`
 }
 
 // Titlebar reads the layout and icons now.
 func (a *App) Titlebar() Titlebar {
+	if !a.csd {
+		return Titlebar{}
+	}
 	left, right := parseLayout(a.setting(wmNamespace, "button-layout"))
 	theme := a.setting(ifNamespace, "icon-theme")
 	icons := map[string]string{}
@@ -44,7 +74,7 @@ func (a *App) Titlebar() Titlebar {
 			icons[name] = svg
 		}
 	}
-	return Titlebar{Left: left, Right: right, Icons: icons}
+	return Titlebar{Client: true, Left: left, Right: right, Icons: icons}
 }
 
 // watchTitlebar re-sends the title bar when the desktop setting changes.
@@ -113,7 +143,7 @@ func parseLayout(s string) (left, right []string) {
 	}
 	l, r, _ := strings.Cut(s, ":")
 	pick := func(part string) []string {
-		var out []string
+		out := []string{} // empty, not nil: the frontend gets [] rather than null
 		for _, b := range strings.Split(part, ",") {
 			switch b = strings.TrimSpace(b); b {
 			case "minimize", "maximize", "close":

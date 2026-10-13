@@ -1,13 +1,15 @@
 // Title bar of the frameless window: drag to move, double click to maximize,
 // window buttons in the desktop's order with the icon theme's own symbolic
-// icons (both come from titlebar.go); own icons only as a fallback.
+// icons (both come from titlebar.go); own icons only as a fallback. Where the
+// compositor decorates the window (bar.client false: KDE, LXQt) the row only
+// holds the brand and the shell drops its margin, corners and shadow.
 
 import { EventsOn, WindowSetTitle } from '../wailsjs/runtime/runtime'
 import * as App from '../wailsjs/go/main/App'
 import { el, esc } from './core'
 import { t } from './i18n'
 
-type Bar = { left: string[], right: string[], icons: Record<string, string> }
+type Bar = { client: boolean, left: string[], right: string[], icons: Record<string, string> }
 
 const fallback: Record<string, string> = {
   'window-minimize': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect x="4" y="10" width="8" height="2" rx="1"/></svg>',
@@ -16,7 +18,7 @@ const fallback: Record<string, string> = {
   'window-close': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="m4 4 8 8m0-8-8 8" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg>',
 }
 
-let bar: Bar = { left: [], right: ['minimize', 'maximize', 'close'], icons: {} }
+let bar: Bar = { client: true, left: [], right: ['minimize', 'maximize', 'close'], icons: {} }
 let maximized = false
 const WIN_MARGIN = 18 // --win-margin in style.css, winMargin in main.go
 
@@ -27,8 +29,8 @@ function mask(name: string): string {
   return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`
 }
 
-function buttons(list: string[]): string {
-  return list.map(b => {
+function buttons(list: string[] | null): string {
+  return (list ?? []).map(b => {
     const icon = b === 'maximize' && maximized ? 'window-restore' : 'window-' + b
     return `<button class="tb-btn" data-win="${b}" title="${esc(t('win.' + b))}"><i style='-webkit-mask-image:${mask(icon)};mask-image:${mask(icon)}'></i></button>`
   }).join('')
@@ -50,7 +52,7 @@ export function titlebar(app: HTMLElement, brand: string) {
     if (b.dataset.win === 'maximize') App.ToggleMaximise()
     if (b.dataset.win === 'close') App.Close()
   }
-  const onDouble = (e: MouseEvent) => { if (!(e.target as HTMLElement).closest('button')) App.ToggleMaximise() }
+  const onDouble = (e: MouseEvent) => { if (bar.client && !(e.target as HTMLElement).closest('button')) App.ToggleMaximise() }
   for (const n of [side, main]) { n.addEventListener('click', onClick); n.addEventListener('dblclick', onDouble) }
 
   const sync = async () => {
@@ -61,13 +63,20 @@ export function titlebar(app: HTMLElement, brand: string) {
     if (w?.flags) w.flags.borderThickness = maximized ? 0 : WIN_MARGIN + 4
     render()
   }
-  window.addEventListener('blur', () => document.documentElement.classList.add('unfocused'))
-  window.addEventListener('focus', () => document.documentElement.classList.remove('unfocused'))
-  let pending = 0
-  window.addEventListener('resize', () => { clearTimeout(pending); pending = window.setTimeout(sync, 120) })
+  const client = () => {
+    window.addEventListener('blur', () => document.documentElement.classList.add('unfocused'))
+    window.addEventListener('focus', () => document.documentElement.classList.remove('unfocused'))
+    let pending = 0
+    window.addEventListener('resize', () => { clearTimeout(pending); pending = window.setTimeout(sync, 120) })
+    EventsOn('titlebar', (b: Bar) => { bar = b; render() })
+    sync()
+  }
+  const server = () => {
+    document.documentElement.classList.add('ssd')
+    const w = (window as any).wails
+    if (w?.flags) w.flags.borderThickness = 0
+  }
 
-  App.Titlebar().then(b => { bar = b as Bar; render() }).catch(render)
-  EventsOn('titlebar', (b: Bar) => { bar = b; render() })
+  App.Titlebar().then(b => { bar = b as Bar; bar.client ? client() : server() }).catch(client)
   WindowSetTitle('Nitro Control Center')
-  sync()
 }

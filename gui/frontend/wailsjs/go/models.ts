@@ -55,6 +55,7 @@ export namespace main {
 		}
 	}
 	export class Titlebar {
+	    client: boolean;
 	    left: string[];
 	    right: string[];
 	    icons: Record<string, string>;
@@ -65,6 +66,7 @@ export namespace main {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.client = source["client"];
 	        this.left = source["left"];
 	        this.right = source["right"];
 	        this.icons = source["icons"];
