@@ -1,6 +1,6 @@
 # nitroctl — STATUS (ponto de retomada)
 
-Última atualização: 2026-10-12. Leia este arquivo primeiro; a referência técnica está em `docs/firmware-wmi.md` (citada abaixo como §N).
+Última atualização: 2026-10-13. Leia este arquivo primeiro; a referência técnica está em `docs/firmware-wmi.md` (citada abaixo como §N).
 
 ## Objetivo e decisão de arquitetura
 
@@ -50,13 +50,15 @@ Máquina de referência: Acer **Nitro ANV15-52** (i7-13620H, RTX 4060, BIOS V1.3
 - [x] **Cenários + App Sync** (2026-10-12): `internal/scenarios` (formato, validação, `scenarios.json`), `internal/appsync` (proc connector com filtro do kernel, casamento por `comm`/argv com suporte a Wine/Proton, usuário ativo do seat0, testes) e `internal/service/scenarios.go` (Apply/Save/Delete/SetAppSync, `Active` zerado por mudança manual, retrato + reversão). Validado no ANV15-52: cenário com `balanced-performance` + fan CPU max ligado a um executável de teste → aplicado ao abrir, revertido ao fechar; com mudança manual no meio, não reverte; App Sync retomado após restart. Custo ~0,1–0,2 ms por `exec` (era 0,4 ms antes de filtro no kernel, leitura crua do `comm` e processamento sem troca de goroutine). Semântica em api-dbus.md §9. **Falta** testar com um jogo Proton real.
 - [x] **Suspend/resume** (2026-10-12): `internal/service/sleep.go` ouve `PrepareForSleep` do logind; reaplica perfil e fans no resume e restaura fans na partida (manual → auto). Achados no ANV15-52: o firmware volta o perfil a `balanced` no resume (o daemon ignora essa escrita e a do tuned até terminar), os fans (max/manual + PWM) sobrevivem ao S3. Validado: `quiet` + max e `quiet` + manual 40 % → resume restaura `quiet`; restart com manual → `auto` (api-dbus.md §11).
 - [x] **Marca `[N]`** (2026-10-13): `assets/logo/n-brackets.svg` (N em `currentColor`, colchetes em `var(--accent, #ff1b19)`) e `n-brackets-mono.svg`. N da Source Code Pro Black (SIL OFL 1.1) convertido em contorno; colchetes redesenhados com as espessuras da fonte, mais altos para envolver o N. `n-mark.svg` (N geométrico) fica como alternativa. Ícone do app: `n-icon.svg` (octógono com borda em degradê #FF001E→#FFA000, painel escuro e facetas, `[N]` no centro); **atenção:** esse fundo imita o ícone da Acer (identidade visual), avaliar antes de distribuir. Alternativas próprias para distribuir: `n-icon-cut.svg` (quadrado arredondado escuro com base #FFA000 de 12 u aparecendo embaixo, efeito 3D no estilo dos ícones do GNOME, contorno de 1,5 u em #7A3300; `[N]` com os colchetes originais da fonte em baixo-relevo (sombra interna bem escura nas bordas de cima, 2,5 u); ícone preferido em 2026-10-13), cores e facetas do hexágono, `[N]` no centro; ícone preferido em 2026-10-13), `n-icon-hex.svg` (hexágono de ponta para cima, mesmo degradê/facetas, N sozinho) e `n-icon-square.svg` (quadrado formado pelo N com reforço de 0,08em; vãos mostram o painel escuro).
+- [x] **GUI `nitro-control-center` v1** (2026-10-13): `gui/` em Go + Wails v2 (WebKitGTK 4.1, tag `webkit2_41`), frontend TS sem framework, CSS e ícones próprios, fonte do sistema (`system-ui`), marca `[N]` na barra lateral e `n-icon-cut.svg` como ícone do app, sem 3D/Lottie. Telas: Painel (modos do firmware com `Allowed`/`Extras`, medidores de temperatura e RPM, CPU/GPU/RAM/rede), Monitor (uPlot, 2/5/10 min), Ventoinhas (auto/máx/manual por fan e para todas; manual preserva o PWM atual), Iluminação (estado e timeout), Bateria (carga, saúde, limite 80 %, calibração), Cenários + App Sync (editor, salvar estado atual, renomear), Configurações (USB charging, °C/°F, idioma pt/en, iniciar com a sessão via XDG autostart, sobre/módulos, `Reload`). Ponte `gui/app.go`: `State()` com as propriedades de todas as interfaces, evento `state` a cada `PropertiesChanged` (agrupado em 80 ms), reconexão automática quando o daemon reinicia (tela "sem conexão"), Monitor só com janela visível numa tela ao vivo, erros do daemon como `{kind,msg}` traduzidos. Instância única (abrir de novo traz a janela). `daemon/client.Plain` passou a ser compartilhado pela CLI e pela GUI. Testado no navegador do `wails dev` contra o daemon simulado (todas as telas, erros `NotSupported`/`NotAllowed`/`InvalidArgument`, queda e volta do daemon) e aberto no host contra o `nitrod` real (conecta e assina o Monitor). Empacotamento: `packaging/install-gui.sh` + `io.github.fnndk.NitroControlCenter.desktop`.
+- [x] **Fix no daemon** (2026-10-13): `conn.Send` devolve `*dbus.Call`; o Monitor tratava o retorno como erro e logava `signal send failed` a cada amostra para cada assinante. Agora checa `call.Err`. **Reinstalar o daemon** para sumir o aviso do journal.
 - [x] **Persistência validada em reboot** (2026-10-12): `packaging/install-modules.sh` instala os `.ko` assinados em `/var/lib/acer-wmi-modules/` (rótulo `modules_object_t`) e habilita `acer-wmi-modules.service`; `packaging/check.sh` confirma a camada inteira após o boot.
 
 ## Próximo passo imediato
 
-0. **Reinstalar o daemon com os nomes novos** (2026-10-13): `sh packaging/install-daemon.sh build` no container e `distrobox-host-exec sudo sh packaging/install-daemon.sh` no host; o script remove o `nitrosensed` antigo e move `/var/lib/nitrosense` → `/var/lib/nitrod`. Conferir com `nitroctl status`.
-1. **Instalado (build com mutex/poll/debounce, 2026-10-12): CPU ociosa ~0,5 %** (após a revisão de custo); GPU agora por NVML (go-nvml, `libnvidia-ml.so` carregada em runtime; `nvidia-smi` só como reserva). Ação `settings` confirmada: o gnome-shell abre o diálogo de senha (chamadas via `distrobox-host-exec` caem na sessão gráfica 5 do logind). 
-2. **Completar o daemon:** App Sync com um jogo Proton real. Depois, **GUI** (backlog 4).
+0. **Instalar GUI e daemon corrigido** (2026-10-13): no container `sh packaging/install-daemon.sh build && sh packaging/install-gui.sh build`; no host `distrobox-host-exec sudo sh packaging/install-daemon.sh install && distrobox-host-exec sudo sh packaging/install-gui.sh`. Abrir "Nitro Control Center" pelo menu e conferir no hardware real as escritas (modo, fans, timeout, limite, USB, cenários); polkit `settings` deve pedir senha.
+1. **GUI, o que falta:** tray (StatusNotifierItem, modos rápidos; o Wails v2 não tem tray no Linux → processo à parte em Go, ex. `fyne.io/systray`), tecla Nitro abrindo o app (daemon `--nitro-key none` + atalho do GNOME para `nitro-control-center`, instância única já traz a janela), widget de monitor, Flatpak.
+2. **Completar o daemon:** App Sync com um jogo Proton real.
 3. Manutenção da camada de kernel: após atualização de kernel, `distrobox-host-exec sudo sh packaging/build-sign.sh`; `sh packaging/check.sh` para conferir. Depois, akmods/DKMS.
 
 ## Backlog (ordem sugerida)
@@ -69,7 +71,7 @@ Máquina de referência: Acer **Nitro ANV15-52** (i7-13620H, RTX 4060, BIOS V1.3
    - API espelhando o app original: `GetCapabilities`, `Get/SetOperatingMode`, `Get/SetFanMode` (auto/máx/manual por fan), `GetFanSpeeds`, `GetTemperatures`, `Get/SetBacklightTimeout`, `Get/SetUsbCharging`, `Get/SetChargeLimit`, `StartCalibration`, `GetMonitor` (stream por sinal), perfis/cenários (`List/Apply/Save/Delete`), App Sync (watcher de processos), sinais de mudança.
    - Regras: Eco só na bateria; Turbo/OC só com AC e ≥ 40 %; restaurar último estado no boot e no resume; ciclo de modos pela tecla Nitro com a lista de perfis vinda do firmware.
    - CLI `nitroctl` sobre a mesma API.
-4. **GUI `nitro-control-center` (Go + Wails v2)** — `gui/` (a criar)
+4. **GUI `nitro-control-center` (Go + Wails v2)** — `gui/` (v1 feita 2026-10-13; faltam tray, tecla Nitro, widget, Flatpak)
    - Frontend web (TS + CSS; gráficos com uPlot; animações Lottie; opcional three.js), bindings Go → D-Bus.
    - Telas 1:1: Home (modo + monitor), Fan Control (auto/máx/manual, sem curva onde o firmware não tem), Lighting (timeout; zonas/efeitos só em modelos com RGB), Battery (limite 80 %, calibração, saúde), Settings (USB charging, unidades, inicialização), Scenario Manager + App Sync, widget de monitor, tray (StatusNotifierItem) com modos rápidos.
    - A GUI esconde o que `GetCapabilities` não listar (ex.: Turbo no ANV15-52).
@@ -115,6 +117,7 @@ busctl --user introspect io.github.fnndk.Nitrod1 /io/github/fnndk/Nitrod1
 - `packaging/` — módulos: `acer-wmi-modules.service`, `install-modules.sh`, `build-sign.sh`, `check.sh`; daemon: `nitrod.service`, `io.github.fnndk.Nitrod1.conf` (D-Bus), `io.github.fnndk.nitrod.policy` (polkit), `install-daemon.sh`.
 - `daemon/` — `nitrod` em Go (ver `daemon/README.md`).
 - `docs/api-dbus.md` — API D-Bus do daemon (rascunho v1, revisado 2026-10-12).
+- `gui/` — `nitro-control-center` (ver `gui/README.md`); `packaging/install-gui.sh`, `packaging/io.github.fnndk.NitroControlCenter.desktop`.
 
 ## Regras acordadas
 

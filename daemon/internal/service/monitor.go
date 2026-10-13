@@ -95,8 +95,8 @@ func (d *Daemon) emitTo(dest, iface, member string, args ...interface{}) {
 	if len(args) > 0 {
 		msg.Headers[dbus.FieldSignature] = dbus.MakeVariant(dbus.SignatureOf(args...))
 	}
-	if err := d.conn.Send(msg, nil); err != nil {
-		slog.Warn("signal send failed", "dest", dest, "err", err)
+	if call := d.conn.Send(msg, nil); call.Err != nil {
+		slog.Warn("signal send failed", "dest", dest, "err", call.Err)
 	}
 }
 

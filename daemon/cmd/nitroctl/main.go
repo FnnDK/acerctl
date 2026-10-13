@@ -648,47 +648,8 @@ func sampleLine(s map[string]interface{}) string {
 // ---- formatting helpers ----------------------------------------------------
 
 // plain unwraps variants recursively into maps, slices and scalars.
-func plain(v interface{}) interface{} {
-	switch t := v.(type) {
-	case dbus.Variant:
-		return plain(t.Value())
-	case map[string]dbus.Variant:
-		m := map[string]interface{}{}
-		for k, x := range t {
-			m[k] = plain(x)
-		}
-		return m
-	case map[string]map[string]dbus.Variant:
-		m := map[string]interface{}{}
-		for k, x := range t {
-			m[k] = plain(x)
-		}
-		return m
-	case map[string]map[string]interface{}:
-		return t
-	case map[string]interface{}:
-		m := map[string]interface{}{}
-		for k, x := range t {
-			m[k] = plain(x)
-		}
-		return m
-	case []map[string]dbus.Variant:
-		out := make([]interface{}, len(t))
-		for i, x := range t {
-			out[i] = plain(x)
-		}
-		return out
-	}
-	return v
-}
-
-func plainMap(v interface{}) map[string]interface{} {
-	m, _ := plain(v).(map[string]interface{})
-	if m == nil {
-		m = map[string]interface{}{}
-	}
-	return m
-}
+func plain(v interface{}) interface{}               { return client.Plain(v) }
+func plainMap(v interface{}) map[string]interface{} { return client.PlainMap(v) }
 
 func printJSON(v interface{}) error {
 	enc := json.NewEncoder(os.Stdout)

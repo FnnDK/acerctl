@@ -3,6 +3,7 @@
 *.ko
 *.mod
 !daemon/go.mod
+!gui/go.mod
 *.mod.c
 *.cmd
 .*.cmd
