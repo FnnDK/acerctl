@@ -69,7 +69,8 @@ echo "collecting into $OUT"
 # --- system ---------------------------------------------------------------
 sec system.txt uname -srvm
 sec system.txt cat /etc/os-release
-sec system.txt sh -c 'sed "s/UUID=[^ ]*/UUID=x/g" /proc/cmdline'
+# Mask disk/LVM names (may carry the hostname), UUIDs and the ostree deployment hash.
+sec system.txt sh -c 'sed -E -e "s/(root|resume|rd\.lvm\.[a-z]+|rd\.luks\.[a-z]+)=[^ ]*/\1=x/g" -e "s/[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}/x/g" -e "s/[0-9a-f]{32,}/x/g" /proc/cmdline'
 dump system.txt /sys/kernel/security/lockdown /sys/module/module/parameters/sig_enforce
 have mokutil && sec system.txt mokutil --sb-state
 have lscpu && sec system.txt sh -c 'lscpu | grep -E "^(Model name|Vendor ID|CPU\(s\)|Thread|Core)"'
