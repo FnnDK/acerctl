@@ -146,4 +146,10 @@ ls /sys/devices/platform/acer-wmi-extras/
 
 ## License
 
-Kernel modules: GPL-2.0. `drivers/acer-wmi-battery/` keeps the license of the upstream project.
+nitroctl is free and open-source software under the GNU General Public License:
+
+- **Daemon, CLI, tray, GUI and scripts** (`daemon/`, `gui/`, `packaging/`): [GPL-3.0-or-later](LICENSE).
+- **Our kernel modules** (`drivers/acer-wmi-extras/`, `drivers/acer-wmi-lab/`): [GPL-2.0](drivers/LICENSE), as required for code that links against the Linux kernel.
+- **`drivers/acer-wmi-battery/`**: GPL-2.0-or-later, the license of the upstream project ([its LICENSE](drivers/acer-wmi-battery/LICENSE)).
+
+You can use, study, change and redistribute it; modified versions you distribute must stay under the same license and ship their source code.
