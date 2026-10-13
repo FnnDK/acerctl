@@ -25,7 +25,7 @@ export function fans(): Page {
       <div class="row"><span class="muted small">${t('fans.all')}</span>
         <div class="seg" data-all><button data-m="auto">${t('fan.auto')}</button><button data-m="max">${t('fan.max')}</button></div></div>
     </div>
-    <div class="grid g2" data-cards></div>
+    <div class="grid fan-grid" data-cards></div>
     <div class="note mt hidden" data-nocurve>${icon('info')}<span>${t('fans.nocurve')} ${t('fans.floor')}</span></div>
   </section>`)
   const cards = root.querySelector('[data-cards]') as HTMLElement
@@ -44,10 +44,12 @@ export function fans(): Page {
       const [lo, hi] = caps().fans?.range?.[id] ?? [0, 100]
       return `<div class="card fan-card" data-fan="${id}">
         <div class="fan-visual">${fanArt}</div>
-        <div class="stack">
+        <div class="stack" style="gap:6px">
           <h3>${t('fan.' + id) === 'fan.' + id ? id.toUpperCase() : t('fan.' + id)}</h3>
           <div class="fan-rpm"><span data-rpm>–</span> <small>RPM</small></div>
-          <div class="seg" data-modes>${modes.map(m => `<button data-m="${m}">${t('fan.' + m)}</button>`).join('')}</div>
+        </div>
+        <div class="fan-controls stack">
+          <div class="seg fill" data-modes>${modes.map(m => `<button data-m="${m}">${t('fan.' + m)}</button>`).join('')}</div>
           <div class="stack" data-manual style="gap:6px">
             <span class="muted small">${t('fan.speed')}</span>
             <div class="slider-row"><input type="range" min="${lo}" max="${hi}" step="1" value="${lo}"><output class="num">–</output></div>

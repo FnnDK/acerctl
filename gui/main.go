@@ -35,21 +35,24 @@ func main() {
 	if *minimized {
 		start = options.Minimised
 	}
+	// Single instance, except for development (--session), so a dev build can
+	// run next to the installed app.
+	var single *options.SingleInstanceLock
+	if !*session {
+		single = &options.SingleInstanceLock{UniqueId: appID, OnSecondInstanceLaunch: app.secondInstance}
+	}
 	err := wails.Run(&options.App{
-		Title:            "Nitro Control Center",
-		Width:            1180,
-		Height:           760,
-		MinWidth:         960,
-		MinHeight:        640,
-		WindowStartState: start,
-		AssetServer:      &assetserver.Options{Assets: assets},
-		BackgroundColour: &options.RGBA{R: 16, G: 14, B: 18, A: 255},
-		OnStartup:        app.startup,
-		OnShutdown:       app.shutdown,
-		SingleInstanceLock: &options.SingleInstanceLock{
-			UniqueId:               appID,
-			OnSecondInstanceLaunch: app.secondInstance,
-		},
+		Title:              "Nitro Control Center",
+		Width:              1180,
+		Height:             760,
+		MinWidth:           960,
+		MinHeight:          640,
+		WindowStartState:   start,
+		AssetServer:        &assetserver.Options{Assets: assets},
+		BackgroundColour:   &options.RGBA{R: 16, G: 14, B: 18, A: 255},
+		OnStartup:          app.startup,
+		OnShutdown:         app.shutdown,
+		SingleInstanceLock: single,
 		Linux: &linux.Options{
 			Icon:             icon,
 			ProgramName:      appID, // Wayland app_id = .desktop file name

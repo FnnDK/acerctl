@@ -38,15 +38,15 @@ export function home(): Page {
       ${gaugeHtml('cpuT', t('home.cpu_temp'))}${gaugeHtml('gpuT', t('home.gpu_temp'))}
       ${gaugeHtml('cpuF', t('home.cpu_fan'))}${gaugeHtml('gpuF', t('home.gpu_fan'))}
     </div></div>
-    <div class="grid g4 mt">
+    <div class="grid tiles mt">
       <div class="card"><div class="tile-head">${icon('cpu')}<b>CPU</b></div>
-        <div class="grid g3">
+        <div class="stats">
           <div class="stat"><span class="k">${t('home.usage')}</span><span class="v" data-cpu-use>–</span></div>
           <div class="stat"><span class="k">${t('home.freq')}</span><span class="v" data-cpu-freq>–</span></div>
           <div class="stat"><span class="k">${t('home.power')}</span><span class="v" data-cpu-pow>–</span></div>
         </div></div>
       <div class="card"><div class="tile-head">${icon('gpu')}<b>GPU</b><span class="badge hidden" data-gpu-sleep>${t('home.gpu_sleep')}</span></div>
-        <div class="grid g3" data-gpu-stats>
+        <div class="stats" data-gpu-stats>
           <div class="stat"><span class="k">${t('home.usage')}</span><span class="v" data-gpu-use>–</span></div>
           <div class="stat"><span class="k">${t('home.clock')}</span><span class="v" data-gpu-clk>–</span></div>
           <div class="stat"><span class="k">${t('home.power')}</span><span class="v" data-gpu-pow>–</span></div>
@@ -56,7 +56,7 @@ export function home(): Page {
         <div class="stat"><span class="v" data-ram>–</span></div>
         <div class="meter" style="margin-top:10px"><i data-ram-bar style="width:0"></i></div></div>
       <div class="card"><div class="tile-head">${icon('net')}<b>${t('home.net')}</b></div>
-        <div class="grid g2">
+        <div class="stats">
           <div class="stat"><span class="k">${t('home.down')}</span><span class="v" data-rx>–</span></div>
           <div class="stat"><span class="k">${t('home.up')}</span><span class="v" data-tx>–</span></div>
         </div></div>
