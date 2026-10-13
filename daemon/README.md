@@ -39,4 +39,4 @@ Instala em `/usr/local/bin`, `/etc/dbus-1/system.d`, `/usr/local/share/polkit-1/
 
 ## O que ainda falta (ver STATUS.md)
 
-Cenários e App Sync, CLI `nitrosense-cli`, testes de integração com tuned-ppd.
+CLI `nitrosense-cli`, App Sync testado com jogo Proton real, cadência dos fans conforme assinantes, testes de integração com tuned-ppd.

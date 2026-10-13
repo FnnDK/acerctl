@@ -169,7 +169,14 @@ kbd_timeout_s: u
 apps: as              # basenames de executáveis (App Sync)
 ```
 
-Armazenamento em `/var/lib/nitrosense/scenarios.json` (global ao sistema, já que o daemon é do sistema). App Sync: `proc` connector (netlink, o daemon é root) para `exec`/`exit`; casa `comm`/basename do exe com `apps`, só para processos do usuário da sessão ativa (logind). Ao sair o último processo casado, volta ao cenário anterior.
+Armazenamento em `/var/lib/nitrosense/scenarios.json` (global ao sistema, já que o daemon é do sistema). `Save` valida contra o hardware (perfis do firmware, ids e faixa dos fans, timeouts do teclado; chave desconhecida ⇒ `InvalidArgument`) e normaliza `apps` para basenames em minúsculas (`C:\Games\Foo.exe` → `foo.exe`).
+
+**Semântica (implementada 2026-10-12).**
+- `Apply` grava os modos e os fans do cenário no estado guardado (§11), então troca de fonte, resume e boot seguem o cenário; o modo aplicado agora é o da fonte atual (com `Fallback` se não for permitido). `Active` passa ao nome.
+- Qualquer mudança manual de algo que um cenário controla (`Mode.Set/Cycle`, tecla Nitro, PPD/sysfs externos, `Fans.*`, `SetKeyboardTimeout`) zera `Active`. `Delete` do cenário ativo também.
+- **App Sync** (`SetAppSync`, persistido; retomado na partida): proc connector (`NETLINK_CONNECTOR`, `CAP_NET_ADMIN`; no kernel ≥ 6.6 com filtro só `exec`/`exit`). A cada `exec` lê `/proc/<pid>/comm`; `cmdline` só quando o `comm` está truncado (15 caracteres) ou é Wine/Proton (`argv[0]` e, após um loader Wine, `argv[1]`). Processos Wine que não casaram são relidos após 2 s (o Wine troca `comm`/argv depois do `exec`). Casamento sem maiúsculas, `.exe` opcional, `comm` truncado por prefixo. Só processos do usuário ativo do seat0 (`ACTIVE_UID` em `/run/systemd/seats/seat0`). `/proc/<pid>/exe` não é usado: exigiria `CAP_SYS_PTRACE`.
+- O app aberto mais recentemente decide o cenário. No primeiro, o daemon guarda um retrato do estado (modos, fans, timeout, `Active`) e aplica o cenário; quando o último sai, aplica o retrato de volta — **a menos que o usuário tenha mudado algo nesse meio tempo** (`Active` ≠ cenário do App Sync), caso em que só descarta o retrato. Desligar o App Sync também reverte. O retrato fica no `state.json`: se o daemon cair com o jogo aberto, na partida ele reverte quando não houver app casado rodando.
+- Custo: ~0,1–0,2 ms de CPU do daemon por `exec` no sistema (medido com 2 000 `exec`s); nada sem `exec`s.
 
 ## 10. Autorização (polkit)
 

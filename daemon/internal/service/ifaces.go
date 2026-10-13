@@ -89,6 +89,7 @@ func (f *fansIface) check(sender dbus.Sender, fan string) *dbus.Error {
 }
 
 func (f *fansIface) remember(fan string, fn func(*state.Fan)) {
+	f.d.leaveScenario()
 	ids := []string{fan}
 	if fan == "all" {
 		ids = f.d.hw.Fans.IDs()
@@ -117,7 +118,12 @@ func (f *fansIface) SetMode(sender dbus.Sender, fan, mode string) *dbus.Error {
 	if err := f.d.hw.Fans.SetMode(fan, mode); err != nil {
 		return errHardware(err)
 	}
-	f.remember(fan, func(s *state.Fan) { s.Mode = mode })
+	f.remember(fan, func(s *state.Fan) {
+		s.Mode = mode
+		if mode != "manual" {
+			s.Speed = 0
+		}
+	})
 	f.d.setProp(ifFans, "State", f.d.fanState())
 	return nil
 }
@@ -166,6 +172,7 @@ func (l *lightingIface) SetKeyboardTimeout(sender dbus.Sender, seconds uint32) *
 	if err := d.hw.Keyboard.SetTimeout(seconds); err != nil {
 		return errHardware(err)
 	}
+	d.leaveScenario()
 	d.setProp(ifLighting, "Keyboard", d.keyboardState())
 	return nil
 }
@@ -236,18 +243,3 @@ func (b *batteryIface) SetUsbCharging(sender dbus.Sender, percent uint32) *dbus.
 	d.setProp(ifBattery, "UsbCharging", d.usbCharging())
 	return nil
 }
-
-// ---- org.nitrosense.Daemon1.Scenarios (not implemented yet) ----------------
-
-type scenariosIface struct{ d *Daemon }
-
-func notYet() *dbus.Error {
-	return dbus.NewError(errBase+"NotSupported", []interface{}{"scenarios are not implemented yet"})
-}
-
-func (s *scenariosIface) Apply(sender dbus.Sender, name string) *dbus.Error { return notYet() }
-func (s *scenariosIface) Save(sender dbus.Sender, sc map[string]dbus.Variant) *dbus.Error {
-	return notYet()
-}
-func (s *scenariosIface) Delete(sender dbus.Sender, name string) *dbus.Error      { return notYet() }
-func (s *scenariosIface) SetAppSync(sender dbus.Sender, enabled bool) *dbus.Error { return notYet() }

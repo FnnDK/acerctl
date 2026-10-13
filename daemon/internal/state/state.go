@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+
+	"nitrosense/daemon/internal/scenarios"
 )
 
 // DefaultPath is where the system daemon keeps its state.
@@ -25,6 +27,13 @@ type Data struct {
 	ModeAC      string         `json:"mode_ac,omitempty"`
 	ModeBattery string         `json:"mode_battery,omitempty"`
 	Fans        map[string]Fan `json:"fans,omitempty"`
+	// Scenario is the active scenario ("" once something is changed by hand).
+	Scenario string `json:"scenario,omitempty"`
+	AppSync  bool   `json:"app_sync,omitempty"`
+	// While App Sync holds a scenario: what to go back to and which
+	// scenario it applied (if Scenario differs, the user took over).
+	SyncRevert  *scenarios.Scenario `json:"app_sync_revert,omitempty"`
+	SyncApplied string              `json:"app_sync_applied,omitempty"`
 }
 
 // Store is a Data with a file behind it.
@@ -93,4 +102,11 @@ func (s *Store) FansSnapshot() map[string]Fan {
 		out[id] = f
 	}
 	return out
+}
+
+// View runs fn on a copy of the data under the lock.
+func (s *Store) View(fn func(d Data)) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	fn(s.Data)
 }

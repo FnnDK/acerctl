@@ -9,9 +9,11 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"nitrosense/daemon/internal/hw"
+	"nitrosense/daemon/internal/scenarios"
 	"nitrosense/daemon/internal/service"
 	"nitrosense/daemon/internal/state"
 )
@@ -57,9 +59,10 @@ func main() {
 	}
 
 	st := state.Load(*statePth)
+	sc := scenarios.Load(filepath.Join(filepath.Dir(*statePth), "scenarios.json"))
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
-	if err := service.New(cfg, h, st).Run(ctx); err != nil {
+	if err := service.New(cfg, h, st, sc).Run(ctx); err != nil {
 		slog.Error("nitrosensed", "err", err)
 		os.Exit(1)
 	}

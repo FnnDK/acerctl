@@ -15,10 +15,12 @@ import (
 	"github.com/godbus/dbus/v5/introspect"
 	"github.com/godbus/dbus/v5/prop"
 
+	"nitrosense/daemon/internal/appsync"
 	"nitrosense/daemon/internal/hw"
 	"nitrosense/daemon/internal/monitor"
 	"nitrosense/daemon/internal/ppd"
 	"nitrosense/daemon/internal/rules"
+	"nitrosense/daemon/internal/scenarios"
 	"nitrosense/daemon/internal/state"
 )
 
@@ -63,6 +65,8 @@ type Daemon struct {
 	cfg     Config
 	hw      *hw.Hardware
 	st      *state.Store
+	sc      *scenarios.Store
+	ctx     context.Context
 	conn    *dbus.Conn
 	props   *prop.Properties
 	ppd     *ppd.Client
@@ -80,15 +84,21 @@ type Daemon struct {
 
 	subMu sync.Mutex
 	subs  map[string]*subscriber
+
+	// syncMu serialises scenario application (D-Bus Apply and App Sync).
+	syncMu    sync.Mutex
+	syncStop  context.CancelFunc // App Sync watcher running when non-nil
+	syncWatch *appsync.Watcher
 }
 
 // New builds the daemon; Run connects it.
-func New(cfg Config, h *hw.Hardware, st *state.Store) *Daemon {
-	return &Daemon{cfg: cfg, hw: h, st: st, sampler: monitor.New(h), subs: map[string]*subscriber{}}
+func New(cfg Config, h *hw.Hardware, st *state.Store, sc *scenarios.Store) *Daemon {
+	return &Daemon{cfg: cfg, hw: h, st: st, sc: sc, sampler: monitor.New(h), subs: map[string]*subscriber{}}
 }
 
 // Run serves until ctx is done.
 func (d *Daemon) Run(ctx context.Context) error {
+	d.ctx = ctx
 	var err error
 	if d.cfg.Session {
 		d.conn, err = dbus.ConnectSessionBus()
@@ -136,6 +146,7 @@ func (d *Daemon) Run(ctx context.Context) error {
 	}
 	d.restoreMode()
 	d.restoreFans(true)
+	d.startAppSync()
 
 	<-ctx.Done()
 	d.stopAllSubscribers()
@@ -146,6 +157,8 @@ func (d *Daemon) Run(ctx context.Context) error {
 // ---- export ----------------------------------------------------------------
 
 func (d *Daemon) export() error {
+	var active string
+	d.st.View(func(s state.Data) { active = s.Scenario })
 	spec := prop.Map{
 		ifSystem: {
 			"Version":      {Value: d.cfg.Version, Emit: prop.EmitTrue},
@@ -172,9 +185,9 @@ func (d *Daemon) export() error {
 			"Health":      {Value: d.health(), Emit: prop.EmitTrue},
 		},
 		ifScenarios: {
-			"List":    {Value: []map[string]dbus.Variant{}, Emit: prop.EmitTrue},
-			"Active":  {Value: "", Emit: prop.EmitTrue},
-			"AppSync": {Value: false, Emit: prop.EmitTrue},
+			"List":    {Value: d.scenarioList(), Emit: prop.EmitTrue},
+			"Active":  {Value: active, Emit: prop.EmitTrue},
+			"AppSync": {Value: false, Emit: prop.EmitTrue}, // set when the watcher starts
 		},
 	}
 	var err error
@@ -490,6 +503,7 @@ func (d *Daemon) applyMode(profile string, remember bool) error {
 	d.mu.Unlock()
 	d.setProp(ifMode, "Current", profile)
 	if remember {
+		d.leaveScenario()
 		d.st.Update(func(s *state.Data) {
 			if source == "battery" {
 				s.ModeBattery = profile
