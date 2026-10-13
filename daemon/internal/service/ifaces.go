@@ -124,7 +124,7 @@ func (f *fansIface) SetMode(sender dbus.Sender, fan, mode string) *dbus.Error {
 			s.Speed = 0
 		}
 	})
-	f.d.setProp(ifFans, "State", f.d.fanState())
+	f.d.refreshFans(true)
 	return nil
 }
 
@@ -146,7 +146,7 @@ func (f *fansIface) SetSpeed(sender dbus.Sender, fan string, percent uint32) *db
 		return errHardware(err)
 	}
 	f.remember(fan, func(s *state.Fan) { s.Mode = "manual"; s.Speed = percent })
-	f.d.setProp(ifFans, "State", f.d.fanState())
+	f.d.refreshFans(true)
 	return nil
 }
 

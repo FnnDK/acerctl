@@ -60,4 +60,4 @@ Instala `nitrosensed` e `nitrosense-cli` em `/usr/local/bin`, `/etc/dbus-1/syste
 
 ## O que ainda falta (ver STATUS.md)
 
-App Sync testado com jogo Proton real, cadência dos fans conforme assinantes, testes de integração com tuned-ppd.
+App Sync testado com jogo Proton real, testes de integração com tuned-ppd.

@@ -97,7 +97,7 @@ Nomes são os do `platform_profile` (o que o daemon escreve). Mapeamento Acer: `
 | método `SetMode(s fan, s mode)` | | `fan` = id ou `all`. `max` ⇒ `pwmN_enable=0`; `auto` ⇒ 2; `manual` ⇒ 1 mantendo o `pwmN` atual |
 | método `SetSpeed(s fan, u percent)` | | grava `pwmN = percent·255/100`; muda para `manual` se preciso. Sem piso fixo no daemon: aceita a faixa de `capabilities.fans.range` (0–100 por padrão) e o firmware aplica o mínimo real da ventoinha; fora da faixa ⇒ `InvalidArgument` |
 
-`State.rpm` é atualizado a cada amostra do Monitor (§6); `mode`/`speed` são lidos após cada escrita e a cada 5 s (outro processo pode escrever no hwmon).
+`rpm` é relido a cada 5 s (leitura do EC, ~0,2 ms). `mode`/`speed` custam chamadas WMI (`pwmN_enable` ~16 ms, `pwmN` ~7 ms por fan no ANV15-52), então são relidos só após cada escrita, no resume e a cada 60 s (para pegar outro processo escrevendo no hwmon). As amostras do Monitor leem só o RPM.
 
 ## 6. Interface `org.nitrosense.Daemon1.Monitor`
 
@@ -112,7 +112,7 @@ Formato da amostra (chaves ausentes quando o backend não existe):
 
 ```
 cpu:     {temp: d, usage: u, freq: u, power: d}
-gpu:     {temp: d, usage: u, clock: u, mem_clock: u, power: d}
+gpu:     {active: b, temp: d, usage: u, clock: u, mem_clock: u, power: d}  # só active=false com a dGPU suspensa
 fans:    {cpu: u, gpu: u}                     # RPM, mesma leitura de Fans.State
 ram:     {used: t, total: t}
 net:     {rx: t, tx: t}                       # bytes/s desde a amostra anterior
@@ -121,6 +121,8 @@ ts:      t                                    # CLOCK_MONOTONIC em ms
 ```
 
 Sem assinantes o daemon **não** amostra (NVML e RAPL custam CPU).
+
+**A dGPU nunca é acordada para ser monitorada.** Com runtime PM (Optimus), qualquer consulta NVML/`nvidia-smi` tira a GPU do D3cold: no ANV15-52 isso leva ~2 s, gasta ~1,4 s de CPU de kernel no driver e deixa a placa ligada (1–10 W) enquanto as consultas continuarem. O daemon lê `power/runtime_status` do dispositivo PCI NVIDIA antes de cada amostra; fora de `active`, a amostra traz só `gpu: {active: false}`. Com a GPU já acordada por outro processo, consulta normalmente. Fans e bateria nas amostras: só RPM (EC) e `power_supply`; a temperatura da bateria (WMI) é relida no máximo a cada 30 s.
 
 ## 7. Interface `org.nitrosense.Daemon1.Lighting`
 

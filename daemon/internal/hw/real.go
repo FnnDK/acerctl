@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"golang.org/x/sys/unix"
 )
@@ -40,9 +42,9 @@ func Probe() *Hardware {
 	}
 	h.Battery = probeBatteryInfo()
 	if g := probeNVML(); g != nil {
-		h.GPU = g
+		h.GPU = gateRuntimePM(g)
 	} else if g := probeGPU(); g != nil {
-		h.GPU = g // nvidia-smi fallback
+		h.GPU = gateRuntimePM(g) // nvidia-smi fallback
 	}
 	h.NitroKey = probeNitroKey()
 	slog.Info("probe done", "caps", h.Capabilities())
@@ -210,6 +212,16 @@ func probeFans() *acerHwmon {
 func (f *acerHwmon) IDs() []string      { return f.ids }
 func (f *acerHwmon) Controllable() bool { return f.pwm }
 func (f *acerHwmon) Range(string) Range { return Range{0, 100} }
+
+func (f *acerHwmon) RPM() (map[string]uint32, error) {
+	out := map[string]uint32{}
+	for _, id := range f.ids {
+		if rpm, err := readUint(filepath.Join(f.dir, fmt.Sprintf("fan%d_input", fanChannel[id]))); err == nil {
+			out[id] = uint32(rpm)
+		}
+	}
+	return out, nil
+}
 
 func (f *acerHwmon) State() (map[string]FanState, error) {
 	out := map[string]FanState{}
@@ -382,7 +394,13 @@ func boolStr(b bool) string {
 
 type psBattery struct {
 	ac, bat, hwmon string
+
+	mu       sync.Mutex
+	temp     float64   // acer_battery temp1: a WMI call (~5 ms), and it moves slowly
+	tempRead time.Time // so it is read at most every batteryTempEvery
 }
+
+const batteryTempEvery = 30 * time.Second
 
 func probeBatteryInfo() *psBattery {
 	return &psBattery{
@@ -409,6 +427,24 @@ func (p *psBattery) Power() (Power, error) {
 	return pw, nil
 }
 
+// batteryTemp returns the acer_battery temperature, re-read at most every
+// batteryTempEvery; NoTemp without the sensor.
+func (p *psBattery) batteryTemp() float64 {
+	if p.hwmon == "" {
+		return NoTemp
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.tempRead.IsZero() || time.Since(p.tempRead) >= batteryTempEvery {
+		if v, err := readInt(filepath.Join(p.hwmon, "temp1_input")); err == nil {
+			p.temp, p.tempRead = float64(v)/1000, time.Now()
+		} else if p.tempRead.IsZero() {
+			return NoTemp
+		}
+	}
+	return p.temp
+}
+
 func (p *psBattery) Health() (Health, error) {
 	h := Health{Temp: NoTemp}
 	if p.bat == "" {
@@ -428,24 +464,28 @@ func (p *psBattery) Health() (Health, error) {
 		h.Full, h.Design = full*uv/1e6, design*uv/1e6
 	}
 	h.Status, _ = readStr(filepath.Join(p.bat, "status"))
-	if p.hwmon != "" {
-		if v, err := readInt(filepath.Join(p.hwmon, "temp1_input")); err == nil {
-			h.Temp = float64(v) / 1000
-		}
+	// Voltage and current: power_supply is a cached ACPI read; the
+	// acer_battery hwmon (SBS over WMI) only when power_supply lacks them.
+	// power_supply gives the magnitude; the sign follows the status, as in
+	// the signed SBS current (negative while discharging).
+	if v, err := readInt(filepath.Join(p.bat, "voltage_now")); err == nil {
+		h.Voltage = uint32(v / 1000)
+	} else if p.hwmon != "" {
 		if v, err := readInt(filepath.Join(p.hwmon, "in0_input")); err == nil {
 			h.Voltage = uint32(v)
 		}
+	}
+	if v, err := readInt(filepath.Join(p.bat, "current_now")); err == nil {
+		h.Current = int32(v / 1000)
+		if h.Status == "Discharging" && h.Current > 0 {
+			h.Current = -h.Current
+		}
+	} else if p.hwmon != "" {
 		if v, err := readInt(filepath.Join(p.hwmon, "curr1_input")); err == nil {
 			h.Current = int32(v)
 		}
-	} else {
-		if v, err := readInt(filepath.Join(p.bat, "voltage_now")); err == nil {
-			h.Voltage = uint32(v / 1000)
-		}
-		if v, err := readInt(filepath.Join(p.bat, "current_now")); err == nil {
-			h.Current = int32(v / 1000)
-		}
 	}
+	h.Temp = p.batteryTemp()
 	return h, nil
 }
 

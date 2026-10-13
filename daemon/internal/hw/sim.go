@@ -65,6 +65,15 @@ func (s *sim) State() (map[string]FanState, error) {
 	}
 	return out, nil
 }
+func (s *sim) RPM() (map[string]uint32, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := map[string]uint32{}
+	for k, v := range s.fans {
+		out[k] = v.RPM
+	}
+	return out, nil
+}
 func (s *sim) each(id string, f func(st *FanState)) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

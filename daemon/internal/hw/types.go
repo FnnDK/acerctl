@@ -54,7 +54,11 @@ type Fans interface {
 	IDs() []string
 	Controllable() bool
 	Range(id string) Range
+	// State reads RPM, mode and speed. Mode and speed go through WMI/SMM
+	// (~23 ms per fan on the ANV15-52); RPM alone is an EC read (~0.2 ms).
 	State() (map[string]FanState, error)
+	// RPM reads only the speeds, for the frequent refreshes.
+	RPM() (map[string]uint32, error)
 	SetMode(id, mode string) error
 	SetSpeed(id string, percent uint32) error
 }
@@ -98,13 +102,14 @@ type BatteryInfo interface {
 
 // GPUSample is one reading of the discrete GPU.
 type GPUSample struct {
+	Off             bool // runtime-suspended: not queried, other fields zero
 	Temp            float64
 	Usage           uint32
 	Clock, MemClock uint32
 	Power           float64
 }
 
-// GPU is the NVIDIA reader (nvidia-smi in the skeleton; NVML later).
+// GPU is the NVIDIA reader (NVML, nvidia-smi as fallback).
 type GPU interface {
 	Sample() (GPUSample, error)
 }

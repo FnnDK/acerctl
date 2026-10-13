@@ -85,6 +85,7 @@ func (d *Daemon) onResume() {
 	}
 	d.restoreMode()
 	d.restoreFans(false)
+	d.refreshFans(true)
 	d.refreshSlow()
 }
 
@@ -135,5 +136,5 @@ func (d *Daemon) restoreFans(startup bool) {
 		}
 		slog.Info("fan restored", "fan", id, "mode", mode, "was", have.Mode)
 	}
-	d.setProp(ifFans, "State", d.fanState())
+	d.refreshFans(true)
 }

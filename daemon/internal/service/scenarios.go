@@ -149,7 +149,7 @@ func (d *Daemon) applyScenario(sc scenarios.Scenario, active string) error {
 				errs = append(errs, fmt.Errorf("fan %s: %w", id, err))
 			}
 		}
-		d.setProp(ifFans, "State", d.fanState())
+		d.refreshFans(true)
 	}
 	if sc.KbdTimeout != nil && d.hw.Keyboard != nil {
 		if cur, err := d.hw.Keyboard.Timeout(); err != nil || cur != *sc.KbdTimeout {

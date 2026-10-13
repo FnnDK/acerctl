@@ -621,7 +621,9 @@ func sampleLine(s map[string]interface{}) string {
 	if c, ok := s["cpu"].(map[string]interface{}); ok {
 		parts = append(parts, fmt.Sprintf("cpu %s %3d%% %4d MHz %s", temp(c["temp"]), num(c["usage"]), num(c["freq"]), watts(c["power"])))
 	}
-	if g, ok := s["gpu"].(map[string]interface{}); ok {
+	if g, ok := s["gpu"].(map[string]interface{}); ok && g["active"] == false {
+		parts = append(parts, "gpu off (suspended)")
+	} else if ok {
 		parts = append(parts, fmt.Sprintf("gpu %s %3d%% %4d MHz %s", temp(g["temp"]), num(g["usage"]), num(g["clock"]), watts(g["power"])))
 	}
 	if f, ok := s["fans"].(map[string]interface{}); ok {

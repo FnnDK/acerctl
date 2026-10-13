@@ -72,8 +72,10 @@ func (s *Sampler) Sample() map[string]interface{} {
 	}
 
 	if s.hw.GPU != nil {
-		if g, err := s.hw.GPU.Sample(); err == nil {
-			gpu := map[string]interface{}{"temp": g.Temp, "usage": g.Usage, "clock": g.Clock, "mem_clock": g.MemClock}
+		if g, err := s.hw.GPU.Sample(); err == nil && g.Off {
+			out["gpu"] = map[string]interface{}{"active": false}
+		} else if err == nil {
+			gpu := map[string]interface{}{"active": true, "temp": g.Temp, "usage": g.Usage, "clock": g.Clock, "mem_clock": g.MemClock}
 			// The first reading after the dGPU wakes from D3cold reports a
 			// bogus power draw (590 W seen on the RTX 4060); drop it.
 			if g.Power > 0 && g.Power < maxGPUPowerW {
@@ -84,10 +86,10 @@ func (s *Sampler) Sample() map[string]interface{} {
 	}
 
 	if s.hw.Fans != nil {
-		if st, err := s.hw.Fans.State(); err == nil {
+		if rpm, err := s.hw.Fans.RPM(); err == nil { // not State(): mode/speed cost WMI calls
 			fans := map[string]interface{}{}
-			for id, f := range st {
-				fans[id] = f.RPM
+			for id, r := range rpm {
+				fans[id] = r
 			}
 			out["fans"] = fans
 		}

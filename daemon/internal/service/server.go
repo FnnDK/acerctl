@@ -40,7 +40,8 @@ const (
 	// charge come from power_supply and are free.
 	powerEvery    = 2 * time.Second  // without uevents
 	powerFallback = 30 * time.Second // with uevents
-	fansEvery     = 5 * time.Second
+	fansEvery     = 5 * time.Second  // RPM only (EC read, ~0.2 ms)
+	fansFullEvery = 60 * time.Second // mode and speed too (WMI, ~23 ms per fan): catches other writers
 	slowEvery     = 30 * time.Second // keyboard, USB charging, charge limit, calibration, health
 	modeFallback  = 10 * time.Second // re-read platform_profile even without a poll() event
 	modeDebounce  = 150 * time.Millisecond
@@ -84,6 +85,9 @@ type Daemon struct {
 
 	subMu sync.Mutex
 	subs  map[string]*subscriber
+
+	fanMu    sync.Mutex
+	fanModes map[string]hw.FanState // mode and speed from the last full read
 
 	// syncMu serialises scenario application (D-Bus Apply and App Sync).
 	syncMu    sync.Mutex
@@ -173,7 +177,7 @@ func (d *Daemon) export() error {
 			"Extras":         {Value: nonNil(d.extras), Emit: prop.EmitTrue},
 		},
 		ifFans: {
-			"State": {Value: d.fanState(), Emit: prop.EmitTrue},
+			"State": {Value: d.readFans(true), Emit: prop.EmitTrue},
 		},
 		ifLighting: {
 			"Keyboard": {Value: d.keyboardState(), Emit: prop.EmitTrue},
@@ -253,9 +257,11 @@ func (d *Daemon) refreshLoop(ctx context.Context) {
 	}
 	power := time.NewTicker(every)
 	fans := time.NewTicker(fansEvery)
+	fansFull := time.NewTicker(fansFullEvery)
 	slow := time.NewTicker(slowEvery)
 	defer power.Stop()
 	defer fans.Stop()
+	defer fansFull.Stop()
 	defer slow.Stop()
 	for {
 		select {
@@ -271,7 +277,9 @@ func (d *Daemon) refreshLoop(ctx context.Context) {
 		case <-power.C:
 			d.refreshPower()
 		case <-fans.C:
-			d.setProp(ifFans, "State", d.fanState())
+			d.refreshFans(false)
+		case <-fansFull.C:
+			d.refreshFans(true)
 		case <-slow.C:
 			d.refreshSlow()
 		}
@@ -542,16 +550,30 @@ func (d *Daemon) cycle() (string, error) {
 
 // ---- property values -------------------------------------------------------
 
-func (d *Daemon) fanState() map[string]map[string]dbus.Variant {
+// readFans builds Fans.State. A full read also re-reads mode and speed,
+// which cost WMI calls; otherwise only the RPM is read and mode/speed come
+// from the last full read (writes and resume always do a full read).
+func (d *Daemon) readFans(full bool) map[string]map[string]dbus.Variant {
 	out := map[string]map[string]dbus.Variant{}
 	if d.hw.Fans == nil {
 		return out
 	}
-	st, err := d.hw.Fans.State()
-	if err != nil {
-		return out
+	d.fanMu.Lock()
+	defer d.fanMu.Unlock()
+	if full || d.fanModes == nil {
+		st, err := d.hw.Fans.State()
+		if err != nil {
+			return out
+		}
+		d.fanModes = st
+	} else if rpm, err := d.hw.Fans.RPM(); err == nil {
+		for id, r := range rpm {
+			f := d.fanModes[id]
+			f.RPM = r
+			d.fanModes[id] = f
+		}
 	}
-	for id, f := range st {
+	for id, f := range d.fanModes {
 		out[id] = map[string]dbus.Variant{
 			"rpm":   dbus.MakeVariant(f.RPM),
 			"mode":  dbus.MakeVariant(f.Mode),
@@ -560,6 +582,8 @@ func (d *Daemon) fanState() map[string]map[string]dbus.Variant {
 	}
 	return out
 }
+
+func (d *Daemon) refreshFans(full bool) { d.setProp(ifFans, "State", d.readFans(full)) }
 
 func (d *Daemon) keyboardState() map[string]dbus.Variant {
 	out := map[string]dbus.Variant{}
