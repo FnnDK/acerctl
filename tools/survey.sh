@@ -340,6 +340,7 @@ acer_wmi.txt, platform_profile.txt, hwmon.txt, power_supply.txt, leds.txt,
 misc.txt, input.txt, hid.txt, dmesg.txt
                     what the kernel already exposes for this laptop
 probes.txt          read-only WMI calls (only with --probes)
+issue-url.txt       link to a new "Hardware report" issue with the text fields filled in
 
 Not collected: hostname, user name, serial numbers, UUIDs, MAC addresses.
 EOF
@@ -349,10 +350,28 @@ for f in "$OUT"/*.txt; do
   sed -i -E 's/([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}/xx:xx:xx:xx:xx:xx/g' "$f"
 done
 
+# Issue link with the form's text fields already filled in (GitHub prefills
+# input/textarea fields from the URL; only the archive is left to attach).
+urlencode() {
+  LC_ALL=C awk 'BEGIN { for (i = 0; i < 256; i++) ord[sprintf("%c", i)] = i }
+    { s = (NR > 1 ? "\n" : "") $0; for (i = 1; i <= length(s); i++) { c = substr(s, i, 1)
+        if (c ~ /[A-Za-z0-9._~-]/) printf "%s", c; else printf "%%%02X", ord[c] } }'
+}
+PRODUCT="$(val /sys/class/dmi/id/sys_vendor) $(val /sys/class/dmi/id/product_name)"
+LINK="$ISSUE_URL&title=$(printf 'Hardware report: %s' "$PRODUCT" | urlencode)"
+LINK="$LINK&model=$(printf '%s' "$(val /sys/class/dmi/id/product_name)" | urlencode)"
+SUMMARY_Q="&summary=$(urlencode < "$OUT/summary.txt")"
+# Stay well below GitHub's URL limit (414 URI Too Long).
+[ $(( ${#LINK} + ${#SUMMARY_Q} )) -lt 7000 ] && LINK="$LINK$SUMMARY_Q"
+printf '%s\n' "$LINK" > "$OUT/issue-url.txt"
+
 tar -czf "$OUT.tar.gz" -C "$DEST" "$NAME"
 if [ -n "${SUDO_USER:-}" ]; then chown -R "$SUDO_USER": "$OUT" "$OUT.tar.gz"; fi
 echo
 cat "$OUT/summary.txt"
 echo
 echo "report: $OUT.tar.gz"
-echo "review it if you like, then attach it to a new issue: $ISSUE_URL"
+echo "review it if you like, then open this link (model and summary already filled in)"
+echo "and drag the .tar.gz into the form:"
+echo
+echo "$LINK"

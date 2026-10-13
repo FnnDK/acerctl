@@ -10,7 +10,7 @@ cd acerctl
 sudo sh tools/survey.sh
 ```
 
-This needs nothing beyond a standard Linux install and takes a few seconds. It prints a summary and writes `acer-report-<model>-<date>.tar.gz` in the current directory.
+This needs nothing beyond a standard Linux install and takes a few seconds. It prints a summary, writes `acer-report-<model>-<date>.tar.gz` in the current directory and prints a link to a new *Hardware report* issue with the model and the summary already filled in (also saved as `issue-url.txt`): open it and drag the `.tar.gz` into the form.
 
 ### Optional: firmware probes
 
@@ -42,6 +42,7 @@ sudo sh tools/survey.sh --lab-module drivers/acer-wmi-lab/acer-wmi-lab.ko
 | `acer_wmi.txt`, `platform_profile.txt`, `hwmon.txt`, `power_supply.txt`, `leds.txt`, `input.txt`, `hid.txt`, `misc.txt`, `dmesg.txt` | What the kernel and its drivers already show for this laptop |
 | `system.txt` | Kernel version, distribution, PCI/USB device list, loaded modules |
 | `probes.txt` | Raw answers to the read-only firmware calls (only with `--probes`) |
+| `issue-url.txt` | The prefilled issue link |
 
 **Not collected:** hostname, user name, serial numbers, UUIDs (including the root filesystem UUID in the kernel command line), MAC addresses, Bluetooth addresses, and the ACPI `MSDM` table (which holds the Windows product key). Everything except the raw firmware tables is plain text you can open and check before sending.
 
