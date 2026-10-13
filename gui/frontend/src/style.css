@@ -12,6 +12,7 @@
   --faint: #6b6472;
   --accent: #ff1b19;
   --accent-2: #ffa000;
+  --orange: #ff7417;
   --grad: linear-gradient(90deg, #ff1b19, #ff6a0c 55%, #ffa000);
   --ok: #3ecf8e;
   --info: #4aa8ff;
@@ -166,6 +167,7 @@ main { grid-column: 2; grid-row: 2; overflow-y: auto; padding: 10px 30px 40px; m
 .btn:hover:not(:disabled) { background: var(--surface-3); border-color: #3c3542; }
 .btn.primary { background: var(--grad); border-color: transparent; color: #fff; font-weight: 600; }
 .btn.primary:hover:not(:disabled) { filter: brightness(1.08); }
+.btn.primary.solid { background: var(--orange); color: #1a1418; }
 .btn.danger:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
 .btn.ghost { background: none; border-color: transparent; color: var(--muted); }
 .btn.ghost:hover:not(:disabled) { color: var(--text); background: var(--surface-2); }
@@ -188,7 +190,7 @@ main { grid-column: 2; grid-row: 2; overflow-y: auto; padding: 10px 30px 40px; m
 .switch input { opacity: 0; width: 0; height: 0; position: absolute; }
 .switch span { position: absolute; inset: 0; background: var(--surface-3); border: 1px solid var(--border); border-radius: 99px; cursor: pointer; transition: background .2s; }
 .switch span::after { content: ""; position: absolute; width: 18px; height: 18px; left: 2px; top: 2px; border-radius: 50%; background: #cfc8d4; transition: transform .2s, background .2s; }
-.switch input:checked + span { background: var(--accent); border-color: transparent; background: var(--grad); }
+.switch input:checked + span { background: var(--orange); border-color: transparent; }
 .switch input:checked + span::after { transform: translateX(20px); background: #fff; }
 .switch input:disabled + span { opacity: .45; cursor: not-allowed; }
 
@@ -233,9 +235,10 @@ input[type=range]:disabled { opacity: .4; }
 .mode b { display: block; margin-top: 10px; font-size: 15px; }
 .mode small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; min-height: 17px; }
 .mode .badge { position: absolute; top: 12px; right: 12px; }
-.mode.on { border-color: transparent; background: linear-gradient(var(--surface-3), var(--surface-3)) padding-box, var(--grad) border-box; border: 1px solid transparent; }
+/* active: 2px gradient border (padding shrinks to keep the size); light border on hover */
+.mode.on { border: 2px solid transparent; padding: 15px 15px 13px; background: linear-gradient(var(--surface-3), var(--surface-3)) padding-box, var(--grad) border-box; }
+.mode.on:hover:not(:disabled) { border-color: transparent; background: linear-gradient(var(--surface-3), var(--surface-3)) padding-box, linear-gradient(#ffb380, #ffb380) border-box; }
 .mode.on svg { color: var(--accent-2); }
-.mode.on::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--grad); }
 .mode:disabled { cursor: not-allowed; opacity: .42; }
 
 /* ---------- gauges ---------- */

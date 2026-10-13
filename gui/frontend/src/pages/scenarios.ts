@@ -105,7 +105,7 @@ function fromCurrent(): Dict {
 export function scenarios(): Page {
   const root = el(`<section>
     <div class="page-head"><div><h1>${t('scn.title')}</h1><p>${t('scn.sub')}</p></div>
-      <div class="row"><button class="btn" data-current>${icon('save')}${t('scn.from_current')}</button><button class="btn primary" data-new>${icon('plus')}${t('scn.new')}</button></div>
+      <div class="row"><button class="btn" data-current>${icon('save')}${t('scn.from_current')}</button><button class="btn primary solid" data-new>${icon('plus')}${t('scn.new')}</button></div>
     </div>
     <div class="card"><div class="setting"><div class="label"><b>${t('scn.appsync')}</b><span>${t('scn.appsync_hint')}</span></div>${switchHtml('data-appsync', false)}</div></div>
     <div class="scn-grid mt" data-list></div>
