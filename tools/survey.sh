@@ -15,7 +15,7 @@
 #   addresses or the MSDM table (Windows product key). Every file is plain
 #   text or a raw firmware table and can be reviewed before sending.
 set -u
-REPORT_VERSION=2
+REPORT_VERSION=3
 HERE=$(cd "$(dirname "$0")" && pwd)
 LAB_SRC=$HERE/../drivers/acer-wmi-lab
 CALL=/sys/devices/platform/acer-wmi-lab/call
@@ -146,6 +146,13 @@ have rfkill && sec misc.txt rfkill list
 sec input.txt sh -c 'grep -v "^U: Uniq=" /proc/bus/input/devices'
 # HID devices: keyboards and lighting controllers (vendor:product, name).
 sec hid.txt sh -c 'for d in /sys/bus/hid/devices/*; do grep -hE "^HID_(ID|NAME)=" $d/uevent 2>/dev/null | tr "\n" " "; echo; done'
+# HID report descriptors: some models switch modes or lighting through a
+# vendor collection of the embedded controller's HID device (Acer = 1025).
+for d in /sys/bus/hid/devices/*; do
+  [ -r "$d/report_descriptor" ] || continue
+  printf '## %s %s\n' "$(basename "$d")" "$(grep -h '^HID_NAME=' "$d/uevent" 2>/dev/null)" >> "$OUT/hid.txt"
+  od -An -tx1 -v "$d/report_descriptor" >> "$OUT/hid.txt"
+done
 have dmesg && sec dmesg.txt sh -c \
   'dmesg | grep -iE "acer|wmi|platform.profile|ec:|thermal|battery|ACPI (BIOS )?Error"'
 
@@ -198,6 +205,9 @@ B 19 0000000001000000 Battery info idx 0
 B 19 0100000001000000 Battery info idx 1
 B 19 0200000001000000 Battery info idx 2
 B 19 0300000001000000 Battery info idx 3
+B 19 0800000001000000 Battery info idx 8 (temperature)
+B 19 0900000001000000 Battery info idx 9 (voltage)
+B 19 0a00000001000000 Battery info idx 10 (current)
 U 11 00000000 Utility LED indicator status
 U 14 00000000 Utility second display status
 EOF
@@ -297,7 +307,9 @@ guid_name() {
   if [ -d /sys/module/acer_wmi ]; then
     echo "acer_wmi:     loaded ($(for p in /sys/module/acer_wmi/parameters/*; do printf '%s=%s ' "$(basename "$p")" "$(val "$p")"; done))"
   else
-    echo "acer_wmi:     not loaded"
+    bl=$(grep -lsE '^[[:space:]]*(blacklist[[:space:]]+acer[_-]wmi|install[[:space:]]+acer[_-]wmi)' /etc/modprobe.d/* /usr/lib/modprobe.d/* /run/modprobe.d/* | tr '\n' ' ')
+    grep -qE 'blacklist=[^ ]*acer[_-]wmi' /proc/cmdline && bl="$bl kernel command line"
+    echo "acer_wmi:     not loaded${bl:+ (blocked by: $bl)}"
   fi
   pp=""; for d in /sys/class/platform-profile/*; do [ -d "$d" ] && pp="$pp$(val "$d/name"): $(val "$d/choices") [$(val "$d/profile")]; "; done
   echo "profiles:     ${pp:-none}"
@@ -314,6 +326,8 @@ guid_name() {
   echo "battery:      ${bat:-none}"
   kbd=$(ls -d /sys/class/leds/*kbd_backlight* 2>/dev/null | xargs -r -n1 basename | tr '\n' ' ')
   echo "kbd LED:      ${kbd:-none}"
+  hid=$(grep -lsh '^HID_ID=.*:00001025:' /sys/bus/hid/devices/*/uevent | xargs -r -n1 dirname | xargs -r -n1 basename | tr '\n' ' ')
+  echo "Acer HID:     ${hid:-none}"
   if have dmidecode && dmidecode -t 170 2>/dev/null | grep -q 'Handle'; then t170=present; else t170=absent; fi
   echo "DMI type 170: $t170"
   echo

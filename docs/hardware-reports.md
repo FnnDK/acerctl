@@ -39,7 +39,8 @@ sudo sh tools/survey.sh --lab-module drivers/acer-wmi-lab/acer-wmi-lab.ko
 | `dmi.txt` | Model and BIOS identification, including the Acer OEM DMI tables (types 170–172) |
 | `wmi.txt`, `bmof-*.bin` | WMI devices and the firmware's own WMI class definitions (binary MOF) |
 | `acpi/*.dat` | DSDT and SSDT tables (where the WMI methods are implemented) |
-| `acer_wmi.txt`, `platform_profile.txt`, `hwmon.txt`, `power_supply.txt`, `leds.txt`, `input.txt`, `hid.txt`, `misc.txt`, `dmesg.txt` | What the kernel and its drivers already show for this laptop |
+| `acer_wmi.txt`, `platform_profile.txt`, `hwmon.txt`, `power_supply.txt`, `leds.txt`, `input.txt`, `misc.txt`, `dmesg.txt` | What the kernel and its drivers already show for this laptop |
+| `hid.txt` | HID devices (vendor:product, name) and their report descriptors (some models switch modes or lighting through the embedded controller's HID device) |
 | `system.txt` | Kernel version, distribution, PCI/USB device list, loaded modules |
 | `probes.txt` | Raw answers to the read-only firmware calls (only with `--probes`) |
 | `issue-url.txt` | The prefilled issue link |
