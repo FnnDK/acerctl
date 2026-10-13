@@ -3,9 +3,9 @@ module acerctl/gui
 go 1.27
 
 require (
+	acerctl/daemon v0.0.0
 	github.com/godbus/dbus/v5 v5.2.3
 	github.com/wailsapp/wails/v2 v2.16.0
-	acerctl/daemon v0.0.0
 )
 
 require (
