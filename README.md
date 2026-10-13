@@ -32,6 +32,58 @@ Acer NitroSense/PredatorSense exists only for Windows. nitroctl brings the same 
 
 The app uses its own dark theme, with an integrated title bar that follows GNOME's button order and icons, and texts in Portuguese and English.
 
+## Compared with other tools
+
+| Project | Features |
+|---|---|
+| `acer_wmi` (in-tree kernel driver) | Thermal profiles in `platform-profile` (fixed list of 5, without reading the firmware mask), fan RPM and temperatures in hwmon, max/manual fans via `pwm` (only with the model quirk or `force_caps`), Fn hotkeys and keyboard backlight events, wireless/rfkill. No battery, USB charging or backlight timeout; no user-space rules (AC/battery). |
+| [acer-wmi-battery](https://github.com/frederik-h/acer-wmi-battery) (kernel module) | 80 % charge limit (health mode), battery calibration, battery temperature. Vendored here with a fix and the `charge_control_end_threshold` hook that GNOME/UPower use. |
+| [Linuwu-Sense](https://github.com/0x7375646F/Linuwu-Sense) (kernel module, replaces `acer_wmi`) | Thermal profiles, CPU/GPU fan speed, 4-zone RGB keyboard with effects, 80 % charge limit, battery calibration, backlight timeout, boot sound, LCD overdrive, USB charging while off. |
+| [Div-Acer-Manager-Max](https://github.com/PXDiv/Div-Acer-Manager-Max) (GUI + daemon on top of Linuwu-Sense) | Thermal profiles adjusted to AC/battery, auto/manual fans, LCD overdrive, backlight timeout, boot animation and sound toggle, live system info. |
+| [predator-sense](https://github.com/wobqqq/predator-sense) (CLI + DKMS on top of Linuwu-Sense) | Thermal profiles, Turbo button as an on/off toggle, auto/max/manual fans per fan, temperature and RPM readout, 80 % charge limit and calibration, RGB keyboard (zones, effects, brightness), USB charging while off, backlight timeout, Fn+F4 fix. |
+| Acer NitroSense / PredatorSense (Windows only) | Operating modes with AC/battery rules, auto/max/custom fans, system monitor and widget, battery health (80 % limit, calibration), RGB/keyboard lighting where present, USB charging while off, boot sound, LCD overdrive, CPU/GPU overclocking on some models, scenarios and App Sync, Nitro/Predator key. |
+| **nitroctl** (this project: companion modules + `nitrod` + Nitro Control Center + CLI, alongside `acer_wmi`) | Operating modes limited to what the firmware reports, with the original app's AC/battery rules and `power-profiles-daemon`/`tuned` sync; auto/max/manual fans per fan; monitor (temperatures, usage, clocks, power, RPM, RAM, network) without waking the dGPU; 80 % charge limit (shared with GNOME), calibration, health; backlight timeout; USB charging while off; scenarios and App Sync (Wine/Proton aware); configurable Nitro key; tray; CLI; state restored at boot and after suspend. Not yet: RGB, boot sound, LCD overdrive, overclocking. |
+
+<sub>Third-party features as listed in each project's README (October 2026).</sub>
+
+## GNOME integration
+
+nitroctl doesn't replace GNOME's own power controls. It stays in sync with them, so you can use either side.
+
+### Power mode
+
+GNOME's power mode menu (quick settings and Settings → Power) talks to `power-profiles-daemon` or `tuned-ppd`. `nitrod` keeps that profile in sync with the Acer mode in both directions. The app has 5 modes and GNOME has 3, so the mapping is many-to-one going to GNOME. Coming back, the power source decides the mode. A mode the firmware doesn't report (e.g. Turbo on the ANV15-52) is never picked.
+
+App → GNOME:
+
+| App mode | GNOME power mode |
+|---|---|
+| Eco | Power Saver |
+| Quiet | Power Saver |
+| Balanced | Balanced |
+| Performance | Performance |
+| Turbo | Performance |
+
+GNOME → app:
+
+| GNOME power mode | On AC | On battery |
+|---|---|---|
+| Power Saver | Quiet | Eco |
+| Balanced | Balanced | Balanced |
+| Performance | Turbo when allowed (supported, battery ≥ 40 %), otherwise Performance | Performance (flagged as extra) when battery ≥ 40 %, otherwise Balanced |
+
+When the app changes the mode, it sets the GNOME profile first, waits for `tuned` to apply it, and then writes the real Acer mode. This avoids loops. Details are in `docs/api-dbus.md` §11.
+
+### Battery health
+
+`acer-wmi-battery` exposes the 80 % limit through the standard `charge_control_end_threshold` attribute (kernel ≥ 6.15). UPower therefore sees it, and GNOME shows its own **Settings → Power → Preserve Battery Health** switch. That switch and the app's 80 % limit are the same setting:
+
+- Turning on "Preserve Battery Health" in GNOME sets the 80 % limit, and the app shows it on the next refresh.
+- The app's limit goes through UPower when it's available, so GNOME's switch follows it and UPower doesn't revert it at startup. Without UPower, `nitrod` writes the firmware directly.
+- The limit is either 80 % or off (100 %). The firmware has no other values and no start threshold.
+
+Tested with UPower 1.91.5 on Fedora 44.
+
 ## Components
 
 | Directory | What it is |
