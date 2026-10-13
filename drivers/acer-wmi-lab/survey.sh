@@ -12,7 +12,7 @@
 # The result is a directory plus a .tar.gz next to it; do not commit it.
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
-MODEL=$(tr -c 'A-Za-z0-9._-\n' '_' < /sys/class/dmi/id/product_name 2>/dev/null || echo unknown)
+MODEL=$(tr -c 'A-Za-z0-9._\n-' '_' < /sys/class/dmi/id/product_name 2>/dev/null || echo unknown)
 OUT=${1:-$PWD/acer-survey-$MODEL-$(date +%Y%m%d-%H%M%S)}
 mkdir -p "$OUT" || exit 1
 [ "$(id -u)" = 0 ] || echo "warning: not root; DMI, ACPI tables, BMOF and dmesg will be missing" >&2
@@ -42,6 +42,7 @@ have mokutil && sec system.txt sh -c 'mokutil --list-enrolled | grep -E "Subject
 have lscpu && sec system.txt lscpu
 have lspci && sec system.txt lspci -nnk
 have lsusb && sec system.txt lsusb
+sec system.txt sh -c 'grep -rsn -iE "acer|wmi" /etc/modprobe.d /usr/lib/modprobe.d /run/modprobe.d'
 sec system.txt sh -c 'lsmod | grep -iE "acer|wmi|platform_profile|nvidia|nouveau|i915|xe|amdgpu"'
 have rpm-ostree && sec system.txt rpm-ostree status
 have powerprofilesctl && sec system.txt powerprofilesctl
@@ -55,6 +56,8 @@ for k in bios_vendor bios_version bios_date bios_release ec_firmware_release \
 done
 have dmidecode && sec dmi.txt sh -c \
   'dmidecode -t 0,1,2,3,11 | grep -viE "serial|uuid|asset tag"'
+# OEM types 170-172: acer_wmi reads type 0xAA (170) for its capabilities.
+have dmidecode && sec dmi.txt sh -c 'dmidecode -t 170,171,172 -u'
 
 # --- WMI ------------------------------------------------------------------
 for d in /sys/bus/wmi/devices/*; do
