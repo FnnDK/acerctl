@@ -145,7 +145,7 @@ Sem assinantes o daemon **não** amostra (NVML e RAPL custam CPU).
 | prop `Calibrating` | `b` | `calibration_mode` |
 | prop `UsbCharging` | `u` | 0 (desligado) / 10 / 20 / 30 |
 | prop `Health` | `a{sv}` | `cycles: u`, `full: t`, `design: t` (µWh), `health_pct: u` (= full/design), `temp: d` |
-| método `SetChargeLimit(b)` | | polkit `settings` |
+| método `SetChargeLimit(b)` | com a extensão `power_supply` do `acer-wmi-battery`, via `EnableChargeThreshold` do UPower (mantém o GNOME em acordo); senão, ou se o UPower falhar, escreve `health_mode` | polkit `settings` |
 | método `StartCalibration()` | | `NotAllowed` sem AC; polkit `settings`. Não há evento de fim na API legada (o `acer_wmi` ocupa o handler): o daemon faz **polling** de `calibration_mode` a cada 30 s enquanto `Calibrating` e emite `PropertiesChanged` ao terminar |
 | método `StopCalibration()` | | — |
 | método `SetUsbCharging(u percent)` | | só valores de `capabilities.usb_charging`; polkit `settings` |

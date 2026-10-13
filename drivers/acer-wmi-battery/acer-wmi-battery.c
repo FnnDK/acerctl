@@ -14,6 +14,18 @@
 #include <linux/acpi.h>
 #include <linux/version.h>
 #include <linux/wmi.h>
+#include <linux/mutex.h>
+
+/*
+ * Kernels with power_supply extensions get a standard
+ * charge_control_end_threshold on the ACPI battery, so UPower and the
+ * desktops (GNOME "Preserve Battery Health") can drive the health mode.
+ */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,15,0)
+#define ACER_BATTERY_EXT
+#include <linux/power_supply.h>
+#include <acpi/battery.h>
+#endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6,12,0)
 #include <asm/unaligned.h>
@@ -40,6 +52,9 @@ MODULE_ALIAS("wmi:" WMI_GUID);
  * single battery for now.
  */
 #define ACER_BATTERY_INDEX	0x1
+
+/* The firmware's health mode stops charging at a fixed 80 %. */
+#define ACER_HEALTH_MODE_LIMIT	80
 
 struct get_battery_health_control_status_input {
 	u8 uBatteryNo;
@@ -73,6 +88,11 @@ struct battery_info {
 };
 
 static struct battery_info battery_status;
+
+/* Serializes set + re-read between the sysfs attributes and the extension. */
+static DEFINE_MUTEX(battery_lock);
+
+static void battery_ext_changed(void);
 
 static short enable_health_mode = -1;
 
@@ -271,6 +291,127 @@ static void update_state(void)
 			battery_status.health_mode ? "enabled" : "disabled");
 }
 
+#ifdef ACER_BATTERY_EXT
+static struct power_supply *hooked_battery;
+static struct device *ext_dev;
+
+static const enum power_supply_property acer_battery_ext_props[] = {
+	POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD,
+};
+
+static int acer_battery_ext_get(struct power_supply *psy,
+				const struct power_supply_ext *ext, void *data,
+				enum power_supply_property psp,
+				union power_supply_propval *val)
+{
+	if (psp != POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD)
+		return -EINVAL;
+
+	val->intval = battery_status.health_mode > 0 ? ACER_HEALTH_MODE_LIMIT :
+						       100;
+	return 0;
+}
+
+/* Only the two values the firmware can honour: 80 (health mode) and 100. */
+static int acer_battery_ext_set(struct power_supply *psy,
+				const struct power_supply_ext *ext, void *data,
+				enum power_supply_property psp,
+				const union power_supply_propval *val)
+{
+	acpi_status status;
+	bool on;
+
+	if (psp != POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD)
+		return -EINVAL;
+
+	if (val->intval == ACER_HEALTH_MODE_LIMIT)
+		on = true;
+	else if (val->intval == 100)
+		on = false;
+	else
+		return -EINVAL;
+
+	mutex_lock(&battery_lock);
+	status = set_battery_health_control(HEALTH_MODE, on);
+	update_state();
+	mutex_unlock(&battery_lock);
+	battery_ext_changed();
+
+	return ACPI_FAILURE(status) ? -EIO : 0;
+}
+
+static int acer_battery_ext_writeable(struct power_supply *psy,
+				      const struct power_supply_ext *ext,
+				      void *data,
+				      enum power_supply_property psp)
+{
+	return psp == POWER_SUPPLY_PROP_CHARGE_CONTROL_END_THRESHOLD;
+}
+
+static const struct power_supply_ext acer_battery_ext = {
+	.name			= "acer-wmi-battery",
+	.properties		= acer_battery_ext_props,
+	.num_properties		= ARRAY_SIZE(acer_battery_ext_props),
+	.get_property		= acer_battery_ext_get,
+	.set_property		= acer_battery_ext_set,
+	.property_is_writeable	= acer_battery_ext_writeable,
+};
+
+static int acer_battery_add(struct power_supply *battery,
+			    struct acpi_battery_hook *hook)
+{
+	int err;
+
+	err = power_supply_register_extension(battery, &acer_battery_ext,
+					      ext_dev, NULL);
+	if (!err) {
+		mutex_lock(&battery_lock);
+		hooked_battery = battery;
+		mutex_unlock(&battery_lock);
+	}
+	return err;
+}
+
+static int acer_battery_remove(struct power_supply *battery,
+			       struct acpi_battery_hook *hook)
+{
+	mutex_lock(&battery_lock);
+	if (hooked_battery == battery)
+		hooked_battery = NULL;
+	mutex_unlock(&battery_lock);
+	power_supply_unregister_extension(battery, &acer_battery_ext);
+	return 0;
+}
+
+static struct acpi_battery_hook acer_battery_hook = {
+	.name		= "Acer Battery Health Control",
+	.add_battery	= acer_battery_add,
+	.remove_battery	= acer_battery_remove,
+};
+
+/* Announce a health mode change (UPower and nitrod reread on the uevent). */
+static void battery_ext_changed(void)
+{
+	mutex_lock(&battery_lock);
+	if (hooked_battery)
+		power_supply_changed(hooked_battery);
+	mutex_unlock(&battery_lock);
+}
+
+static int acer_wmi_battery_probe(struct wmi_device *wdev, const void *context)
+{
+	if (battery_status.health_mode < 0)
+		return 0;
+
+	ext_dev = &wdev->dev;
+	return devm_battery_hook_register(&wdev->dev, &acer_battery_hook);
+}
+#else
+static void battery_ext_changed(void)
+{
+}
+#endif
+
 static ssize_t temperature_show(struct device_driver *driver, char *buf)
 {
 	acpi_status status;
@@ -311,8 +452,11 @@ static ssize_t health_mode_store(struct device_driver *driver, const char *buf,
 	if (err)
 		return err;
 
+	mutex_lock(&battery_lock);
 	set_battery_health_control(HEALTH_MODE, param_val);
 	update_state();
+	mutex_unlock(&battery_lock);
+	battery_ext_changed();
 
 	return count;
 }
@@ -339,8 +483,10 @@ static ssize_t calibration_mode_store(struct device_driver *driver,
 	if (err)
 		return err;
 
+	mutex_lock(&battery_lock);
 	set_battery_health_control(CALIBRATION_MODE, param_val);
 	update_state();
+	mutex_unlock(&battery_lock);
 
 	return count;
 }
@@ -366,6 +512,10 @@ static const struct wmi_device_id acer_wmi_battery_id_table[] = {
 static struct wmi_driver acer_wmi_battery_driver = {
 	.driver = { .name = "acer-wmi-battery",
 		    .groups = acer_wmi_battery_groups },
+#ifdef ACER_BATTERY_EXT
+	.id_table = acer_wmi_battery_id_table,
+	.probe = acer_wmi_battery_probe,
+#endif
 };
 
 static int __init acer_battery_init(void)

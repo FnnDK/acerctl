@@ -346,6 +346,9 @@ func (d *Daemon) refreshPower() {
 	d.mu.Unlock()
 	d.setProp(ifMode, "PowerSource", p.Source)
 	d.setProp(ifMode, "BatteryPercent", p.Percent)
+	// acer-wmi-battery raises a power_supply uevent when health_mode changes
+	// (GNOME/UPower included); its health_mode is a cached value, no WMI call.
+	d.setProp(ifBattery, "ChargeLimit", d.chargeLimit())
 	d.recompute()
 	if !known || d.hw.Profiles == nil {
 		return

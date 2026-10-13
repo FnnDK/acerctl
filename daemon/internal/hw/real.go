@@ -346,6 +346,7 @@ func (extrasUSB) Set(p uint32) error {
 
 type wmiBattery struct {
 	limit, calib bool
+	upower       *upowerLimit // nil: no power_supply extension, write health_mode
 }
 
 func probeBatteryControl() *wmiBattery {
@@ -363,6 +364,11 @@ func probeBatteryControl() *wmiBattery {
 	if !b.limit && !b.calib {
 		return nil
 	}
+	if b.limit {
+		if b.upower = probeUPowerLimit(); b.upower != nil {
+			slog.Info("charge limit through UPower", "battery", b.upower.native)
+		}
+	}
 	return b
 }
 
@@ -373,6 +379,17 @@ func (b *wmiBattery) ChargeLimit() (bool, error) {
 	return v > 0, err
 }
 func (b *wmiBattery) SetChargeLimit(on bool) error {
+	if b.upower != nil {
+		if DryRun {
+			slog.Info("dry-run: skip UPower EnableChargeThreshold", "on", on)
+			return nil
+		}
+		err := b.upower.set(on)
+		if err == nil {
+			return nil
+		}
+		slog.Warn("UPower charge threshold failed, writing health_mode", "err", err)
+	}
 	return writeStr(filepath.Join(batteryDrvDir, "health_mode"), boolStr(on))
 }
 func (b *wmiBattery) Calibrating() (bool, error) {
