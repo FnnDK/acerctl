@@ -8,13 +8,13 @@ import (
 
 	"github.com/godbus/dbus/v5"
 
-	"nitrosense/daemon/internal/appsync"
-	"nitrosense/daemon/internal/rules"
-	"nitrosense/daemon/internal/scenarios"
-	"nitrosense/daemon/internal/state"
+	"nitroctl/daemon/internal/appsync"
+	"nitroctl/daemon/internal/rules"
+	"nitroctl/daemon/internal/scenarios"
+	"nitroctl/daemon/internal/state"
 )
 
-// ---- org.nitrosense.Daemon1.Scenarios --------------------------------------
+// ---- io.github.fnndk.Nitrod1.Scenarios --------------------------------------
 
 type scenariosIface struct{ d *Daemon }
 

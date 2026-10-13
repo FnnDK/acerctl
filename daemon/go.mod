@@ -1,4 +1,4 @@
-module nitrosense/daemon
+module nitroctl/daemon
 
 go 1.27
 

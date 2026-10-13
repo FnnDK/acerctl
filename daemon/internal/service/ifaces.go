@@ -3,11 +3,11 @@ package service
 import (
 	"github.com/godbus/dbus/v5"
 
-	"nitrosense/daemon/internal/rules"
-	"nitrosense/daemon/internal/state"
+	"nitroctl/daemon/internal/rules"
+	"nitroctl/daemon/internal/state"
 )
 
-// ---- org.nitrosense.Daemon1.System -----------------------------------------
+// ---- io.github.fnndk.Nitrod1.System -----------------------------------------
 
 type systemIface struct{ d *Daemon }
 
@@ -28,7 +28,7 @@ func (s *systemIface) Reload(sender dbus.Sender) *dbus.Error {
 	return nil
 }
 
-// ---- org.nitrosense.Daemon1.Mode -------------------------------------------
+// ---- io.github.fnndk.Nitrod1.Mode -------------------------------------------
 
 type modeIface struct{ d *Daemon }
 
@@ -70,7 +70,7 @@ func (m *modeIface) Cycle(sender dbus.Sender) (string, *dbus.Error) {
 	return next, nil
 }
 
-// ---- org.nitrosense.Daemon1.Fans -------------------------------------------
+// ---- io.github.fnndk.Nitrod1.Fans -------------------------------------------
 
 type fansIface struct{ d *Daemon }
 
@@ -150,7 +150,7 @@ func (f *fansIface) SetSpeed(sender dbus.Sender, fan string, percent uint32) *db
 	return nil
 }
 
-// ---- org.nitrosense.Daemon1.Lighting ---------------------------------------
+// ---- io.github.fnndk.Nitrod1.Lighting ---------------------------------------
 
 type lightingIface struct{ d *Daemon }
 
@@ -177,7 +177,7 @@ func (l *lightingIface) SetKeyboardTimeout(sender dbus.Sender, seconds uint32) *
 	return nil
 }
 
-// ---- org.nitrosense.Daemon1.Battery ----------------------------------------
+// ---- io.github.fnndk.Nitrod1.Battery ----------------------------------------
 
 type batteryIface struct{ d *Daemon }
 

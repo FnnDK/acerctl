@@ -14,5 +14,5 @@ modules.order
 __pycache__/
 *.pyc
 # daemon build output
-daemon/nitrosensed
-daemon/nitrosense-cli
+daemon/nitrod
+daemon/nitroctl

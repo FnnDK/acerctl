@@ -6,10 +6,10 @@ import (
 	"github.com/godbus/dbus/v5"
 )
 
-// polkit action ids (packaging/org.nitrosense.daemon.policy).
+// polkit action ids (packaging/io.github.fnndk.nitrod.policy).
 const (
-	actionControl  = "org.nitrosense.daemon.control"
-	actionSettings = "org.nitrosense.daemon.settings"
+	actionControl  = "io.github.fnndk.nitrod.control"
+	actionSettings = "io.github.fnndk.nitrod.settings"
 )
 
 type polkitSubject struct {

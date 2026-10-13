@@ -1,4 +1,4 @@
-// nitrosense-cli is the command-line client of nitrosensed: everything the
+// nitroctl is the command-line client of nitrod: everything the
 // GUI does, over the same D-Bus API (docs/api-dbus.md).
 package main
 
@@ -17,10 +17,10 @@ import (
 
 	"github.com/godbus/dbus/v5"
 
-	"nitrosense/daemon/client"
+	"nitroctl/daemon/client"
 )
 
-const usage = `usage: nitrosense-cli [--json] [--session] <command> [args]
+const usage = `usage: nitroctl [--json] [--session] <command> [args]
 
 Status
   status                          everything at a glance (default)
@@ -69,7 +69,7 @@ var (
 )
 
 func main() {
-	fs := flag.NewFlagSet("nitrosense-cli", flag.ContinueOnError)
+	fs := flag.NewFlagSet("nitroctl", flag.ContinueOnError)
 	fs.Usage = func() { fmt.Fprint(os.Stderr, usage) }
 	session := fs.Bool("session", false, "talk to a daemon on the session bus (development)")
 	fs.BoolVar(&jsonOut, "json", false, "machine-readable output")
@@ -111,10 +111,10 @@ func main() {
 func fail(err error) {
 	var ue usageError
 	if errors.As(err, &ue) {
-		fmt.Fprintf(os.Stderr, "nitrosense-cli: %v\n(see nitrosense-cli help)\n", err)
+		fmt.Fprintf(os.Stderr, "nitroctl: %v\n(see nitroctl help)\n", err)
 		os.Exit(2)
 	}
-	fmt.Fprintf(os.Stderr, "nitrosense-cli: %v\n", err)
+	fmt.Fprintf(os.Stderr, "nitroctl: %v\n", err)
 	os.Exit(1)
 }
 
@@ -423,7 +423,7 @@ func scenarioList() error {
 	list, _ := plain(p["List"]).([]interface{})
 	active := str(p["Active"].Value())
 	if len(list) == 0 {
-		fmt.Println("no scenarios (create one with: nitrosense-cli scenario save <name> --from-current)")
+		fmt.Println("no scenarios (create one with: nitroctl scenario save <name> --from-current)")
 	}
 	for _, x := range list {
 		sc, _ := x.(map[string]interface{})

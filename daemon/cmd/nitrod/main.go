@@ -1,4 +1,4 @@
-// nitrosensed is the NitroSense daemon: it owns org.nitrosense.Daemon1 on the
+// nitrod is the nitroctl daemon: it owns io.github.fnndk.Nitrod1 on the
 // system bus and drives the kernel interfaces described in docs/api-dbus.md.
 package main
 
@@ -12,10 +12,10 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"nitrosense/daemon/internal/hw"
-	"nitrosense/daemon/internal/scenarios"
-	"nitrosense/daemon/internal/service"
-	"nitrosense/daemon/internal/state"
+	"nitroctl/daemon/internal/hw"
+	"nitroctl/daemon/internal/scenarios"
+	"nitroctl/daemon/internal/service"
+	"nitroctl/daemon/internal/state"
 )
 
 // Version is set by the build (-ldflags "-X main.Version=...").
@@ -63,7 +63,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	if err := service.New(cfg, h, st, sc).Run(ctx); err != nil {
-		slog.Error("nitrosensed", "err", err)
+		slog.Error("nitrod", "err", err)
 		os.Exit(1)
 	}
 }

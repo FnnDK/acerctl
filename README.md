@@ -1,4 +1,4 @@
-# nitrosense-linux
+# nitroctl
 
 Ferramentas para trazer ao Linux as funções do Acer NitroSense/PredatorSense em notebooks Nitro e Predator (e, no que o firmware permitir, outros Acer), **complementando o driver in-tree `acer_wmi`** em vez de substituí-lo.
 
@@ -11,7 +11,7 @@ Estado e próximos passos: `STATUS.md`. Referência técnica do firmware (classe
 | `drivers/acer-wmi-extras/` | Módulo companheiro (GPL): timeout do backlight do teclado, carregador USB com o notebook desligado, perfis térmicos que o firmware realmente suporta, hwmon da bateria (temperatura, tensão, corrente). Cada função só aparece se o firmware responder. |
 | `drivers/acer-wmi-battery/` | Driver de limite de carga (80 %) e calibração, vendorado do projeto de Frederik Himpe com uma correção de leitura fora do buffer (`UPSTREAM.md`). |
 | `drivers/acer-wmi-lab/` | Módulo de pesquisa: chama qualquer método WMI por `sysfs` (`/sys/devices/platform/acer-wmi-lab/call`). Só para mapear firmware; não é para uso normal. |
-| `daemon/` | `nitrosensed` (Go): serviço D-Bus `org.nitrosense.Daemon1` no system bus com polkit; modo térmico com regras AC/bateria, fans, iluminação, bateria, monitor. API em `docs/api-dbus.md`; instalação em `packaging/install-daemon.sh`. |
+| `daemon/` | `nitrod` (Go): serviço D-Bus `io.github.fnndk.Nitrod1` no system bus com polkit; modo térmico com regras AC/bateria, fans, iluminação, bateria, monitor. API em `docs/api-dbus.md`; instalação em `packaging/install-daemon.sh`. |
 
 Camada mainline usada: `acer_wmi` com `predator_v4=1` (perfis térmicos em `platform-profile`, fans e temperaturas em hwmon) e, até a quirk DMI chegar upstream, `force_caps=0x1C26` para liberar o controle manual dos fans.
 

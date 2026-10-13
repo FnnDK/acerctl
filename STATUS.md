@@ -1,4 +1,4 @@
-# NitroSense para Linux — STATUS (ponto de retomada)
+# nitroctl — STATUS (ponto de retomada)
 
 Última atualização: 2026-10-12. Leia este arquivo primeiro; a referência técnica está em `docs/firmware-wmi.md` (citada abaixo como §N).
 
@@ -7,6 +7,8 @@
 Reproduzir no Linux as funções do Acer NitroSense/PredatorSense **coexistindo com o `acer_wmi` in-tree**, sem substituí-lo: o que faltar entra por (a) patches upstream no `acer_wmi` e (b) módulos companheiros fora da árvore + um daemon + uma GUI. Sem flag de marca: as capacidades vêm do firmware (máscaras WMI, DMI); tabela por modelo só para o que o firmware não informa. Linuwu-Sense e Div-Acer-Manager-Max são referência, não base (§10).
 
 **Pilha decidida (2026-10-12):** módulos de kernel em **C** (`drivers/`), daemon em **Go** (serviço D-Bus no system bus, polkit, systemd), GUI 1:1 em **Go + Wails** (frontend web em WebView/WebKitGTK), CLI e tray como clientes da mesma API D-Bus. Arte própria na GUI (ícones, fontes, animações): nada de material da Acer.
+
+**Nomes (2026-10-13), no esquema do asusctl:** projeto e CLI `nitroctl`, daemon `nitrod`, GUI `nitro-control-center`; prefixo reverse-DNS `io.github.fnndk` (D-Bus `io.github.fnndk.Nitrod1` em `/io/github/fnndk/Nitrod1`, polkit `io.github.fnndk.nitrod.{control,settings}`, estado em `/var/lib/nitrod`). "Nitro" só como referência ao hardware; README deve dizer que não há vínculo com a Acer.
 
 Máquina de referência: Acer **Nitro ANV15-52** (i7-13620H, RTX 4060, BIOS V1.31), Fedora Silverblue 44, kernel 7.2.9.
 
@@ -41,33 +43,37 @@ Máquina de referência: Acer **Nitro ANV15-52** (i7-13620H, RTX 4060, BIOS V1.3
 - [x] **AC/bateria por uevent** (2026-10-12): `internal/hw/uevent.go` escuta `NETLINK_KOBJECT_UEVENT` (grupo 1, sem libudev) e filtra `power_supply`; releitura de segurança a cada 30 s. Validado: daemon iniciado na bateria, cabo recolocado → `power source changed from=battery to=ac` imediato, `Allowed` recalculado. Tomada → bateria também validado (sem fallback: `balanced` vale nas duas fontes).
 - [x] **Tecla Nitro por evdev** (2026-10-12): `internal/hw/nitrokey.go` lê `KEY_PROG1` do teclado interno sem grab e reabre se o dispositivo sumir; ação pela opção `--nitro-key` (`cycle`, padrão sem GUI; `none` quando a GUI/tray assumir a tecla, já que no app original ela abre o app). Validado: 3 toques → `balanced-performance`, `quiet`, `balanced`.
 - [x] **Daemon instalado no host e validado no system bus** (2026-10-12): `install-daemon.sh` (build no container, install no host; polkit reiniciado para ler `/usr/local/share/polkit-1/actions`; `DeviceAllow` para NVIDIA), polkit `control` sem senha na sessão ativa, ida e volta com tuned-ppd sem laço, `pwm=0` → piso de ~1 955 RPM. **Achado:** chamadas WMI concorrentes de métodos diferentes corrompem respostas (§9 do firmware-wmi.md) → mutex no daemon, cadência reduzida (6 % → 1,7 % CPU), `poll()` no `platform_profile`, debounce de mudanças externas. Candidato upstream (4): serializar WMI.
-- [x] **Esqueleto do daemon Go** (`daemon/`, 2026-10-12): módulo `nitrosense/daemon` (godbus v5.2.3), backends reais (`internal/hw/real.go`) e simulado (`sim.go`), regras puras com testes (`internal/rules`), serviço D-Bus completo da API v1 (propriedades + `PropertiesChanged`, métodos com polkit, erros, Monitor com `Subscribe` unicast, PPD sync, estado em JSON), unit + policy D-Bus + polkit + `packaging/install-daemon.sh`. Validado no bus de sessão: simulado (toda a API, erros `NotAllowed`/`NotSupported`/`InvalidArgument`) e hardware real em `--dry-run` (capacidades do ANV15-52 detectadas do firmware, fans, bateria, monitor). **Ainda não instalado no host.**
+- [x] **Esqueleto do daemon Go** (`daemon/`, 2026-10-12): módulo `nitroctl/daemon` (godbus v5.2.3), backends reais (`internal/hw/real.go`) e simulado (`sim.go`), regras puras com testes (`internal/rules`), serviço D-Bus completo da API v1 (propriedades + `PropertiesChanged`, métodos com polkit, erros, Monitor com `Subscribe` unicast, PPD sync, estado em JSON), unit + policy D-Bus + polkit + `packaging/install-daemon.sh`. Validado no bus de sessão: simulado (toda a API, erros `NotAllowed`/`NotSupported`/`InvalidArgument`) e hardware real em `--dry-run` (capacidades do ANV15-52 detectadas do firmware, fans, bateria, monitor). **Ainda não instalado no host.**
 - [x] **GPU por NVML instalada e validada** (2026-10-12): `internal/hw/gpu_nvml.go` (go-nvml, `libnvidia-ml.so` em runtime; `nvidia-smi` só como reserva). Na unit: `NVML ready gpu="NVIDIA GeForce RTX 4060 Laptop GPU"`, `gpu.*` presente já na 1ª amostra e igual ao `nvidia-smi` (P8 ocioso: 210/405 MHz, ~1,6 W). **Ganho:** a build anterior, que consultava via `nvidia-smi`, mantinha a GPU acordada (2010/7001 MHz, ~10 W); com NVML a GPU volta a `runtime_status=suspended` entre amostras. Sandbox da unit não atrapalha.
-- [x] **CLI `nitrosense-cli`** (2026-10-12): `daemon/cmd/nitrosense-cli` sobre o pacote público `daemon/client` (que a GUI vai reusar; por isso no mesmo módulo Go do daemon e não em `cli/`). Comandos: `status` (padrão), `caps`, `monitor`, `mode` (aliases `eco`/`turbo`), `fan`, `kbd timeout`, `battery limit|calibrate`, `usb-charging`, `scenario list|save|apply|delete` (`save --from-current`), `appsync`, `reload`, `version`; `--json` em todas as leituras. Instalada pelo `install-daemon.sh` em `/usr/local/bin`. Testada no host contra o daemon real (leituras, escritas, erros do daemon e de uso). Junto: `Health.full/design` corrigido — o BAT1 do ANV15-52 só tem `charge_*` (µAh) e o daemon publicava µAh como µWh; agora converte pela `voltage_min_design` (3,733 Ah × 15,4 V = 57,5 Wh).
+- [x] **Custo de CPU do daemon** (2026-10-12): medidas por atributo no ANV15-52 — `pwmN_enable` ~16 ms, `pwmN` ~7 ms, `platform_profile`/`kbd_*`/`usb_charging`/hwmon `acer_battery` ~5–15 ms (WMI/SMM); `fanN_input`, temps do hwmon `acer` e `power_supply` ≤ 0,2 ms. Mudanças: fans com `RPM()` barato a cada 5 s e modo/velocidade em cache (relidos após escrita, no resume e a cada 60 s); amostras do Monitor só com RPM e `power_supply` (temperatura da bateria no máximo a cada 30 s); **a dGPU nunca é acordada para ser monitorada** (`runtime_status` antes da consulta NVML → `gpu.active=false`). Medido: ocioso **1,7 % → 0,5 %**; Monitor a 1 s **10,4 % → 1,0 %**, e a GPU fica em D3cold (antes cada amostra a mantinha ligada a 1–10 W; acordar custava ~2 s e 1,4 s de CPU de kernel). Com a GPU acordada por outro processo, o Monitor mostra os dados e ela volta a dormir sozinha ~20 s depois.
+- [x] **CLI `nitroctl`** (2026-10-12): `daemon/cmd/nitroctl` sobre o pacote público `daemon/client` (que a GUI vai reusar; por isso no mesmo módulo Go do daemon e não em `cli/`). Comandos: `status` (padrão), `caps`, `monitor`, `mode` (aliases `eco`/`turbo`), `fan`, `kbd timeout`, `battery limit|calibrate`, `usb-charging`, `scenario list|save|apply|delete` (`save --from-current`), `appsync`, `reload`, `version`; `--json` em todas as leituras. Instalada pelo `install-daemon.sh` em `/usr/local/bin`. Testada no host contra o daemon real (leituras, escritas, erros do daemon e de uso). Junto: `Health.full/design` corrigido — o BAT1 do ANV15-52 só tem `charge_*` (µAh) e o daemon publicava µAh como µWh; agora converte pela `voltage_min_design` (3,733 Ah × 15,4 V = 57,5 Wh).
 - [x] **Cenários + App Sync** (2026-10-12): `internal/scenarios` (formato, validação, `scenarios.json`), `internal/appsync` (proc connector com filtro do kernel, casamento por `comm`/argv com suporte a Wine/Proton, usuário ativo do seat0, testes) e `internal/service/scenarios.go` (Apply/Save/Delete/SetAppSync, `Active` zerado por mudança manual, retrato + reversão). Validado no ANV15-52: cenário com `balanced-performance` + fan CPU max ligado a um executável de teste → aplicado ao abrir, revertido ao fechar; com mudança manual no meio, não reverte; App Sync retomado após restart. Custo ~0,1–0,2 ms por `exec` (era 0,4 ms antes de filtro no kernel, leitura crua do `comm` e processamento sem troca de goroutine). Semântica em api-dbus.md §9. **Falta** testar com um jogo Proton real.
 - [x] **Suspend/resume** (2026-10-12): `internal/service/sleep.go` ouve `PrepareForSleep` do logind; reaplica perfil e fans no resume e restaura fans na partida (manual → auto). Achados no ANV15-52: o firmware volta o perfil a `balanced` no resume (o daemon ignora essa escrita e a do tuned até terminar), os fans (max/manual + PWM) sobrevivem ao S3. Validado: `quiet` + max e `quiet` + manual 40 % → resume restaura `quiet`; restart com manual → `auto` (api-dbus.md §11).
+- [x] **Marca `[N]`** (2026-10-13): `assets/logo/n-brackets.svg` (N em `currentColor`, colchetes em `var(--accent, #ff1b19)`) e `n-brackets-mono.svg`. N da Source Code Pro Black (SIL OFL 1.1) convertido em contorno; colchetes redesenhados com as espessuras da fonte, mais altos para envolver o N. `n-mark.svg` (N geométrico) fica como alternativa. Ícone do app: `n-icon.svg` (octógono com borda em degradê #FF001E→#FFA000, painel escuro e facetas, `[N]` no centro); **atenção:** esse fundo imita o ícone da Acer (identidade visual), avaliar antes de distribuir. Alternativas próprias para distribuir: `n-icon-hex.svg` (hexágono de ponta para cima, mesmo degradê/facetas, N sozinho) e `n-icon-square.svg` (quadrado formado pelo N com reforço de 0,08em; vãos mostram o painel escuro).
 - [x] **Persistência validada em reboot** (2026-10-12): `packaging/install-modules.sh` instala os `.ko` assinados em `/var/lib/acer-wmi-modules/` (rótulo `modules_object_t`) e habilita `acer-wmi-modules.service`; `packaging/check.sh` confirma a camada inteira após o boot.
 
 ## Próximo passo imediato
 
-1. **Instalado (build com mutex/poll/debounce, 2026-10-12): CPU ociosa ~1,5 %** (ver item 2); GPU agora por NVML (go-nvml, `libnvidia-ml.so` carregada em runtime; `nvidia-smi` só como reserva). Ação `settings` confirmada: o gnome-shell abre o diálogo de senha (chamadas via `distrobox-host-exec` caem na sessão gráfica 5 do logind). 
-2. **Completar o daemon** (ordem sugerida): App Sync com um jogo Proton real; **custo ocioso do daemon ~1,5 %** de CPU, quase tudo tempo de kernel em leituras WMI/SMM (fans a cada 5 s, ~6 chamadas de 5–10 ms): ler os fans a 5 s só com assinante do Monitor e a 30 s sem. (O "0,5 %" anotado antes era otimista; a unit antiga já consumia ~1,4 %.)
+0. **Reinstalar o daemon com os nomes novos** (2026-10-13): `sh packaging/install-daemon.sh build` no container e `distrobox-host-exec sudo sh packaging/install-daemon.sh` no host; o script remove o `nitrosensed` antigo e move `/var/lib/nitrosense` → `/var/lib/nitrod`. Conferir com `nitroctl status`.
+1. **Instalado (build com mutex/poll/debounce, 2026-10-12): CPU ociosa ~0,5 %** (após a revisão de custo); GPU agora por NVML (go-nvml, `libnvidia-ml.so` carregada em runtime; `nvidia-smi` só como reserva). Ação `settings` confirmada: o gnome-shell abre o diálogo de senha (chamadas via `distrobox-host-exec` caem na sessão gráfica 5 do logind). 
+2. **Completar o daemon:** App Sync com um jogo Proton real. Depois, **GUI** (backlog 4).
 3. Manutenção da camada de kernel: após atualização de kernel, `distrobox-host-exec sudo sh packaging/build-sign.sh`; `sh packaging/check.sh` para conferir. Depois, akmods/DKMS.
 
 ## Backlog (ordem sugerida)
 
 1. **Patches upstream `acer_wmi`** (§8): entrada DMI `Nitro ANV15-52` (`predator_v4` + `pwm`); `platform_profile_probe` lendo a máscara 0x0A; battery hook `charge_control_end_threshold`; **serialização das chamadas WMI** (respostas corrompidas sob concorrência, §9).
 2. **Persistência/empacotamento** dos módulos (akmods ou DKMS + unit systemd), script único de build+sign.
-3. **Daemon `nitrosensed` (Go)** — `daemon/` (esqueleto feito 2026-10-12; itens abaixo são o alvo completo)
-   - D-Bus system bus `org.nitrosense.Daemon1` (godbus), polkit para ações privilegiadas, unit systemd `nitrosensed.service`.
+3. **Daemon `nitrod` (Go)** — `daemon/` (esqueleto feito 2026-10-12; itens abaixo são o alvo completo)
+   - D-Bus system bus `io.github.fnndk.Nitrod1` (godbus), polkit para ações privilegiadas, unit systemd `nitrod.service`.
    - Backends: `platform-profile` (modo), hwmon `acer` (RPM, temps, `pwm*`), `acer-wmi-extras` (timeout, USB, perfis suportados, hwmon bateria), `acer-wmi-battery` (limite 80 %, calibração), NVML (`nvidia-smi`/go-nvml: temp, clocks, uso, potência), `/proc` + `/sys` (CPU, RAM, rede), UPower/udev (AC, bateria), evdev (tecla Nitro `KEY_PROG1`).
    - API espelhando o app original: `GetCapabilities`, `Get/SetOperatingMode`, `Get/SetFanMode` (auto/máx/manual por fan), `GetFanSpeeds`, `GetTemperatures`, `Get/SetBacklightTimeout`, `Get/SetUsbCharging`, `Get/SetChargeLimit`, `StartCalibration`, `GetMonitor` (stream por sinal), perfis/cenários (`List/Apply/Save/Delete`), App Sync (watcher de processos), sinais de mudança.
    - Regras: Eco só na bateria; Turbo/OC só com AC e ≥ 40 %; restaurar último estado no boot e no resume; ciclo de modos pela tecla Nitro com a lista de perfis vinda do firmware.
-   - CLI `nitrosense-cli` sobre a mesma API.
-4. **GUI `nitrosense` (Go + Wails v2)** — `gui/` (a criar)
+   - CLI `nitroctl` sobre a mesma API.
+4. **GUI `nitro-control-center` (Go + Wails v2)** — `gui/` (a criar)
    - Frontend web (TS + CSS; gráficos com uPlot; animações Lottie; opcional three.js), bindings Go → D-Bus.
    - Telas 1:1: Home (modo + monitor), Fan Control (auto/máx/manual, sem curva onde o firmware não tem), Lighting (timeout; zonas/efeitos só em modelos com RGB), Battery (limite 80 %, calibração, saúde), Settings (USB charging, unidades, inicialização), Scenario Manager + App Sync, widget de monitor, tray (StatusNotifierItem) com modos rápidos.
    - A GUI esconde o que `GetCapabilities` não listar (ex.: Turbo no ANV15-52).
+   - **Arte e textos próprios:** nada de fontes da marca (usar fonte livre, ex. Noto/Inter), ícones, fundos, animações Lottie, modelos 3D, sons, vídeos ou textos de interface do app original; ícone do app sem o octógono com degradê. Material Icons (Apache-2.0) e Noto (OFL) são livres. Nomes "Nitro", "NitroSense", "Predator", "PredatorSense" são marcas da Acer: decidir o nome público antes de publicar.
    - Empacotamento: Flatpak (fala D-Bus com o daemon do host); RPM/akmods para módulos + daemon.
 5. **Extras para outros modelos** (auto-detectados pelo firmware): RGB 4 zonas/per-key, LEDs, som de boot, LCD overdrive, fan table, OC de CPU/GPU (NVML), CPU power limit (RAPL).
 6. Fora do escopo: serviços online da Acer, atualizações de BIOS/drivers, boot logo, DTS, MagKey, app mobile.
@@ -76,7 +82,7 @@ Máquina de referência: Acer **Nitro ANV15-52** (i7-13620H, RTX 4060, BIOS V1.3
 
 ```
 drivers/            módulos C (extras, battery, lab)
-daemon/             Go: cmd/{nitrosensed,nitrosense-cli}, client/, internal/{hw,rules,service,monitor,ppd,state,scenarios,appsync}
+daemon/             Go: cmd/{nitrod,nitroctl}, client/, internal/{hw,rules,service,monitor,ppd,state,scenarios,appsync}
 gui/                Go + Wails: app.go, frontend/ (TS, CSS, assets próprios)
 packaging/          systemd (módulos, daemon), polkit, dbus, install-daemon.sh; akmods/dkms, flatpak a fazer
 docs/               firmware-wmi.md, api-dbus.md
@@ -86,16 +92,16 @@ docs/               firmware-wmi.md, api-dbus.md
 
 ```bash
 # compilar um módulo no host (ex.: extras)
-distrobox-host-exec make -C /var/home/klumpp/work/nitro-sense/nitrosense-linux/drivers/acer-wmi-extras
+distrobox-host-exec make -C /var/home/klumpp/work/nitro-sense/nitroctl/drivers/acer-wmi-extras
 # assinar + carregar (acer-wmi-battery, acer-wmi-lab ou acer-wmi-extras)
-distrobox-host-exec sudo sh -c 'K=/usr/src/kernels/$(uname -r); M=/var/home/klumpp/work/nitro-sense/nitrosense-linux/drivers/acer-wmi-extras/acer-wmi-extras.ko; "$K/scripts/sign-file" sha256 /etc/pki/akmods/private/private_key.priv /etc/pki/akmods/certs/public_key.der "$M" && insmod "$M"'
+distrobox-host-exec sudo sh -c 'K=/usr/src/kernels/$(uname -r); M=/var/home/klumpp/work/nitro-sense/nitroctl/drivers/acer-wmi-extras/acer-wmi-extras.ko; "$K/scripts/sign-file" sha256 /etc/pki/akmods/private/private_key.priv /etc/pki/akmods/certs/public_key.der "$M" && insmod "$M"'
 # chamadas WMI arbitrárias (pesquisa), com acer-wmi-lab carregado:
 #   echo "<GUID> <método> <bytes hex>" | sudo tee /sys/devices/platform/acer-wmi-lab/call; cat /sys/devices/platform/acer-wmi-lab/call
 # lotes prontos: drivers/acer-wmi-lab/probe.sh, probe2.sh, probe3.sh; tecla: keywatch.py
 # daemon sem root (bus de sessão): simulado ou hardware real só leitura
-(cd daemon && go test ./... && go build ./cmd/nitrosensed && ./nitrosensed --session --simulate ANV15-52 --state /tmp/ns.json)
-(cd daemon && ./nitrosensed --session --dry-run --state /tmp/ns.json)
-busctl --user introspect org.nitrosense.Daemon1 /org/nitrosense/Daemon1
+(cd daemon && go test ./... && go build ./cmd/nitrod && ./nitrod --session --simulate ANV15-52 --state /tmp/ns.json)
+(cd daemon && ./nitrod --session --dry-run --state /tmp/ns.json)
+busctl --user introspect io.github.fnndk.Nitrod1 /io/github/fnndk/Nitrod1
 # instalar: sh packaging/install-daemon.sh build  (container)  →  distrobox-host-exec sudo sh packaging/install-daemon.sh  (host)
 ```
 
@@ -106,8 +112,8 @@ busctl --user introspect org.nitrosense.Daemon1 /org/nitrosense/Daemon1
 - `drivers/acer-wmi-battery/` — vendorado (ver `UPSTREAM.md`), `.ko` assinado.
 - `drivers/acer-wmi-lab/` — módulo de pesquisa + `probe*.sh`, `keywatch.py`, resultados `probe*-<data>.txt`.
 - `drivers/acer-wmi-extras/` — companheiro v1 + `test.sh`.
-- `packaging/` — módulos: `acer-wmi-modules.service`, `install-modules.sh`, `build-sign.sh`, `check.sh`; daemon: `nitrosensed.service`, `org.nitrosense.Daemon1.conf` (D-Bus), `org.nitrosense.daemon.policy` (polkit), `install-daemon.sh`.
-- `daemon/` — `nitrosensed` em Go (ver `daemon/README.md`).
+- `packaging/` — módulos: `acer-wmi-modules.service`, `install-modules.sh`, `build-sign.sh`, `check.sh`; daemon: `nitrod.service`, `io.github.fnndk.Nitrod1.conf` (D-Bus), `io.github.fnndk.nitrod.policy` (polkit), `install-daemon.sh`.
+- `daemon/` — `nitrod` em Go (ver `daemon/README.md`).
 - `docs/api-dbus.md` — API D-Bus do daemon (rascunho v1, revisado 2026-10-12).
 
 ## Regras acordadas
@@ -116,5 +122,6 @@ busctl --user introspect org.nitrosense.Daemon1 /org/nitrosense/Daemon1
 - Nome do companheiro: **`acer-wmi-extras`** (vale de Aspire a Predator).
 - Linguagens: C (kernel), Go (daemon, CLI), Go + Wails (GUI). GUI com arte própria.
 - Só métodos "Get" em probes exploratórios; "Set" só com formato validado e reversível.
+- Nomes: `nitroctl` (projeto/CLI), `nitrod` (daemon), `nitro-control-center` (GUI), namespace `io.github.fnndk`.
 - Funções além do app original (ex.: Performance na bateria) são permitidas, mas sempre **sinalizadas como extra** na API (`Mode.Extras`) e na GUI.
 - Antes de persistir opções que criam `platform_profile`, conferir o perfil do `tuned`.

@@ -6,7 +6,7 @@ import (
 	"github.com/godbus/dbus/v5"
 )
 
-const errBase = "org.nitrosense.Daemon1.Error."
+const errBase = "io.github.fnndk.Nitrod1.Error."
 
 func errNotSupported(what string) *dbus.Error {
 	return dbus.NewError(errBase+"NotSupported", []interface{}{what + " is not available on this hardware"})

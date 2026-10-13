@@ -10,11 +10,11 @@ import (
 	"path/filepath"
 	"sync"
 
-	"nitrosense/daemon/internal/scenarios"
+	"nitroctl/daemon/internal/scenarios"
 )
 
 // DefaultPath is where the system daemon keeps its state.
-const DefaultPath = "/var/lib/nitrosense/state.json"
+const DefaultPath = "/var/lib/nitrod/state.json"
 
 // Fan is the remembered setting of one fan.
 type Fan struct {

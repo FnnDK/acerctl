@@ -1,10 +1,10 @@
-# API D-Bus do daemon `nitrosensed` (rascunho v1)
+# API D-Bus do daemon `nitrod` (rascunho v1)
 
 Revisado em 2026-10-12 a partir do v0, contra `docs/firmware-wmi.md` (§1, §4–§8) e os atributos reais de `acer_wmi`, `acer-wmi-extras` e `acer-wmi-battery` no ANV15-52. Mudanças em relação ao v0 e pontos em aberto no fim do arquivo.
 
 ## 1. Visão geral
 
-- **Bus:** system bus. Nome `org.nitrosense.Daemon1`, objeto `/org/nitrosense/Daemon1`, um objeto só com várias interfaces.
+- **Bus:** system bus. Nome `io.github.fnndk.Nitrod1`, objeto `/io/github/fnndk/Nitrod1`, um objeto só com várias interfaces.
 - **Leituras são propriedades** D-Bus (`org.freedesktop.DBus.Properties`, com `PropertiesChanged`), para que `busctl`, GUI, CLI e tray usem o mecanismo padrão sem código extra. **Escritas são métodos**, porque precisam validar, aplicar regras e devolver erro com motivo.
 - **Capacidades vêm do firmware** (§3 abaixo). Toda interface expõe só o que `Capabilities` listar; o cliente nunca assume uma função pela marca ou modelo. Uma chamada a algo não listado devolve `NotSupported`.
 - **Autorização** por polkit (§9). O daemon roda como root (precisa escrever em sysfs e ler evdev/RAPL); nunca executa nada vindo do cliente além dos valores validados.
@@ -14,10 +14,10 @@ Revisado em 2026-10-12 a partir do v0, contra `docs/firmware-wmi.md` (§1, §4�
 
 | Nome | Quando |
 |---|---|
-| `org.nitrosense.Daemon1.Error.NotSupported` | função ausente em `Capabilities` neste hardware |
-| `org.nitrosense.Daemon1.Error.NotAllowed` | regra do daemon (ex.: `performance` na bateria); a mensagem traz o motivo em texto para a GUI exibir |
-| `org.nitrosense.Daemon1.Error.InvalidArgument` | valor fora do conjunto aceito (ex.: USB 15 %) |
-| `org.nitrosense.Daemon1.Error.Hardware` | sysfs/WMI devolveu erro; mensagem com o `errno` |
+| `io.github.fnndk.Nitrod1.Error.NotSupported` | função ausente em `Capabilities` neste hardware |
+| `io.github.fnndk.Nitrod1.Error.NotAllowed` | regra do daemon (ex.: `performance` na bateria); a mensagem traz o motivo em texto para a GUI exibir |
+| `io.github.fnndk.Nitrod1.Error.InvalidArgument` | valor fora do conjunto aceito (ex.: USB 15 %) |
+| `io.github.fnndk.Nitrod1.Error.Hardware` | sysfs/WMI devolveu erro; mensagem com o `errno` |
 | `org.freedesktop.DBus.Error.AccessDenied` | polkit negou |
 
 ### Fontes de cada dado (host)
@@ -39,7 +39,7 @@ Revisado em 2026-10-12 a partir do v0, contra `docs/firmware-wmi.md` (§1, §4�
 | RAM, rede | `/proc/meminfo`, `/proc/net/dev` (soma das interfaces físicas) | — |
 | Tecla Nitro | evdev `KEY_PROG1` (148) no teclado interno (`AT Translated Set 2 keyboard`) | sem `EVIOCGRAB`: o desktop continua recebendo a tecla |
 
-## 2. Interface `org.nitrosense.Daemon1.System`
+## 2. Interface `io.github.fnndk.Nitrod1.System`
 
 | Membro | Tipo | Descrição |
 |---|---|---|
@@ -68,7 +68,7 @@ Sem Turbo (`performance`) em `profiles` ⇒ a GUI nem mostra o botão. Isso vale
 
 **Convenção para funções extras.** Tudo o que o daemon permite além do comportamento do app original (hoje só Performance na bateria) é exposto separadamente (`Mode.Extras`) para a GUI marcar como extra, nunca misturado em silêncio com o comportamento 1:1.
 
-## 4. Interface `org.nitrosense.Daemon1.Mode`
+## 4. Interface `io.github.fnndk.Nitrod1.Mode`
 
 Nomes são os do `platform_profile` (o que o daemon escreve). Mapeamento Acer: `quiet`=Quiet, `balanced`=Balanced, `balanced-performance`=Performance, `performance`=Turbo, `low-power`=Eco.
 
@@ -89,7 +89,7 @@ Nomes são os do `platform_profile` (o que o daemon escreve). Mapeamento Acer: `
 - `low-power` nunca na tomada.
 - O daemon guarda o último perfil escolhido **por fonte** (`mode_ac`, `mode_battery`) e reaplica na troca. Se o perfil atual ficar proibido (ex.: Turbo e o cabo sai), troca para o guardado da outra fonte, ou `balanced`.
 
-## 5. Interface `org.nitrosense.Daemon1.Fans`
+## 5. Interface `io.github.fnndk.Nitrod1.Fans`
 
 | Membro | Tipo | Descrição |
 |---|---|---|
@@ -99,7 +99,7 @@ Nomes são os do `platform_profile` (o que o daemon escreve). Mapeamento Acer: `
 
 `rpm` é relido a cada 5 s (leitura do EC, ~0,2 ms). `mode`/`speed` custam chamadas WMI (`pwmN_enable` ~16 ms, `pwmN` ~7 ms por fan no ANV15-52), então são relidos só após cada escrita, no resume e a cada 60 s (para pegar outro processo escrevendo no hwmon). As amostras do Monitor leem só o RPM.
 
-## 6. Interface `org.nitrosense.Daemon1.Monitor`
+## 6. Interface `io.github.fnndk.Nitrod1.Monitor`
 
 | Membro | Tipo | Descrição |
 |---|---|---|
@@ -124,7 +124,7 @@ Sem assinantes o daemon **não** amostra (NVML e RAPL custam CPU).
 
 **A dGPU nunca é acordada para ser monitorada.** Com runtime PM (Optimus), qualquer consulta NVML/`nvidia-smi` tira a GPU do D3cold: no ANV15-52 isso leva ~2 s, gasta ~1,4 s de CPU de kernel no driver e deixa a placa ligada (1–10 W) enquanto as consultas continuarem. O daemon lê `power/runtime_status` do dispositivo PCI NVIDIA antes de cada amostra; fora de `active`, a amostra traz só `gpu: {active: false}`. Com a GPU já acordada por outro processo, consulta normalmente. Fans e bateria nas amostras: só RPM (EC) e `power_supply`; a temperatura da bateria (WMI) é relida no máximo a cada 30 s.
 
-## 7. Interface `org.nitrosense.Daemon1.Lighting`
+## 7. Interface `io.github.fnndk.Nitrod1.Lighting`
 
 | Membro | Tipo | Descrição |
 |---|---|---|
@@ -134,7 +134,7 @@ Sem assinantes o daemon **não** amostra (NVML e RAPL custam CPU).
 
 `on` muda pela tecla Fn; o daemon relê `kbd_backlight_state` a cada 2 s enquanto a GUI está na tela de iluminação (o cliente chama `Subscribe` do Monitor) e emite `PropertiesChanged`.
 
-## 8. Interface `org.nitrosense.Daemon1.Battery`
+## 8. Interface `io.github.fnndk.Nitrod1.Battery`
 
 | Membro | Tipo | Descrição |
 |---|---|---|
@@ -147,7 +147,7 @@ Sem assinantes o daemon **não** amostra (NVML e RAPL custam CPU).
 | método `StopCalibration()` | | — |
 | método `SetUsbCharging(u percent)` | | só valores de `capabilities.usb_charging`; polkit `settings` |
 
-## 9. Interface `org.nitrosense.Daemon1.Scenarios`
+## 9. Interface `io.github.fnndk.Nitrod1.Scenarios`
 
 Renomeada de `Profiles` para não colidir com os perfis térmicos (`platform_profile`).
 
@@ -171,7 +171,7 @@ kbd_timeout_s: u
 apps: as              # basenames de executáveis (App Sync)
 ```
 
-Armazenamento em `/var/lib/nitrosense/scenarios.json` (global ao sistema, já que o daemon é do sistema). `Save` valida contra o hardware (perfis do firmware, ids e faixa dos fans, timeouts do teclado; chave desconhecida ⇒ `InvalidArgument`) e normaliza `apps` para basenames em minúsculas (`C:\Games\Foo.exe` → `foo.exe`).
+Armazenamento em `/var/lib/nitrod/scenarios.json` (global ao sistema, já que o daemon é do sistema). `Save` valida contra o hardware (perfis do firmware, ids e faixa dos fans, timeouts do teclado; chave desconhecida ⇒ `InvalidArgument`) e normaliza `apps` para basenames em minúsculas (`C:\Games\Foo.exe` → `foo.exe`).
 
 **Semântica (implementada 2026-10-12).**
 - `Apply` grava os modos e os fans do cenário no estado guardado (§11), então troca de fonte, resume e boot seguem o cenário; o modo aplicado agora é o da fonte atual (com `Fallback` se não for permitido). `Active` passa ao nome.
@@ -182,18 +182,18 @@ Armazenamento em `/var/lib/nitrosense/scenarios.json` (global ao sistema, já qu
 
 ## 10. Autorização (polkit)
 
-Duas ações, em `/usr/share/polkit-1/actions/org.nitrosense.daemon.policy`:
+Duas ações, em `/usr/share/polkit-1/actions/io.github.fnndk.nitrod.policy`:
 
 | Ação | Cobre | Padrão |
 |---|---|---|
-| `org.nitrosense.daemon.control` | `Mode.Set/Cycle`, `Fans.*`, `Lighting.*`, `Scenarios.*`, `System.Reload` | `allow_active=yes`, `allow_inactive=no`, `allow_any=auth_admin` |
-| `org.nitrosense.daemon.settings` | `Battery.SetChargeLimit`, `Start/StopCalibration`, `SetUsbCharging` | `allow_active=auth_admin_keep`, demais `auth_admin` |
+| `io.github.fnndk.nitrod.control` | `Mode.Set/Cycle`, `Fans.*`, `Lighting.*`, `Scenarios.*`, `System.Reload` | `allow_active=yes`, `allow_inactive=no`, `allow_any=auth_admin` |
+| `io.github.fnndk.nitrod.settings` | `Battery.SetChargeLimit`, `Start/StopCalibration`, `SetUsbCharging` | `allow_active=auth_admin_keep`, demais `auth_admin` |
 
-Motivo da divisão: trocar modo e fan é ação corriqueira (a tecla Nitro faz isso sem senha); limite de carga, calibração e USB charging persistem no EC e afetam a máquina desligada. Leituras e `Monitor.Subscribe` não passam por polkit. Política D-Bus em `/usr/share/dbus-1/system.d/org.nitrosense.Daemon1.conf`: só root possui o nome; qualquer usuário pode enviar.
+Motivo da divisão: trocar modo e fan é ação corriqueira (a tecla Nitro faz isso sem senha); limite de carga, calibração e USB charging persistem no EC e afetam a máquina desligada. Leituras e `Monitor.Subscribe` não passam por polkit. Política D-Bus em `/usr/share/dbus-1/system.d/io.github.fnndk.Nitrod1.conf`: só root possui o nome; qualquer usuário pode enviar.
 
 ## 11. Comportamento do daemon
 
-- **Boot/resume.** Restaura só o que não vive no EC: perfil térmico (por fonte de energia) e o modo dos fans. Timeout, USB charging e limite de carga ficam no EC e são apenas lidos. Fans em `manual` **não** são restaurados no boot (risco de ventoinha baixa sob carga); voltam a `auto` e o daemon registra no log. No resume, reaplica o perfil e relê tudo. Estado em `/var/lib/nitrosense/state.json`.
+- **Boot/resume.** Restaura só o que não vive no EC: perfil térmico (por fonte de energia) e o modo dos fans. Timeout, USB charging e limite de carga ficam no EC e são apenas lidos. Fans em `manual` **não** são restaurados no boot (risco de ventoinha baixa sob carga); voltam a `auto` e o daemon registra no log. No resume, reaplica o perfil e relê tudo. Estado em `/var/lib/nitrod/state.json`.
 - **AC/bateria.** uevents do kernel por netlink (`NETLINK_KOBJECT_UEVENT`, grupo 1, filtro `SUBSYSTEM=power_supply`; sem libudev) com releitura de segurança a cada 30 s; a cada evento recalcula `Allowed`, reaplica o perfil guardado da fonte e emite `PropertiesChanged` em `Mode`.
 - **Tecla Nitro.** No app original a tecla **abre o app**; ciclar modos é do "Mode Switch Key" de outros modelos. Abrir um app não cabe a um serviço de sistema, então: o daemon lê `KEY_PROG1` por evdev (teclado interno, sem grab, reabre se o dispositivo sumir) e a ação é a opção `--nitro-key`: `cycle` (padrão enquanto não há GUI: `Mode.Cycle()` sem polkit) ou `none` (a GUI/tray registra o atalho no desktop e abre o app, 1:1). Quando a GUI existir, o padrão passa a `none`.
 - **Convivência com `tuned-ppd`/`power-profiles-daemon` (decidido 2026-10-12).** O daemon escreve **direto** em `platform_profile` e mantém o PPD sincronizado nos dois sentidos. A seleção completa (5 modos) fica no nosso app; o PPD só tem 3 perfis, então o mapeamento é muitos-para-um na ida e resolvido pela fonte de energia na volta.
@@ -228,7 +228,7 @@ Motivo da divisão: trocar modo e fan é ação corriqueira (a tecla Nitro faz i
 - **Leituras corrompidas.** Chamadas WMI concorrentes de processos diferentes corrompem respostas (ver `firmware-wmi.md` §9). O daemon serializa as suas com um mutex e, numa mudança externa de perfil, só age se o valor for um nome conhecido e se repetir numa segunda leitura 150 ms depois.
 - **Mudanças externas** nos fans (outro programa no hwmon) aparecem em `Fans.State` em até 5 s.
 - **Log** em journald; `--dry-run` (não escreve) e `--simulate <modelo>` (backends falsos com capacidades fixas, para desenvolver GUI sem hardware).
-- Unit `nitrosensed.service`: `Type=dbus`, `BusName=org.nitrosense.Daemon1`, `After=acer-wmi-modules.service`, `ProtectSystem=strict` com `ReadWritePaths=/sys /var/lib/nitrosense`, `DeviceAllow=/dev/input/event* r`, `CapabilityBoundingSet=CAP_NET_ADMIN` (connector) — a refinar quando o esqueleto existir.
+- Unit `nitrod.service`: `Type=dbus`, `BusName=io.github.fnndk.Nitrod1`, `After=acer-wmi-modules.service`, `ProtectSystem=strict` com `ReadWritePaths=/sys /var/lib/nitrod`, `DeviceAllow=/dev/input/event* r`, `CapabilityBoundingSet=CAP_NET_ADMIN` (connector) — a refinar quando o esqueleto existir.
 
 ## 12. Mudanças em relação ao v0
 

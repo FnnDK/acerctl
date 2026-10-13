@@ -1,4 +1,4 @@
-# nitrosense-linux — notas para o assistente
+# nitroctl — notas para o assistente
 
 Projeto: NitroSense/PredatorSense (Acer) para Linux, coexistindo com o `acer_wmi` in-tree. **Leia `STATUS.md` primeiro** (estado, feito, próximo passo, backlog, comandos) e depois as seções citadas de `docs/firmware-wmi.md`.
 

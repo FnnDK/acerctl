@@ -1,4 +1,4 @@
-// Package service exports the org.nitrosense.Daemon1 object on D-Bus and
+// Package service exports the io.github.fnndk.Nitrod1 object on D-Bus and
 // implements the daemon behaviour described in docs/api-dbus.md.
 package service
 
@@ -15,18 +15,18 @@ import (
 	"github.com/godbus/dbus/v5/introspect"
 	"github.com/godbus/dbus/v5/prop"
 
-	"nitrosense/daemon/internal/appsync"
-	"nitrosense/daemon/internal/hw"
-	"nitrosense/daemon/internal/monitor"
-	"nitrosense/daemon/internal/ppd"
-	"nitrosense/daemon/internal/rules"
-	"nitrosense/daemon/internal/scenarios"
-	"nitrosense/daemon/internal/state"
+	"nitroctl/daemon/internal/appsync"
+	"nitroctl/daemon/internal/hw"
+	"nitroctl/daemon/internal/monitor"
+	"nitroctl/daemon/internal/ppd"
+	"nitroctl/daemon/internal/rules"
+	"nitroctl/daemon/internal/scenarios"
+	"nitroctl/daemon/internal/state"
 )
 
 const (
-	busName     = "org.nitrosense.Daemon1"
-	objPath     = dbus.ObjectPath("/org/nitrosense/Daemon1")
+	busName     = "io.github.fnndk.Nitrod1"
+	objPath     = dbus.ObjectPath("/io/github/fnndk/Nitrod1")
 	ifSystem    = busName + ".System"
 	ifMode      = busName + ".Mode"
 	ifFans      = busName + ".Fans"
@@ -127,7 +127,7 @@ func (d *Daemon) Run(ctx context.Context) error {
 	if err := d.export(); err != nil {
 		return err
 	}
-	slog.Info("nitrosensed ready", "bus", map[bool]string{true: "session", false: "system"}[d.cfg.Session],
+	slog.Info("nitrod ready", "bus", map[bool]string{true: "session", false: "system"}[d.cfg.Session],
 		"version", d.cfg.Version)
 
 	go d.refreshLoop(ctx)

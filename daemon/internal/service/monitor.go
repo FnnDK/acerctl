@@ -15,7 +15,7 @@ type subscriber struct {
 	stop     chan struct{}
 }
 
-// ---- org.nitrosense.Daemon1.Monitor ----------------------------------------
+// ---- io.github.fnndk.Nitrod1.Monitor ----------------------------------------
 
 type monitorIface struct{ d *Daemon }
 

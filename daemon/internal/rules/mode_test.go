@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"nitrosense/daemon/internal/hw"
+	"nitroctl/daemon/internal/hw"
 )
 
 var anv15 = []string{"low-power", "quiet", "balanced", "balanced-performance"}
