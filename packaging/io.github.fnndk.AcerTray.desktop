@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
 Name=Nitro Control Center (tray)
-Comment=Tray icon and Nitro key agent of nitroctl; exits when not needed
-Exec=/usr/local/bin/nitro-tray
+Comment=Tray icon and Nitro key agent of acerctl; exits when not needed
+Exec=/usr/local/bin/acer-tray
 Icon=io.github.fnndk.NitroControlCenter
 NoDisplay=true
 X-GNOME-Autostart-enabled=true

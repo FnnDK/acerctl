@@ -8,13 +8,13 @@ import (
 
 	"github.com/godbus/dbus/v5"
 
-	"nitroctl/daemon/internal/appsync"
-	"nitroctl/daemon/internal/rules"
-	"nitroctl/daemon/internal/scenarios"
-	"nitroctl/daemon/internal/state"
+	"acerctl/daemon/internal/appsync"
+	"acerctl/daemon/internal/rules"
+	"acerctl/daemon/internal/scenarios"
+	"acerctl/daemon/internal/state"
 )
 
-// ---- io.github.fnndk.Nitrod1.Scenarios --------------------------------------
+// ---- io.github.fnndk.Acerd1.Scenarios --------------------------------------
 
 type scenariosIface struct{ d *Daemon }
 

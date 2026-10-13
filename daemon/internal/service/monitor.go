@@ -15,7 +15,7 @@ type subscriber struct {
 	stop     chan struct{}
 }
 
-// ---- io.github.fnndk.Nitrod1.Monitor ----------------------------------------
+// ---- io.github.fnndk.Acerd1.Monitor ----------------------------------------
 
 type monitorIface struct{ d *Daemon }
 

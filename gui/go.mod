@@ -1,11 +1,11 @@
-module nitroctl/gui
+module acerctl/gui
 
 go 1.27
 
 require (
 	github.com/godbus/dbus/v5 v5.2.3
 	github.com/wailsapp/wails/v2 v2.16.0
-	nitroctl/daemon v0.0.0
+	acerctl/daemon v0.0.0
 )
 
 require (
@@ -38,4 +38,4 @@ require (
 	golang.org/x/text v0.39.0 // indirect
 )
 
-replace nitroctl/daemon => ../daemon
+replace acerctl/daemon => ../daemon

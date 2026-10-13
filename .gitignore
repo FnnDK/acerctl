@@ -15,6 +15,6 @@ modules.order
 __pycache__/
 *.pyc
 # daemon build output
-daemon/nitrod
-daemon/nitroctl
-daemon/nitro-tray
+daemon/acerd
+daemon/acerctl
+daemon/acer-tray

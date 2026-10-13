@@ -1,12 +1,12 @@
-# nitrod
+# acerd
 
-Go daemon that exposes `io.github.fnndk.Nitrod1` on the system bus and applies the rules of `docs/api-dbus.md` on top of `platform-profile`, hwmon `acer`, `acer-wmi-extras`, `acer-wmi-battery` and `power_supply`. Clients (GUI, CLI, tray) only speak D-Bus.
+Go daemon that exposes `io.github.fnndk.Acerd1` on the system bus and applies the rules of `docs/api-dbus.md` on top of `platform-profile`, hwmon `acer`, `acer-wmi-extras`, `acer-wmi-battery` and `power_supply`. Clients (GUI, CLI, tray) only speak D-Bus.
 
 ## Layout
 
 ```
-cmd/nitrod/      main: flags, probe or simulation, stop signal
-cmd/nitroctl/   CLI: status, caps, monitor, mode, fan, kbd, battery, usb-charging,
+cmd/acerd/      main: flags, probe or simulation, stop signal
+cmd/acerctl/   CLI: status, caps, monitor, mode, fan, kbd, battery, usb-charging,
                       scenario, appsync, reload (--json on every read)
 client/               public D-Bus client (CLI now, GUI/tray later): constants,
                       typed errors (NotAllowed etc.), Monitor Subscribe
@@ -17,7 +17,7 @@ internal/service/     D-Bus object: properties (godbus/prop), methods, polkit,
                       watchers (sysfs, AC/battery, PPD), Monitor with unicast signals
 internal/monitor/     CPU/GPU/fans/RAM/network/battery sample
 internal/ppd/         net.hadess.PowerProfiles client (tuned-ppd)
-internal/state/       /var/lib/nitrod/state.json (mode per source, fans, active scenario,
+internal/state/       /var/lib/acerd/state.json (mode per source, fans, active scenario,
                       App Sync and snapshot to revert)
 internal/scenarios/   scenarios: format, validation, scenarios.json, app index
 internal/appsync/     proc connector (exec/exit), matching by comm/argv, active user
@@ -26,11 +26,11 @@ internal/appsync/     proc connector (exec/exit), matching by comm/argv, active 
 ## Developing without root
 
 ```bash
-cd daemon && go test ./... && go build ./cmd/nitrod
-./nitrod --session --simulate ANV15-52 --state /tmp/ns-state.json   # no hardware
-./nitrod --session --dry-run --state /tmp/ns-state.json             # real hardware, read-only
-busctl --user introspect io.github.fnndk.Nitrod1 /io/github/fnndk/Nitrod1
-busctl --user call io.github.fnndk.Nitrod1 /io/github/fnndk/Nitrod1 io.github.fnndk.Nitrod1.Mode Set s quiet
+cd daemon && go test ./... && go build ./cmd/acerd
+./acerd --session --simulate ANV15-52 --state /tmp/ns-state.json   # no hardware
+./acerd --session --dry-run --state /tmp/ns-state.json             # real hardware, read-only
+busctl --user introspect io.github.fnndk.Acerd1 /io/github/fnndk/Acerd1
+busctl --user call io.github.fnndk.Acerd1 /io/github/fnndk/Acerd1 io.github.fnndk.Acerd1.Mode Set s quiet
 ```
 
 `--session` uses the session bus and disables polkit; `--dry-run` logs the writes instead of performing them. Without PPD on the session bus, syncing is disabled (it shows up in the log).
@@ -38,13 +38,13 @@ busctl --user call io.github.fnndk.Nitrod1 /io/github/fnndk/Nitrod1 io.github.fn
 ## CLI
 
 ```bash
-nitroctl                       # status
-nitroctl monitor -i 1000       # live sensors
-nitroctl mode quiet            # eco|low-power, quiet, balanced, balanced-performance, turbo|performance
-nitroctl fan gpu 60            # manual; auto|max too; id all
-nitroctl scenario save Game --from-current --mode-ac balanced-performance --fan cpu=max --app eldenring.exe
-nitroctl appsync on
-nitroctl --json status         # for scripts
+acerctl                       # status
+acerctl monitor -i 1000       # live sensors
+acerctl mode quiet            # eco|low-power, quiet, balanced, balanced-performance, turbo|performance
+acerctl fan gpu 60            # manual; auto|max too; id all
+acerctl scenario save Game --from-current --mode-ac balanced-performance --fan cpu=max --app eldenring.exe
+acerctl appsync on
+acerctl --json status         # for scripts
 ```
 
 The names are the `platform_profile` ones; Acer's "Performance" mode is `balanced-performance` and "Turbo" is `performance`. Daemon refusals exit with the daemon's reason and code 1; usage errors exit with code 2. `--session` talks to a development daemon on the session bus.
@@ -56,7 +56,7 @@ sh packaging/install-daemon.sh build                      # in the container (ha
 distrobox-host-exec sudo sh packaging/install-daemon.sh   # on the host (has root)
 ```
 
-Installs `nitrod` and `nitroctl` into `/usr/local/bin`, `/etc/dbus-1/system.d`, `/usr/local/share/polkit-1/actions` and `/etc/systemd/system`, and enables `nitrod.service` (ordered after `acer-wmi-modules.service` and tuned).
+Installs `acerd` and `acerctl` into `/usr/local/bin`, `/etc/dbus-1/system.d`, `/usr/local/share/polkit-1/actions` and `/etc/systemd/system`, and enables `acerd.service` (ordered after `acer-wmi-modules.service` and tuned).
 
 ## Still missing (see STATUS.md)
 

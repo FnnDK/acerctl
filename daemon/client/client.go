@@ -1,4 +1,4 @@
-// Package client talks to nitrod over D-Bus (docs/api-dbus.md). It is
+// Package client talks to acerd over D-Bus (docs/api-dbus.md). It is
 // shared by the CLI and, later, the GUI and tray; it holds no policy of its
 // own: the daemon validates and explains every refusal.
 package client
@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	BusName = "io.github.fnndk.Nitrod1"
-	ObjPath = dbus.ObjectPath("/io/github/fnndk/Nitrod1")
+	BusName = "io.github.fnndk.Acerd1"
+	ObjPath = dbus.ObjectPath("/io/github/fnndk/Acerd1")
 
 	IfSystem    = BusName + ".System"
 	IfMode      = BusName + ".Mode"
@@ -48,7 +48,7 @@ func Connect(session bool) (*Client, error) {
 	var has bool
 	if err := conn.BusObject().Call("org.freedesktop.DBus.NameHasOwner", 0, BusName).Store(&has); err != nil || !has {
 		conn.Close()
-		return nil, errors.New("nitrod is not running (systemctl status nitrod)")
+		return nil, errors.New("acerd is not running (systemctl status acerd)")
 	}
 	return &Client{conn: conn, obj: conn.Object(BusName, ObjPath)}, nil
 }

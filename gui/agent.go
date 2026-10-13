@@ -6,18 +6,18 @@ import (
 
 	"github.com/godbus/dbus/v5"
 
-	"nitroctl/daemon/client"
-	"nitroctl/daemon/usercfg"
+	"acerctl/daemon/client"
+	"acerctl/daemon/usercfg"
 )
 
-// The session agent (nitro-tray) shows the tray icon and opens this app on
+// The session agent (acer-tray) shows the tray icon and opens this app on
 // the Nitro key. It starts at login (XDG autostart) and exits when neither
 // is wanted; the GUI tells it about changes and starts it when needed.
 
 const (
-	agentName   = "io.github.fnndk.NitroTray"
-	agentPath   = dbus.ObjectPath("/io/github/fnndk/NitroTray")
-	agentBinary = "nitro-tray"
+	agentName   = "io.github.fnndk.AcerTray"
+	agentPath   = dbus.ObjectPath("/io/github/fnndk/AcerTray")
+	agentBinary = "acer-tray"
 )
 
 // TrayShown tells whether the tray icon is on (user setting).

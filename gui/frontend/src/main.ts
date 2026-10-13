@@ -70,7 +70,7 @@ document.addEventListener('visibilitychange', monitorPolicy)
 const overlay = el(`<div class="overlay hidden"><div class="box">
   ${mark}
   <h2 style="margin:6px 0 0">${t('conn.title')}</h2>
-  <p class="muted" style="margin:0">${t('conn.hint')} <code>systemctl status nitrod</code></p>
+  <p class="muted" style="margin:0">${t('conn.hint')} <code>systemctl status acerd</code></p>
   <p class="small faint" data-err style="margin:0"></p>
   <p class="small muted" style="margin:0">${t('conn.retry')}</p>
 </div></div>`)

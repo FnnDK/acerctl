@@ -7,7 +7,7 @@ import (
 
 	"github.com/godbus/dbus/v5"
 
-	"nitroctl/daemon/internal/state"
+	"acerctl/daemon/internal/state"
 )
 
 // resumeDelay gives the firmware, tuned and the power_supply uevents time to

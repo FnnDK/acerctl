@@ -30,17 +30,17 @@ const (
 )
 
 // clientDecorations tells whether the app draws its own title bar.
-// NITROCTL_DECORATIONS=client|server overrides the guess from
+// ACERCTL_DECORATIONS=client|server overrides the guess from
 // XDG_CURRENT_DESKTOP (a colon-separated list, e.g. "KDE" or "ubuntu:GNOME").
 func clientDecorations() bool {
-	switch v := os.Getenv("NITROCTL_DECORATIONS"); v {
+	switch v := os.Getenv("ACERCTL_DECORATIONS"); v {
 	case "client":
 		return true
 	case "server":
 		return false
 	case "":
 	default:
-		fmt.Fprintf(os.Stderr, "nitro-control-center: ignoring NITROCTL_DECORATIONS=%q (client or server)\n", v)
+		fmt.Fprintf(os.Stderr, "nitro-control-center: ignoring ACERCTL_DECORATIONS=%q (client or server)\n", v)
 	}
 	for _, d := range strings.Split(os.Getenv("XDG_CURRENT_DESKTOP"), ":") {
 		switch strings.ToUpper(strings.TrimSpace(d)) {

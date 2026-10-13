@@ -1,4 +1,4 @@
-# nitroctl — notes for the assistant
+# acerctl — notes for the assistant
 
 Project: Acer NitroSense/PredatorSense features on Linux, coexisting with the in-tree `acer_wmi`. **Read `STATUS.md` first** (state, done, next step, backlog, commands), then the sections of `docs/firmware-wmi.md` it cites.
 
@@ -8,6 +8,6 @@ Environment:
 - Build modules on the host: `distrobox-host-exec make -C drivers/<module>`.
 
 Project rules:
-- **English only in the repository.** Everything tracked by git is written in English: code, identifiers, comments, log and error messages, docs (`README.md`, `STATUS.md`, `docs/`, per-directory READMEs), scripts, packaging files and commit messages. The only exception is user-facing translations: the GUI (`gui/frontend/src/i18n.ts`) and the tray (`daemon/cmd/nitro-tray`) keep their Portuguese texts, and desktop/polkit files may carry `[pt_BR]` translations next to the English strings. Conversation with the user can stay in Portuguese.
+- **English only in the repository.** Everything tracked by git is written in English: code, identifiers, comments, log and error messages, docs (`README.md`, `STATUS.md`, `docs/`, per-directory READMEs), scripts, packaging files and commit messages. The only exception is user-facing translations: the GUI (`gui/frontend/src/i18n.ts`) and the tray (`daemon/cmd/acer-tray`) keep their Portuguese texts, and desktop/polkit files may carry `[pt_BR]` translations next to the English strings. Conversation with the user can stay in Portuguese.
 - Do not replace `acer_wmi`; no brand flags (capabilities come from the firmware); probes only with "Get" methods; "Set" only with a validated, reversible format; keep `tuned` on `balanced`.
 - Update `STATUS.md` at the end of each block of work. Commit only when the user asks.

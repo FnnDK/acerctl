@@ -91,7 +91,7 @@ export function settings(): Page {
       key.querySelectorAll<HTMLElement>('button').forEach(b => b.classList.toggle('on', b.dataset.k === s.system?.NitroKey))
 
       const sys = s.system ?? {}, md = sys.Model ?? {}
-      setText(root, '[data-version]', sys.Version ? `nitrod ${sys.Version}` : '')
+      setText(root, '[data-version]', sys.Version ? `acerd ${sys.Version}` : '')
       const mods = Object.entries<string>(md.modules ?? {}).map(([n, v]) => `${n} ${v === 'absent' ? `<span class="faint">(${t('set.absent')})</span>` : esc(v)}`).join(', ')
       const rows: [string, string][] = [
         [t('set.model'), esc([md.vendor, md.product].filter(Boolean).join(' '))],

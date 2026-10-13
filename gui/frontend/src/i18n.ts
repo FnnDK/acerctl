@@ -78,12 +78,12 @@ const pt = {
   'set.disclaimer': 'Projeto independente e de código aberto. Sem vínculo com a Acer; “Nitro” e “Predator” são marcas da Acer Inc., citadas só para identificar o hardware.',
   'set.absent': 'ausente',
 
-  'conn.title': 'Sem conexão com o nitrod', 'conn.retry': 'Tentando de novo…',
+  'conn.title': 'Sem conexão com o acerd', 'conn.retry': 'Tentando de novo…',
   'conn.hint': 'O serviço do sistema precisa estar rodando:',
 
   'err.NotSupported': 'Não suportado neste notebook', 'err.NotAllowed': 'Não permitido agora',
   'err.InvalidArgument': 'Valor inválido', 'err.Hardware': 'Erro do hardware', 'err.AccessDenied': 'Não autorizado',
-  'err.Disconnected': 'Sem conexão com o nitrod', 'err.Other': 'Erro',
+  'err.Disconnected': 'Sem conexão com o acerd', 'err.Other': 'Erro',
   'ok': 'OK', 'cancel': 'Cancelar', 'done': 'Feito',
   'win.minimize': 'Minimizar', 'win.maximize': 'Maximizar', 'win.close': 'Fechar',
 }
@@ -168,12 +168,12 @@ const en: Record<Key, string> = {
   'set.disclaimer': 'Independent open-source project. Not affiliated with Acer; “Nitro” and “Predator” are trademarks of Acer Inc., mentioned only to identify the hardware.',
   'set.absent': 'absent',
 
-  'conn.title': 'Cannot reach nitrod', 'conn.retry': 'Retrying…',
+  'conn.title': 'Cannot reach acerd', 'conn.retry': 'Retrying…',
   'conn.hint': 'The system service must be running:',
 
   'err.NotSupported': 'Not supported on this laptop', 'err.NotAllowed': 'Not allowed right now',
   'err.InvalidArgument': 'Invalid value', 'err.Hardware': 'Hardware error', 'err.AccessDenied': 'Not authorized',
-  'err.Disconnected': 'Cannot reach nitrod', 'err.Other': 'Error',
+  'err.Disconnected': 'Cannot reach acerd', 'err.Other': 'Error',
   'ok': 'OK', 'cancel': 'Cancel', 'done': 'Done',
   'win.minimize': 'Minimize', 'win.maximize': 'Maximize', 'win.close': 'Close',
 }

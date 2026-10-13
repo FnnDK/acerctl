@@ -15,7 +15,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"nitroctl/daemon/client"
+	"acerctl/daemon/client"
 )
 
 // Events sent to the frontend.
@@ -24,7 +24,7 @@ const (
 	evSample = "sample" // one Monitor sample
 )
 
-// App is the bridge between the frontend and nitrod. Every method bound to
+// App is the bridge between the frontend and acerd. Every method bound to
 // the frontend maps to one daemon call; the daemon decides and explains.
 type App struct {
 	ctx     context.Context
@@ -143,7 +143,7 @@ func (a *App) serve(cl *client.Client) {
 				}
 			case "org.freedesktop.DBus.NameOwnerChanged":
 				if len(s.Body) == 3 && s.Body[2] == "" {
-					a.drop(cl, "nitrod stopped")
+					a.drop(cl, "acerd stopped")
 					return
 				}
 			}

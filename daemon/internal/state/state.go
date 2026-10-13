@@ -10,11 +10,11 @@ import (
 	"path/filepath"
 	"sync"
 
-	"nitroctl/daemon/internal/scenarios"
+	"acerctl/daemon/internal/scenarios"
 )
 
 // DefaultPath is where the system daemon keeps its state.
-const DefaultPath = "/var/lib/nitrod/state.json"
+const DefaultPath = "/var/lib/acerd/state.json"
 
 // Fan is the remembered setting of one fan.
 type Fan struct {

@@ -1,4 +1,4 @@
-// Package service exports the io.github.fnndk.Nitrod1 object on D-Bus and
+// Package service exports the io.github.fnndk.Acerd1 object on D-Bus and
 // implements the daemon behaviour described in docs/api-dbus.md.
 package service
 
@@ -15,18 +15,18 @@ import (
 	"github.com/godbus/dbus/v5/introspect"
 	"github.com/godbus/dbus/v5/prop"
 
-	"nitroctl/daemon/internal/appsync"
-	"nitroctl/daemon/internal/hw"
-	"nitroctl/daemon/internal/monitor"
-	"nitroctl/daemon/internal/ppd"
-	"nitroctl/daemon/internal/rules"
-	"nitroctl/daemon/internal/scenarios"
-	"nitroctl/daemon/internal/state"
+	"acerctl/daemon/internal/appsync"
+	"acerctl/daemon/internal/hw"
+	"acerctl/daemon/internal/monitor"
+	"acerctl/daemon/internal/ppd"
+	"acerctl/daemon/internal/rules"
+	"acerctl/daemon/internal/scenarios"
+	"acerctl/daemon/internal/state"
 )
 
 const (
-	busName     = "io.github.fnndk.Nitrod1"
-	objPath     = dbus.ObjectPath("/io/github/fnndk/Nitrod1")
+	busName     = "io.github.fnndk.Acerd1"
+	objPath     = dbus.ObjectPath("/io/github/fnndk/Acerd1")
 	ifSystem    = busName + ".System"
 	ifMode      = busName + ".Mode"
 	ifFans      = busName + ".Fans"
@@ -128,7 +128,7 @@ func (d *Daemon) Run(ctx context.Context) error {
 	if err := d.export(); err != nil {
 		return err
 	}
-	slog.Info("nitrod ready", "bus", map[bool]string{true: "session", false: "system"}[d.cfg.Session],
+	slog.Info("acerd ready", "bus", map[bool]string{true: "session", false: "system"}[d.cfg.Session],
 		"version", d.cfg.Version)
 
 	go d.refreshLoop(ctx)

@@ -1,5 +1,5 @@
-// nitro-control-center is the desktop app of nitroctl: a window over the
-// nitrod D-Bus API (docs/api-dbus.md), with the same rules and errors as the
+// nitro-control-center is the desktop app of acerctl: a window over the
+// acerd D-Bus API (docs/api-dbus.md), with the same rules and errors as the
 // CLI. It holds no hardware logic of its own.
 package main
 
@@ -29,9 +29,9 @@ const appID = "io.github.fnndk.NitroControlCenter"
 const winMargin = 18
 
 func main() {
-	// NITROCTL_SESSION=1 does the same as --session under `wails dev`, whose
+	// ACERCTL_SESSION=1 does the same as --session under `wails dev`, whose
 	// own flag parser rejects unknown flags.
-	session := flag.Bool("session", os.Getenv("NITROCTL_SESSION") == "1", "talk to a daemon on the session bus (development)")
+	session := flag.Bool("session", os.Getenv("ACERCTL_SESSION") == "1", "talk to a daemon on the session bus (development)")
 	minimized := flag.Bool("minimized", false, "start minimized (autostart)")
 	flag.Parse()
 

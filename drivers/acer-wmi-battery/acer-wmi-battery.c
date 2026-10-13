@@ -389,7 +389,7 @@ static struct acpi_battery_hook acer_battery_hook = {
 	.remove_battery	= acer_battery_remove,
 };
 
-/* Announce a health mode change (UPower and nitrod reread on the uevent). */
+/* Announce a health mode change (UPower and acerd reread on the uevent). */
 static void battery_ext_changed(void)
 {
 	mutex_lock(&battery_lock);

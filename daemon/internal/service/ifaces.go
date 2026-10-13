@@ -5,11 +5,11 @@ import (
 
 	"github.com/godbus/dbus/v5"
 
-	"nitroctl/daemon/internal/rules"
-	"nitroctl/daemon/internal/state"
+	"acerctl/daemon/internal/rules"
+	"acerctl/daemon/internal/state"
 )
 
-// ---- io.github.fnndk.Nitrod1.System -----------------------------------------
+// ---- io.github.fnndk.Acerd1.System -----------------------------------------
 
 type systemIface struct{ d *Daemon }
 
@@ -79,7 +79,7 @@ func (d *Daemon) onNitroKey() {
 	}
 }
 
-// ---- io.github.fnndk.Nitrod1.Mode -------------------------------------------
+// ---- io.github.fnndk.Acerd1.Mode -------------------------------------------
 
 type modeIface struct{ d *Daemon }
 
@@ -121,7 +121,7 @@ func (m *modeIface) Cycle(sender dbus.Sender) (string, *dbus.Error) {
 	return next, nil
 }
 
-// ---- io.github.fnndk.Nitrod1.Fans -------------------------------------------
+// ---- io.github.fnndk.Acerd1.Fans -------------------------------------------
 
 type fansIface struct{ d *Daemon }
 
@@ -201,7 +201,7 @@ func (f *fansIface) SetSpeed(sender dbus.Sender, fan string, percent uint32) *db
 	return nil
 }
 
-// ---- io.github.fnndk.Nitrod1.Lighting ---------------------------------------
+// ---- io.github.fnndk.Acerd1.Lighting ---------------------------------------
 
 type lightingIface struct{ d *Daemon }
 
@@ -228,7 +228,7 @@ func (l *lightingIface) SetKeyboardTimeout(sender dbus.Sender, seconds uint32) *
 	return nil
 }
 
-// ---- io.github.fnndk.Nitrod1.Battery ----------------------------------------
+// ---- io.github.fnndk.Acerd1.Battery ----------------------------------------
 
 type batteryIface struct{ d *Daemon }
 

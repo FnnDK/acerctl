@@ -1,10 +1,10 @@
-# D-Bus API of the `nitrod` daemon (v1 draft)
+# D-Bus API of the `acerd` daemon (v1 draft)
 
 Revised on 2026-10-12 from v0, against `docs/firmware-wmi.md` (§1, §4–§8) and the real attributes of `acer_wmi`, `acer-wmi-extras` and `acer-wmi-battery` on the ANV15-52. Changes from v0 and open points at the end of the file.
 
 ## 1. Overview
 
-- **Bus:** system bus. Name `io.github.fnndk.Nitrod1`, object `/io/github/fnndk/Nitrod1`, a single object with several interfaces.
+- **Bus:** system bus. Name `io.github.fnndk.Acerd1`, object `/io/github/fnndk/Acerd1`, a single object with several interfaces.
 - **Reads are D-Bus properties** (`org.freedesktop.DBus.Properties`, with `PropertiesChanged`), so that `busctl`, GUI, CLI and tray use the standard mechanism with no extra code. **Writes are methods**, because they need to validate, apply rules and return an error with a reason.
 - **Capabilities come from the firmware** (§3 below). Every interface exposes only what `Capabilities` lists; the client never assumes a feature from the brand or model. A call to something not listed returns `NotSupported`.
 - **Authorization** through polkit (§10). The daemon runs as root (it needs to write to sysfs and read evdev/RAPL); it never executes anything coming from the client beyond the validated values.
@@ -14,10 +14,10 @@ Revised on 2026-10-12 from v0, against `docs/firmware-wmi.md` (§1, §4–§8) a
 
 | Name | When |
 |---|---|
-| `io.github.fnndk.Nitrod1.Error.NotSupported` | feature missing from `Capabilities` on this hardware |
-| `io.github.fnndk.Nitrod1.Error.NotAllowed` | daemon rule (e.g. `performance` on battery); the message carries the reason as text for the GUI to show |
-| `io.github.fnndk.Nitrod1.Error.InvalidArgument` | value outside the accepted set (e.g. USB 15 %) |
-| `io.github.fnndk.Nitrod1.Error.Hardware` | sysfs/WMI returned an error; message with the `errno` |
+| `io.github.fnndk.Acerd1.Error.NotSupported` | feature missing from `Capabilities` on this hardware |
+| `io.github.fnndk.Acerd1.Error.NotAllowed` | daemon rule (e.g. `performance` on battery); the message carries the reason as text for the GUI to show |
+| `io.github.fnndk.Acerd1.Error.InvalidArgument` | value outside the accepted set (e.g. USB 15 %) |
+| `io.github.fnndk.Acerd1.Error.Hardware` | sysfs/WMI returned an error; message with the `errno` |
 | `org.freedesktop.DBus.Error.AccessDenied` | polkit denied |
 
 ### Source of each piece of data (host)
@@ -39,7 +39,7 @@ Revised on 2026-10-12 from v0, against `docs/firmware-wmi.md` (§1, §4–§8) a
 | RAM, network | `/proc/meminfo`, `/proc/net/dev` (sum of the physical interfaces) | — |
 | Nitro key | evdev `KEY_PROG1` (148) on the internal keyboard (`AT Translated Set 2 keyboard`) | no `EVIOCGRAB`: the desktop still receives the key |
 
-## 2. Interface `io.github.fnndk.Nitrod1.System`
+## 2. Interface `io.github.fnndk.Acerd1.System`
 
 | Member | Type | Description |
 |---|---|---|
@@ -48,7 +48,7 @@ Revised on 2026-10-12 from v0, against `docs/firmware-wmi.md` (§1, §4–§8) a
 | prop `Model` | `a{sv}` | `vendor`, `product`, `bios` (DMI), `kernel`, `modules: a{ss}` (name → version/“absent”), `acer_wmi_caps: u` (effective `force_caps`, if readable) |
 | prop `NitroKey` | `s` | Nitro key action: `app` (the session agent opens the app, as in the original) or `cycle` (the daemon cycles the profile); persisted in `state.json`, default from the `--nitro-key` option |
 | method `SetNitroKey(s action)` | | `app` or `cycle`; `NotSupported` without `capabilities.nitro_key`; polkit `control` |
-| signal `NitroKeyPressed` | `s` | on every press, with the action in effect; the session agent (`nitro-tray`) opens the app when it is `app` and only accepts the signal from the owner of the name `io.github.fnndk.Nitrod1` |
+| signal `NitroKeyPressed` | `s` | on every press, with the action in effect; the session agent (`acer-tray`) opens the app when it is `app` and only accepts the signal from the owner of the name `io.github.fnndk.Acerd1` |
 | method `Reload()` | | reprobe of modules and capabilities (after `insmod`/update); polkit `control` |
 
 ## 3. Capabilities (`System.Capabilities`)
@@ -71,7 +71,7 @@ No Turbo (`performance`) in `profiles` ⇒ the GUI does not even show the button
 
 **Convention for extra features.** Everything the daemon allows beyond the original app's behavior (today only Performance on battery) is exposed separately (`Mode.Extras`) so the GUI can mark it as extra, never silently mixed with the 1:1 behavior.
 
-## 4. Interface `io.github.fnndk.Nitrod1.Mode`
+## 4. Interface `io.github.fnndk.Acerd1.Mode`
 
 Names are the `platform_profile` ones (what the daemon writes). Acer mapping: `quiet`=Quiet, `balanced`=Balanced, `balanced-performance`=Performance, `performance`=Turbo, `low-power`=Eco.
 
@@ -92,7 +92,7 @@ Names are the `platform_profile` ones (what the daemon writes). Acer mapping: `q
 - `low-power` never on AC.
 - The daemon keeps the last chosen profile **per source** (`mode_ac`, `mode_battery`) and reapplies it on a switch. If the current profile becomes forbidden (e.g. Turbo and the cable is unplugged), it switches to the one saved for the other source, or `balanced`.
 
-## 5. Interface `io.github.fnndk.Nitrod1.Fans`
+## 5. Interface `io.github.fnndk.Acerd1.Fans`
 
 | Member | Type | Description |
 |---|---|---|
@@ -102,7 +102,7 @@ Names are the `platform_profile` ones (what the daemon writes). Acer mapping: `q
 
 `rpm` is reread every 5 s (EC read, ~0.2 ms). `mode`/`speed` cost WMI calls (`pwmN_enable` ~16 ms, `pwmN` ~7 ms per fan on the ANV15-52), so they are reread only after each write, on resume and every 60 s (to catch another process writing to hwmon). Monitor samples read only the RPM.
 
-## 6. Interface `io.github.fnndk.Nitrod1.Monitor`
+## 6. Interface `io.github.fnndk.Acerd1.Monitor`
 
 | Member | Type | Description |
 |---|---|---|
@@ -127,7 +127,7 @@ With no subscribers the daemon does **not** sample (NVML and RAPL cost CPU).
 
 **The dGPU is never woken up to be monitored.** With runtime PM (Optimus), any NVML/`nvidia-smi` query takes the GPU out of D3cold: on the ANV15-52 this takes ~2 s, spends ~1.4 s of kernel CPU in the driver and leaves the card on (1–10 W) for as long as the queries continue. The daemon reads `power/runtime_status` of the NVIDIA PCI device before each sample; outside `active`, the sample carries only `gpu: {active: false}`. With the GPU already woken by another process, it queries normally. Fans and battery in the samples: only RPM (EC) and `power_supply`; the battery temperature (WMI) is reread at most every 30 s.
 
-## 7. Interface `io.github.fnndk.Nitrod1.Lighting`
+## 7. Interface `io.github.fnndk.Acerd1.Lighting`
 
 | Member | Type | Description |
 |---|---|---|
@@ -137,7 +137,7 @@ With no subscribers the daemon does **not** sample (NVML and RAPL cost CPU).
 
 `on` changes via the Fn key; the daemon rereads `kbd_backlight_state` every 2 s while the GUI is on the lighting screen (the client calls the Monitor's `Subscribe`) and emits `PropertiesChanged`.
 
-## 8. Interface `io.github.fnndk.Nitrod1.Battery`
+## 8. Interface `io.github.fnndk.Acerd1.Battery`
 
 | Member | Type | Description |
 |---|---|---|
@@ -150,7 +150,7 @@ With no subscribers the daemon does **not** sample (NVML and RAPL cost CPU).
 | method `StopCalibration()` | | — |
 | method `SetUsbCharging(u percent)` | | only values from `capabilities.usb_charging`; polkit `settings` |
 
-## 9. Interface `io.github.fnndk.Nitrod1.Scenarios`
+## 9. Interface `io.github.fnndk.Acerd1.Scenarios`
 
 Renamed from `Profiles` to avoid clashing with the thermal profiles (`platform_profile`).
 
@@ -174,7 +174,7 @@ kbd_timeout_s: u
 apps: as              # executable basenames (App Sync)
 ```
 
-Stored in `/var/lib/nitrod/scenarios.json` (system-wide, since the daemon is a system one). `Save` validates against the hardware (firmware profiles, fan ids and range, keyboard timeouts; unknown key ⇒ `InvalidArgument`) and normalizes `apps` to lowercase basenames (`C:\Games\Foo.exe` → `foo.exe`).
+Stored in `/var/lib/acerd/scenarios.json` (system-wide, since the daemon is a system one). `Save` validates against the hardware (firmware profiles, fan ids and range, keyboard timeouts; unknown key ⇒ `InvalidArgument`) and normalizes `apps` to lowercase basenames (`C:\Games\Foo.exe` → `foo.exe`).
 
 **Semantics (implemented 2026-10-12).**
 - `Apply` writes the scenario's modes and fans into the saved state (§11), so source switches, resume and boot follow the scenario; the mode applied now is the one for the current source (with `Fallback` if it is not allowed). `Active` becomes the name.
@@ -185,21 +185,21 @@ Stored in `/var/lib/nitrod/scenarios.json` (system-wide, since the daemon is a s
 
 ## 10. Authorization (polkit)
 
-Two actions, in `/usr/share/polkit-1/actions/io.github.fnndk.nitrod.policy`:
+Two actions, in `/usr/share/polkit-1/actions/io.github.fnndk.acerd.policy`:
 
 | Action | Covers | Default |
 |---|---|---|
-| `io.github.fnndk.nitrod.control` | `Mode.Set/Cycle`, `Fans.*`, `Lighting.*`, `Scenarios.*`, `System.Reload` | `allow_active=yes`, `allow_inactive=no`, `allow_any=auth_admin` |
-| `io.github.fnndk.nitrod.settings` | `Battery.SetChargeLimit`, `Start/StopCalibration`, `SetUsbCharging` | `allow_active=auth_admin_keep`, others `auth_admin` |
+| `io.github.fnndk.acerd.control` | `Mode.Set/Cycle`, `Fans.*`, `Lighting.*`, `Scenarios.*`, `System.Reload` | `allow_active=yes`, `allow_inactive=no`, `allow_any=auth_admin` |
+| `io.github.fnndk.acerd.settings` | `Battery.SetChargeLimit`, `Start/StopCalibration`, `SetUsbCharging` | `allow_active=auth_admin_keep`, others `auth_admin` |
 
-Reason for the split: switching mode and fan is an everyday action (the Nitro key does it without a password); charge limit, calibration and USB charging persist in the EC and affect the machine while it is off. Reads and `Monitor.Subscribe` do not go through polkit. D-Bus policy in `/usr/share/dbus-1/system.d/io.github.fnndk.Nitrod1.conf`: only root owns the name; any user can send.
+Reason for the split: switching mode and fan is an everyday action (the Nitro key does it without a password); charge limit, calibration and USB charging persist in the EC and affect the machine while it is off. Reads and `Monitor.Subscribe` do not go through polkit. D-Bus policy in `/usr/share/dbus-1/system.d/io.github.fnndk.Acerd1.conf`: only root owns the name; any user can send.
 
 ## 11. Daemon behavior
 
-- **Boot/resume.** Restores only what does not live in the EC: thermal profile (per power source) and fan mode. Timeout, USB charging and charge limit live in the EC and are only read. Fans in `manual` are **not** restored at boot (risk of a slow fan under load); they go back to `auto` and the daemon logs it. On resume, it reapplies the profile and rereads everything. State in `/var/lib/nitrod/state.json`.
+- **Boot/resume.** Restores only what does not live in the EC: thermal profile (per power source) and fan mode. Timeout, USB charging and charge limit live in the EC and are only read. Fans in `manual` are **not** restored at boot (risk of a slow fan under load); they go back to `auto` and the daemon logs it. On resume, it reapplies the profile and rereads everything. State in `/var/lib/acerd/state.json`.
 - **AC/battery.** Kernel uevents via netlink (`NETLINK_KOBJECT_UEVENT`, group 1, filter `SUBSYSTEM=power_supply`; no libudev) with a safety reread every 30 s; on each event it recalculates `Allowed`, reapplies the profile saved for the source and emits `PropertiesChanged` on `Mode`.
-- **Nitro key.** In the original app the key **opens the app**; cycling modes belongs to the "Mode Switch Key" of other models. The daemon reads `KEY_PROG1` via evdev (internal keyboard, no grab, reopens if the device disappears), emits `System.NitroKeyPressed` and, in `cycle`, calls `Mode.Cycle()` without polkit. Opening an app is not a system service's job: in `app`, the session agent `nitro-tray` opens it (XDG autostart; the GUI is single-instance, so opening it again only brings the window forward). The choice is `System.SetNitroKey` (GUI: Settings → Nitro key); `--nitro-key` only sets the default (`cycle`; `none` is a synonym for `app`).
-- **Session agent (`nitro-tray`).** Tray icon (StatusNotifierItem; on GNOME, the AppIndicator extension) with quick modes, fans at max, scenarios and App Sync, and the Nitro key's "open the app". It starts at login and exits on its own when the icon is off (`~/.config/nitroctl/settings.json`, `tray_hidden`) and the key is set to `cycle`; the GUI notifies it of changes (`io.github.fnndk.NitroTray.Reload` on the session bus) and starts it when it becomes needed.
+- **Nitro key.** In the original app the key **opens the app**; cycling modes belongs to the "Mode Switch Key" of other models. The daemon reads `KEY_PROG1` via evdev (internal keyboard, no grab, reopens if the device disappears), emits `System.NitroKeyPressed` and, in `cycle`, calls `Mode.Cycle()` without polkit. Opening an app is not a system service's job: in `app`, the session agent `acer-tray` opens it (XDG autostart; the GUI is single-instance, so opening it again only brings the window forward). The choice is `System.SetNitroKey` (GUI: Settings → Nitro key); `--nitro-key` only sets the default (`cycle`; `none` is a synonym for `app`).
+- **Session agent (`acer-tray`).** Tray icon (StatusNotifierItem; on GNOME, the AppIndicator extension) with quick modes, fans at max, scenarios and App Sync, and the Nitro key's "open the app". It starts at login and exits on its own when the icon is off (`~/.config/acerctl/settings.json`, `tray_hidden`) and the key is set to `cycle`; the GUI notifies it of changes (`io.github.fnndk.AcerTray.Reload` on the session bus) and starts it when it becomes needed.
 - **Coexistence with `tuned-ppd`/`power-profiles-daemon` (decided 2026-10-12).** The daemon writes **directly** to `platform_profile` and keeps PPD in sync both ways. The full selection (5 modes) lives in our app; PPD has only 3 profiles, so the mapping is many-to-one going out and resolved by the power source coming back.
 
   Facts about tuned-ppd 2.28 (Fedora 44): PPD `power-saver` → tuned `powersave` → `platform_profile=low-power|quiet` (the first one present in `choices`); `balanced` → `balanced`; `performance` → `throughput-performance` → `performance` (= Turbo) plus governor etc. On battery, PPD `balanced` becomes `balanced-battery`, with no `[acpi]` section; when switching profiles tuned **restores** the value it read when applying the previous one. With `sysfs_acpi_monitor=true` it watches the file through inotify and, if another process writes `low-power`/`balanced`/`performance`, switches `ActiveProfile` to follow; it ignores `quiet` and `balanced-performance`.
@@ -232,7 +232,7 @@ Reason for the split: switching mode and fan is an everyday action (the Nitro ke
 - **Corrupted reads.** Concurrent WMI calls from different processes corrupt responses (see `firmware-wmi.md` §9). The daemon serializes its own with a mutex and, on an external profile change, only acts if the value is a known name and repeats in a second read 150 ms later.
 - **External changes** to the fans (another program on hwmon) show up in `Fans.State` within 5 s.
 - **Logging** to journald; `--dry-run` (does not write) and `--simulate <model>` (fake backends with fixed capabilities, for developing the GUI without hardware).
-- Unit `nitrod.service`: `Type=dbus`, `BusName=io.github.fnndk.Nitrod1`, `After=acer-wmi-modules.service`, `ProtectSystem=strict` with `ReadWritePaths=/sys /var/lib/nitrod`, `DeviceAllow=/dev/input/event* r`, `CapabilityBoundingSet=CAP_NET_ADMIN` (connector) — to be refined once the skeleton exists.
+- Unit `acerd.service`: `Type=dbus`, `BusName=io.github.fnndk.Acerd1`, `After=acer-wmi-modules.service`, `ProtectSystem=strict` with `ReadWritePaths=/sys /var/lib/acerd`, `DeviceAllow=/dev/input/event* r`, `CapabilityBoundingSet=CAP_NET_ADMIN` (connector) — to be refined once the skeleton exists.
 
 ## 12. Changes from v0
 

@@ -1,7 +1,7 @@
-// nitro-tray is the session agent of nitroctl: the tray icon
+// acer-tray is the session agent of acerctl: the tray icon
 // (StatusNotifierItem) with the quick modes, and the process that opens the
 // app when the Nitro key is set to "app" (a system service cannot start
-// desktop apps; nitrod sends System.NitroKeyPressed). It exits when neither
+// desktop apps; acerd sends System.NitroKeyPressed). It exits when neither
 // is wanted: tray icon hidden in the user settings and the key cycling modes.
 package main
 
@@ -21,16 +21,16 @@ import (
 	"fyne.io/systray"
 	"github.com/godbus/dbus/v5"
 
-	"nitroctl/daemon/client"
-	"nitroctl/daemon/usercfg"
+	"acerctl/daemon/client"
+	"acerctl/daemon/usercfg"
 )
 
 //go:embed icon.png
 var iconPNG []byte
 
 const (
-	agentName = "io.github.fnndk.NitroTray"
-	agentPath = dbus.ObjectPath("/io/github/fnndk/NitroTray")
+	agentName = "io.github.fnndk.AcerTray"
+	agentPath = dbus.ObjectPath("/io/github/fnndk/AcerTray")
 	appBinary = "nitro-control-center"
 )
 
@@ -38,7 +38,7 @@ const (
 var allProfiles = []string{"low-power", "quiet", "balanced", "balanced-performance", "performance"}
 
 func main() {
-	session := flag.Bool("session", os.Getenv("NITROCTL_SESSION") == "1", "talk to a daemon on the session bus (development)")
+	session := flag.Bool("session", os.Getenv("ACERCTL_SESSION") == "1", "talk to a daemon on the session bus (development)")
 	flag.Parse()
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, nil)))
 
@@ -127,7 +127,7 @@ func (a *agent) exitIfIdle() {
 
 // ---- daemon ----------------------------------------------------------------
 
-// daemonLoop keeps a connection to nitrod, reconnecting when it restarts.
+// daemonLoop keeps a connection to acerd, reconnecting when it restarts.
 // Without the tray icon, giving up after a while is fine: nothing to show.
 func (a *agent) daemonLoop() {
 	failures := 0
@@ -136,7 +136,7 @@ func (a *agent) daemonLoop() {
 		if err != nil {
 			a.setClient(nil)
 			if failures++; a.menu == nil && failures > 15 {
-				slog.Info("nitrod unreachable, exiting", "err", err)
+				slog.Info("acerd unreachable, exiting", "err", err)
 				return
 			}
 			time.Sleep(2 * time.Second)
@@ -173,7 +173,7 @@ func (a *agent) serve(cl *client.Client) {
 	conn.Signal(sigs)
 	_ = conn.AddMatchSignal(dbus.WithMatchObjectPath(client.ObjPath),
 		dbus.WithMatchInterface("org.freedesktop.DBus.Properties"), dbus.WithMatchMember("PropertiesChanged"))
-	// Only nitrod itself may send the key press (the bus resolves the name to its owner).
+	// Only acerd itself may send the key press (the bus resolves the name to its owner).
 	_ = conn.AddMatchSignal(dbus.WithMatchSender(client.BusName), dbus.WithMatchObjectPath(client.ObjPath),
 		dbus.WithMatchInterface(client.IfSystem), dbus.WithMatchMember("NitroKeyPressed"))
 	_ = conn.AddMatchSignal(dbus.WithMatchSender("org.freedesktop.DBus"),
@@ -478,7 +478,7 @@ var texts = map[string][2]string{ // en, pt
 	"scenarios":    {"Scenarios", "Cenários"},
 	"appsync_hint": {"Apply scenarios when their apps run", "Aplicar cenários quando os apps deles abrirem"},
 	"quit":         {"Hide until next login", "Ocultar até o próximo login"},
-	"disconnected": {"nitrod is not running", "nitrod não está rodando"},
+	"disconnected": {"acerd is not running", "acerd não está rodando"},
 	"extra":        {"extra", "extra"},
 	"ac":           {"on AC", "na tomada"},
 	"battery":      {"on battery", "na bateria"},
@@ -492,7 +492,7 @@ var texts = map[string][2]string{ // en, pt
 	"err.InvalidArgument": {"Invalid value", "Valor inválido"},
 	"err.Hardware":        {"Hardware error", "Erro do hardware"},
 	"err.AccessDenied":    {"Not authorized", "Não autorizado"},
-	"err.Disconnected":    {"nitrod is not running", "nitrod não está rodando"},
+	"err.Disconnected":    {"acerd is not running", "acerd não está rodando"},
 }
 
 func tr(k string) string {

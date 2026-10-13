@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"nitroctl/daemon/internal/hw"
+	"acerctl/daemon/internal/hw"
 )
 
 var anv15 = []string{"low-power", "quiet", "balanced", "balanced-performance"}

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"testing"
 
-	"nitroctl/daemon/internal/scenarios"
+	"acerctl/daemon/internal/scenarios"
 )
 
 // datagram builds one netlink message carrying a proc_event.

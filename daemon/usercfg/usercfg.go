@@ -1,5 +1,5 @@
 // Package usercfg is the per-user settings file shared by the GUI and the
-// session agent (nitro-tray): ~/.config/nitroctl/settings.json. System-wide
+// session agent (acer-tray): ~/.config/acerctl/settings.json. System-wide
 // choices (the Nitro key action) live in the daemon instead.
 package usercfg
 
@@ -21,7 +21,7 @@ func Path() string {
 	if err != nil {
 		dir = filepath.Join(os.Getenv("HOME"), ".config")
 	}
-	return filepath.Join(dir, "nitroctl", "settings.json")
+	return filepath.Join(dir, "acerctl", "settings.json")
 }
 
 // Load reads the settings; errors give the defaults.

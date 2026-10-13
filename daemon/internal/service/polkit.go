@@ -6,10 +6,10 @@ import (
 	"github.com/godbus/dbus/v5"
 )
 
-// polkit action ids (packaging/io.github.fnndk.nitrod.policy).
+// polkit action ids (packaging/io.github.fnndk.acerd.policy).
 const (
-	actionControl  = "io.github.fnndk.nitrod.control"
-	actionSettings = "io.github.fnndk.nitrod.settings"
+	actionControl  = "io.github.fnndk.acerd.control"
+	actionSettings = "io.github.fnndk.acerd.settings"
 )
 
 type polkitSubject struct {

@@ -1,4 +1,4 @@
-// nitrod is the nitroctl daemon: it owns io.github.fnndk.Nitrod1 on the
+// acerd is the acerctl daemon: it owns io.github.fnndk.Acerd1 on the
 // system bus and drives the kernel interfaces described in docs/api-dbus.md.
 package main
 
@@ -12,10 +12,10 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"nitroctl/daemon/internal/hw"
-	"nitroctl/daemon/internal/scenarios"
-	"nitroctl/daemon/internal/service"
-	"nitroctl/daemon/internal/state"
+	"acerctl/daemon/internal/hw"
+	"acerctl/daemon/internal/scenarios"
+	"acerctl/daemon/internal/service"
+	"acerctl/daemon/internal/state"
 )
 
 // Version is set by the build (-ldflags "-X main.Version=...").
@@ -63,7 +63,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	if err := service.New(cfg, h, st, sc).Run(ctx); err != nil {
-		slog.Error("nitrod", "err", err)
+		slog.Error("acerd", "err", err)
 		os.Exit(1)
 	}
 }

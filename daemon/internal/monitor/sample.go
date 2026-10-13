@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"nitroctl/daemon/internal/hw"
+	"acerctl/daemon/internal/hw"
 )
 
 // maxGPUPowerW is the sanity bound for GPU power readings.

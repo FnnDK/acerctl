@@ -4,7 +4,7 @@
 // See docs/api-dbus.md §4 and §11.
 package rules
 
-import "nitroctl/daemon/internal/hw"
+import "acerctl/daemon/internal/hw"
 
 // TurboMinPercent is the battery charge required for performance (Turbo)
 // on AC and, as an extra, balanced-performance on battery.

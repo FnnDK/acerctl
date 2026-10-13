@@ -1,4 +1,4 @@
-module nitroctl/daemon
+module acerctl/daemon
 
 go 1.27
 
