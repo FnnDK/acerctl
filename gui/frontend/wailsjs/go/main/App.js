@@ -6,6 +6,10 @@ export function ApplyScenario(arg1) {
   return window['go']['main']['App']['ApplyScenario'](arg1);
 }
 
+export function ApplySetup(arg1) {
+  return window['go']['main']['App']['ApplySetup'](arg1);
+}
+
 export function Autostart() {
   return window['go']['main']['App']['Autostart']();
 }
@@ -32,6 +36,10 @@ export function Minimise() {
 
 export function Monitor(arg1) {
   return window['go']['main']['App']['Monitor'](arg1);
+}
+
+export function Reboot() {
+  return window['go']['main']['App']['Reboot']();
 }
 
 export function Reload() {

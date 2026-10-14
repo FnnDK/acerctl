@@ -83,6 +83,8 @@ options acer_wmi predator_v4=1 force_caps=0x1C26
 
 Before enabling `platform-profile`, check the `tuned`/`power-profiles-daemon` profile: Linux's `performance` mode maps to Acer's Turbo, which not every model has. Then `acerctl status` shows what the daemon found and `acerctl help` lists the commands.
 
+From the next release on, the app does this for you: when it opens, it lists what is left (the `acer_wmi` option, enrolling the akmods key for Secure Boot) and applies it with one password and one restart.
+
 ## What it does
 
 - **Operating modes** (Eco, Quiet, Balanced, Performance, Turbo), limited to the profiles the firmware supports, with the original app's AC/battery rules and sync with the desktop's `power-profiles-daemon`/`tuned`.

@@ -50,6 +50,8 @@ Revised on 2026-10-12 from v0, against `docs/firmware-wmi.md` (§1, §4–§8) a
 | method `SetSenseKey(s action)` | | `app` or `cycle`; `NotSupported` without `capabilities.sense_key`, and for `cycle` on models without thermal profiles (there the effective action is always `app`); polkit `control` |
 | signal `SenseKeyPressed` | `s` | on every press, with the action in effect; the session agent (`acer-tray`) opens the app when it is `app` and only accepts the signal from the owner of the name `io.github.fnndk.Acerd1` |
 | method `Reload()` | | reprobe of modules and capabilities (after `insmod`/update); polkit `control` |
+| prop `Setup` | `aa{sv}` | system changes still to make, read from the system on each start, `Reload` and `ApplySetup`: `id: s` (`acer_wmi`: the firmware reports thermal profiles through `acer-wmi-extras` but `acer_wmi` exposes none; `signing_key`: Secure Boot refuses the modules and the akmods key is not enrolled; `modules`: `acer-wmi-extras` not loaded for another reason), `state: s` (`needed`: `ApplySetup` does it; `reboot`: done, takes effect at the next boot; `manual`: the user has to act, `detail` says why: `missing`, `notloaded`, `nokey`, `nomokutil`), `detail: s` (for `acer_wmi`, the options it writes: `predator_v4=1`, plus `force_caps` on models where a value was validated). Empty when nothing is left |
+| method `ApplySetup(as ids)` | `→ s` | applies items in the `needed` state (`signing_key` also in `reboot`, replacing the pending request): `acer_wmi` writes `/etc/modprobe.d/acerctl.conf`, `signing_key` runs `mokutil --import` on the existing akmods key (none is ever created) with a fresh two-digit code and returns it (the firmware asks for it at the next boot; `""` otherwise). Nothing is loaded or reloaded: both take effect after a restart. polkit `setup` (password every time) |
 
 ## 3. Capabilities (`System.Capabilities`)
 
@@ -187,11 +189,12 @@ Stored in `/var/lib/acerd/scenarios.json` (system-wide, since the daemon is a sy
 
 ## 10. Authorization (polkit)
 
-Two actions, in `/usr/share/polkit-1/actions/io.github.fnndk.acerd.policy`:
+Three actions, in `/usr/share/polkit-1/actions/io.github.fnndk.acerd.policy`:
 
 | Action | Covers | Default |
 |---|---|---|
 | `io.github.fnndk.acerd.control` | `Mode.Set/Cycle`, `Fans.*`, `Lighting.*`, `Scenarios.*`, `System.Reload` | `allow_active=yes`, `allow_inactive=no`, `allow_any=auth_admin` |
+| `io.github.fnndk.acerd.setup` | `System.ApplySetup` | `auth_admin` everywhere (never kept) |
 | `io.github.fnndk.acerd.settings` | `Battery.SetChargeLimit`, `Start/StopCalibration`, `SetUsbCharging` | `allow_active=auth_admin_keep`, others `auth_admin` |
 
 Reason for the split: switching mode and fan is an everyday action (the Sense key does it without a password); charge limit, calibration and USB charging persist in the EC and affect the machine while it is off. Reads and `Monitor.Subscribe` do not go through polkit. D-Bus policy in `/usr/share/dbus-1/system.d/io.github.fnndk.Acerd1.conf`: only root owns the name; any user can send.

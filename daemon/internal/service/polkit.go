@@ -10,6 +10,7 @@ import (
 const (
 	actionControl  = "io.github.fnndk.acerd.control"
 	actionSettings = "io.github.fnndk.acerd.settings"
+	actionSetup    = "io.github.fnndk.acerd.setup"
 )
 
 type polkitSubject struct {

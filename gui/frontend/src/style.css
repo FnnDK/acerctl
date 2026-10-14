@@ -353,6 +353,16 @@ input[type=range]:disabled { opacity: .4; }
 .dialog { width: min(620px, 92vw); max-height: 88vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
 .dialog h2 { margin: 0 0 16px; font-size: 18px; }
 .dialog .foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.setup-items { border-top: 1px solid var(--border); }
+.setup-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.setup-item > svg { width: 20px; height: 20px; flex: none; margin-top: 1px; color: var(--muted); }
+.setup-item.needed > svg { color: var(--warn); }
+.setup-item.reboot > svg { color: var(--ok); }
+.setup-item p { margin: 2px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.setup-code { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; margin-top: 12px; }
+.setup-code span { color: var(--muted); font-size: 13px; }
+.setup-code b { font-size: 28px; letter-spacing: 3px; }
+.setup-steps { margin: 14px 0 0; padding-left: 20px; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .field { display: grid; gap: 6px; margin-bottom: 14px; }
 .field > span { color: var(--muted); font-size: 13px; }
 .fan-edit { display: grid; grid-template-columns: 150px 1fr 90px; gap: 10px; align-items: center; margin-bottom: 8px; }

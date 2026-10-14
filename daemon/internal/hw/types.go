@@ -127,6 +127,7 @@ type Hardware struct {
 	Battery    BatteryInfo
 	GPU        GPU
 	SenseKey   bool
+	Setup      Setup // system changes the app can make (setup.go)
 }
 
 // Capabilities builds the System.Capabilities dictionary from what was

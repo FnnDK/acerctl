@@ -167,6 +167,7 @@ func (d *Daemon) export() error {
 			"Capabilities": {Value: variants(d.hw.Capabilities()), Emit: prop.EmitTrue},
 			"Model":        {Value: variants(d.hw.Model), Emit: prop.EmitTrue},
 			"SenseKey":     {Value: d.senseKey(), Emit: prop.EmitTrue},
+			"Setup":        {Value: d.setupItems(), Emit: prop.EmitTrue},
 		},
 		ifMode: {
 			"Current":        {Value: d.current, Emit: prop.EmitTrue},

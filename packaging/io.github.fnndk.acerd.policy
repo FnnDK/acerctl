@@ -31,4 +31,19 @@
       <allow_active>auth_admin_keep</allow_active>
     </defaults>
   </action>
+
+  <!-- System setup from the app: the acer_wmi option in /etc/modprobe.d and
+       the enrollment of the akmods key in the firmware (Secure Boot). Both
+       change how the machine boots: always ask, never remember. -->
+  <action id="io.github.fnndk.acerd.setup">
+    <description>Configure the system for acerctl</description>
+    <description xml:lang="pt_BR">Configurar o sistema para o acerctl</description>
+    <message>Authentication is required to change the boot configuration (acer_wmi options, Secure Boot key)</message>
+    <message xml:lang="pt_BR">É necessário autenticar para alterar a configuração de boot (opções do acer_wmi, chave do Secure Boot)</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin</allow_active>
+    </defaults>
+  </action>
 </policyconfig>

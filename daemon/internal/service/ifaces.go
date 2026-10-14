@@ -28,6 +28,7 @@ func (s *systemIface) Reload(sender dbus.Sender) *dbus.Error {
 	d.readInitial()
 	d.setProp(ifMode, "Current", d.current)
 	d.refreshLights()
+	d.refreshSetup()
 	return nil
 }
 

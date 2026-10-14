@@ -49,6 +49,7 @@ func Probe() *Hardware {
 		h.GPU = gateRuntimePM(g) // nvidia-smi fallback
 	}
 	h.SenseKey = probeSenseKey()
+	h.Setup = realSetup{}
 	slog.Info("probe done", "caps", h.Capabilities())
 	return h
 }

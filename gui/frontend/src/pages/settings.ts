@@ -1,4 +1,5 @@
 import { App, act, caps, el, esc, setText, switchHtml, useF } from '../core'
+import { openSetup, setupItems, setupPending } from '../setup'
 import { savedLang, setLang, t, type Lang } from '../i18n'
 // App icon, same file the installer puts in the icon theme.
 import iconNitro from '../../../../assets/logo/n-icon-cut.svg'
@@ -18,6 +19,7 @@ export function settings(): Page {
       <div class="setting" data-key-row><div class="label"><b>${t('set.key')}</b><span>${t('set.key_hint')}</span></div>
         <div class="seg" data-key><button data-k="app">${t('set.key_app')}</button><button data-k="cycle">${t('set.key_cycle')}</button></div></div>
       <div class="setting"><div class="label"><b>${t('set.reload')}</b><span>${t('set.reload_hint')}</span></div><button class="btn" data-reload>${t('set.reload')}</button></div>
+      <div class="setting hidden" data-setup-row><div class="label"><b>${t('set.setup')}</b><span data-setup-hint></span></div><button class="btn" data-setup>${t('set.setup_open')}</button></div>
     </div>
     <div class="card mt">
       <h2>${t('set.app')}</h2>
@@ -46,6 +48,7 @@ export function settings(): Page {
     if (b && !b.classList.contains('on')) act(App.SetUsbCharging(Number(b.dataset.p)))
   }
   ;(root.querySelector('[data-reload]') as HTMLElement).onclick = () => act(App.Reload(), t('done'))
+  ;(root.querySelector('[data-setup]') as HTMLElement).onclick = () => openSetup()
 
   const units = root.querySelector('[data-units]') as HTMLElement
   const markUnits = () => units.querySelectorAll<HTMLElement>('button').forEach(b => b.classList.toggle('on', (b.dataset.u === 'F') === useF()))
@@ -92,6 +95,9 @@ export function settings(): Page {
         usb.innerHTML = vals.map(v => `<button data-p="${v}">${v === 0 ? t('set.usb_off') : t('set.usb_until', v)}</button>`).join('')
       }
       usb.querySelectorAll<HTMLElement>('button').forEach(b => b.classList.toggle('on', Number(b.dataset.p) === s.battery?.UsbCharging))
+
+      root.querySelector('[data-setup-row]')!.classList.toggle('hidden', !setupItems().length)
+      setText(root, '[data-setup-hint]', setupPending() ? t('set.setup_pending') : t('set.setup_reboot'))
 
       root.querySelector('[data-key-row]')!.classList.toggle('hidden', !caps().sense_key)
       // without thermal profiles the key can only open the app

@@ -4,6 +4,8 @@ import {main} from '../models';
 
 export function ApplyScenario(arg1:string):Promise<void>;
 
+export function ApplySetup(arg1:Array<string>):Promise<string>;
+
 export function Autostart():Promise<boolean>;
 
 export function Close():Promise<void>;
@@ -17,6 +19,8 @@ export function Lang():Promise<string>;
 export function Minimise():Promise<void>;
 
 export function Monitor(arg1:number):Promise<void>;
+
+export function Reboot():Promise<void>;
 
 export function Reload():Promise<void>;
 

@@ -4,6 +4,7 @@ import { lang, savedLang, setLang, t, type Lang } from './i18n'
 import { icon, mark } from './icons'
 import type { Page } from './widgets'
 import { titlebar } from './titlebar'
+import { openSetup, setupPending } from './setup'
 import { appName, brand } from './flavor'
 import { home } from './pages/home'
 import { monitor } from './pages/monitor'
@@ -103,8 +104,11 @@ function chrome(s: State) {
   pp.classList.toggle('hidden', !m.PowerSource)
 }
 
+let setupShown = false
 onState(s => {
   chrome(s)
+  // once per start, while acerd reports something to do
+  if (s.connected && !setupShown && setupPending()) { setupShown = true; openSetup() }
   if (current) {
     const nav = NAV.find(n => n.id === current)
     if (nav?.show && !nav.show()) go('home')

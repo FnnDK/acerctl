@@ -26,6 +26,7 @@ func main() {
 		session  = flag.Bool("session", false, "use the session bus instead of the system bus (development)")
 		noPolkit = flag.Bool("no-polkit", false, "skip polkit authorization (development)")
 		dryRun   = flag.Bool("dry-run", false, "log sysfs writes instead of performing them")
+		simSetup = flag.Bool("simulate-setup", false, "with --simulate: pretend the system setup (acer_wmi option, Secure Boot key) is still to do")
 		simulate = flag.String("simulate", "", "simulate a model instead of probing the hardware: ANV15-52, or the Predators PHN16-72 (4-zone keyboard, logo) and PH16-71 (USB keyboard, light bar)")
 		statePth = flag.String("state", state.DefaultPath, "state file")
 		senseKey = flag.String("sense-key", "cycle", "default action of the Sense key until one is chosen over D-Bus: cycle (thermal profile) or app (the session agent opens the app; 'none' is an alias)")
@@ -51,6 +52,9 @@ func main() {
 		if h, err = hw.Simulate(*simulate); err != nil {
 			slog.Error("simulate", "err", err)
 			os.Exit(2)
+		}
+		if *simSetup {
+			h.Setup = hw.SimSetup()
 		}
 		slog.Info("simulating", "model", *simulate)
 	} else {

@@ -320,6 +320,38 @@ func (a *App) SetAppSync(on bool) error { return a.call(client.IfScenarios, "Set
 
 func (a *App) Reload() error { return a.call(client.IfSystem, "Reload") }
 
+// ApplySetup makes the system changes listed in System.Setup (polkit asks
+// for the password) and returns the one-time code of the firmware's key
+// enrollment screen, or "" when no key was enrolled.
+func (a *App) ApplySetup(ids []string) (string, error) {
+	cl, err := a.client()
+	if err != nil {
+		return "", err
+	}
+	var code string
+	if err := cl.Call(client.IfSystem, "ApplySetup", []interface{}{&code}, ids); err != nil {
+		return "", uiError(err)
+	}
+	return code, nil
+}
+
+// Reboot asks logind to restart the machine, for the setup to take effect.
+// Against a development daemon (session bus) it only logs.
+func (a *App) Reboot() error {
+	if a.session {
+		runtime.LogInfo(a.ctx, "session bus: not rebooting")
+		return nil
+	}
+	conn, err := dbus.ConnectSystemBus()
+	if err != nil {
+		return uiError(err)
+	}
+	defer conn.Close()
+	call := conn.Object("org.freedesktop.login1", "/org/freedesktop/login1").
+		Call("org.freedesktop.login1.Manager.Reboot", dbus.FlagAllowInteractiveAuthorization, true)
+	return uiError(call.Err)
+}
+
 // FanSetting is one fan inside a scenario.
 type FanSetting struct {
 	Mode  string `json:"mode"`
