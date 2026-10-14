@@ -5,8 +5,8 @@
 # host, so the two steps run in different places:
 #   sh packaging/install-daemon.sh build                        # in the container
 #   distrobox-host-exec sudo sh packaging/install-daemon.sh     # on the host
-# The default (all) builds when go is available and otherwise installs the
-# binary already built by the first step.
+# The default (all) builds when go and the sources are there (not in a release
+# binary archive) and otherwise installs the binary already built.
 set -eu
 R=$(cd "$(dirname "$0")/.." && pwd)
 BIN=/usr/local/bin/acerd
@@ -85,7 +85,7 @@ case "${1:-all}" in
   build) build ;;
   install) install_all ;;
   all)
-    if command -v go >/dev/null 2>&1; then
+    if command -v go >/dev/null 2>&1 && [ -f "$R/daemon/go.mod" ]; then
       build
     elif [ -x "$R/daemon/acerd" ]; then
       echo "go not found here; installing the binary built earlier ($("$R/daemon/acerd" --version))"

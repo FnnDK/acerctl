@@ -26,3 +26,5 @@ ec-hid-probe-*.txt
 keywatch-*.txt
 # local dev server config for the GUI preview
 .claude/launch.json
+# tools/release.sh output
+dist/
