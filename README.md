@@ -28,17 +28,30 @@ acerctl works **by complementing the in-tree `acer_wmi` driver** instead of repl
 - **Scenarios** combining mode, fans and keyboard, and **App Sync**, which applies a scenario when a game or program starts (including through Wine/Proton) and restores the previous state when it exits.
 - **Sense key** (the AcerSense/NitroSense/PredatorSense button) opening the app or cycling the modes; state restored at boot and after suspend.
 
-## Nitro Control Center
+## Screenshots
 
-![Dashboard](docs/screenshots/home.png)
+### Acer Control Center
+
+![Dashboard](docs/screenshots/acer/home.png)
 
 | | |
 |---|---|
-| ![Monitor](docs/screenshots/monitor.png) | ![Fans](docs/screenshots/fans.png) |
-| ![Battery](docs/screenshots/battery.png) | ![Scenarios](docs/screenshots/scenarios.png) |
-| ![Lighting](docs/screenshots/lighting.png) | ![Settings](docs/screenshots/settings.png) |
+| ![Monitor](docs/screenshots/acer/monitor.png) | ![Battery](docs/screenshots/acer/battery.png) |
+| ![Settings](docs/screenshots/acer/settings.png) | |
 
-<sub>Screenshots taken with the daemon in simulated mode (`acerd --simulate ANV15-52`).</sub>
+<sub>Aspire AG15-71P, real machine with the daemon in read-only mode (`acerd --dry-run`). Its firmware has no operating modes, fans or keyboard backlight, so those screens and cards do not show up.</sub>
+
+### Nitro Control Center
+
+![Dashboard](docs/screenshots/nitro/home.png)
+
+| | |
+|---|---|
+| ![Monitor](docs/screenshots/nitro/monitor.png) | ![Fans](docs/screenshots/nitro/fans.png) |
+| ![Battery](docs/screenshots/nitro/battery.png) | ![Scenarios](docs/screenshots/nitro/scenarios.png) |
+| ![Lighting](docs/screenshots/nitro/lighting.png) | ![Settings](docs/screenshots/nitro/settings.png) |
+
+<sub>Daemon in simulated mode (`acerd --simulate ANV15-52`).</sub>
 
 The app uses its own dark theme, with an integrated title bar that follows GNOME's button order and icons, and texts in Portuguese and English.
 
