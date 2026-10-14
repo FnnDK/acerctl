@@ -30,9 +30,12 @@ type Data struct {
 	// Scenario is the active scenario ("" once something is changed by hand).
 	Scenario string `json:"scenario,omitempty"`
 	AppSync  bool   `json:"app_sync,omitempty"`
-	// NitroKey is the chosen action of the Nitro key ("app" or "cycle");
-	// empty means the --nitro-key default.
-	NitroKey string `json:"nitro_key,omitempty"`
+	// SenseKey is the chosen action of the Sense key ("app" or "cycle");
+	// empty means the --sense-key default.
+	SenseKey string `json:"sense_key,omitempty"`
+	// LegacyNitroKey is SenseKey as saved before the rename (2026-10-13);
+	// Load moves it over.
+	LegacyNitroKey string `json:"nitro_key,omitempty"`
 	// While App Sync holds a scenario: what to go back to and which
 	// scenario it applied (if Scenario differs, the user took over).
 	SyncRevert  *scenarios.Scenario `json:"app_sync_revert,omitempty"`
@@ -59,6 +62,12 @@ func Load(path string) *Store {
 	if err := json.Unmarshal(b, &s.Data); err != nil {
 		slog.Warn("state: ignoring corrupt file", "path", path, "err", err)
 		s.Data = Data{}
+	}
+	if s.Data.LegacyNitroKey != "" {
+		if s.Data.SenseKey == "" {
+			s.Data.SenseKey = s.Data.LegacyNitroKey
+		}
+		s.Data.LegacyNitroKey = ""
 	}
 	return s
 }

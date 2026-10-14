@@ -12,6 +12,8 @@ export function DeleteScenario(arg1:string):Promise<void>;
 
 export function IsMaximised():Promise<boolean>;
 
+export function Lang():Promise<string>;
+
 export function Minimise():Promise<void>;
 
 export function Monitor(arg1:number):Promise<void>;
@@ -32,9 +34,11 @@ export function SetFanSpeed(arg1:string,arg2:number):Promise<void>;
 
 export function SetKeyboardTimeout(arg1:number):Promise<void>;
 
+export function SetLang(arg1:string):Promise<void>;
+
 export function SetMode(arg1:string):Promise<void>;
 
-export function SetNitroKey(arg1:string):Promise<void>;
+export function SetSenseKey(arg1:string):Promise<void>;
 
 export function SetTrayShown(arg1:boolean):Promise<void>;
 

@@ -26,7 +26,7 @@ acerctl works **by complementing the in-tree `acer_wmi` driver** instead of repl
 - **Battery:** 80 % charge limit, calibration, health, cycles, temperature, voltage and current.
 - **Keyboard:** backlight auto-off timeout. **USB:** charge devices while the laptop is off.
 - **Scenarios** combining mode, fans and keyboard, and **App Sync**, which applies a scenario when a game or program starts (including through Wine/Proton) and restores the previous state when it exits.
-- **Nitro key** cycling the modes; state restored at boot and after suspend.
+- **Sense key** (the NitroSense/AcerSense button) opening the app or cycling the modes; state restored at boot and after suspend.
 
 ## Nitro Control Center
 
@@ -52,7 +52,7 @@ The app uses its own dark theme, with an integrated title bar that follows GNOME
 | [Div-Acer-Manager-Max](https://github.com/PXDiv/Div-Acer-Manager-Max) (GUI + daemon on top of Linuwu-Sense) | Thermal profiles adjusted to AC/battery, auto/manual fans, LCD overdrive, backlight timeout, boot animation and sound toggle, live system info. |
 | [predator-sense](https://github.com/wobqqq/predator-sense) (CLI + DKMS on top of Linuwu-Sense) | Thermal profiles, Turbo button as an on/off toggle, auto/max/manual fans per fan, temperature and RPM readout, 80 % charge limit and calibration, RGB keyboard (zones, effects, brightness), USB charging while off, backlight timeout, Fn+F4 fix. |
 | Acer NitroSense / PredatorSense (Windows only) | Operating modes with AC/battery rules, auto/max/custom fans, system monitor and widget, battery health (80 % limit, calibration), RGB/keyboard lighting where present, USB charging while off, boot sound, LCD overdrive, CPU/GPU overclocking on some models, scenarios and App Sync, Nitro/Predator key. |
-| **acerctl** (this project: companion modules + `acerd` + Nitro Control Center + CLI, alongside `acer_wmi`) | Operating modes limited to what the firmware reports, with the original app's AC/battery rules and `power-profiles-daemon`/`tuned` sync; auto/max/manual fans per fan; monitor (temperatures, usage, clocks, power, RPM, RAM, network) without waking the dGPU; 80 % charge limit (shared with GNOME), calibration, health; backlight timeout; USB charging while off; scenarios and App Sync (Wine/Proton aware); configurable Nitro key; tray; CLI; state restored at boot and after suspend. Not yet: RGB, boot sound, LCD overdrive, overclocking. |
+| **acerctl** (this project: companion modules + `acerd` + Nitro Control Center + CLI, alongside `acer_wmi`) | Operating modes limited to what the firmware reports, with the original app's AC/battery rules and `power-profiles-daemon`/`tuned` sync; auto/max/manual fans per fan; monitor (temperatures, usage, clocks, power, RPM, RAM, network) without waking the dGPU; 80 % charge limit (shared with GNOME), calibration, health; backlight timeout; USB charging while off; scenarios and App Sync (Wine/Proton aware); configurable Sense key; tray; CLI; state restored at boot and after suspend. Not yet: RGB, boot sound, LCD overdrive, overclocking. |
 
 <sub>Third-party features as listed in each project's README (October 2026).</sub>
 

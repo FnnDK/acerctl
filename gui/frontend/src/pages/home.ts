@@ -1,4 +1,4 @@
-import { App, act, blockedReason, el, esc, fmtRate, gib, num, profileName, profiles, setText, state, tempNum, tempUnit, type Dict } from '../core'
+import { App, act, blockedReason, caps, el, esc, fanIds, fmtRate, gib, num, profileName, profiles, setText, state, tempNum, tempUnit, type Dict } from '../core'
 import { t } from '../i18n'
 import { icon, profileIcon } from '../icons'
 import { gaugeHtml, setGauge, type Page } from '../widgets'
@@ -33,19 +33,19 @@ export function bindModes(host: HTMLElement) {
 export function home(): Page {
   const root = el(`<section>
     <div class="page-head"><div><h1>${t('home.title')}</h1><p data-model></p></div></div>
-    <div class="card"><h2>${t('home.mode')}</h2><div class="modes" data-modes></div></div>
-    <div class="card mt"><div class="grid g4">
+    <div class="card" data-mode-card><h2>${t('home.mode')}</h2><div class="modes" data-modes></div></div>
+    <div class="card mt" data-gauge-card><div class="grid g4" data-gauge-grid>
       ${gaugeHtml('cpuT', t('home.cpu_temp'))}${gaugeHtml('gpuT', t('home.gpu_temp'))}
       ${gaugeHtml('cpuF', t('home.cpu_fan'))}${gaugeHtml('gpuF', t('home.gpu_fan'))}
     </div></div>
-    <div class="grid tiles mt">
+    <div class="grid tiles mt" data-tiles>
       <div class="card"><div class="tile-head">${icon('cpu')}<b>CPU</b></div>
         <div class="stats">
           <div class="stat"><span class="k">${t('home.usage')}</span><span class="v" data-cpu-use>–</span></div>
           <div class="stat"><span class="k">${t('home.freq')}</span><span class="v" data-cpu-freq>–</span></div>
           <div class="stat"><span class="k">${t('home.power')}</span><span class="v" data-cpu-pow>–</span></div>
         </div></div>
-      <div class="card"><div class="tile-head">${icon('gpu')}<b>GPU</b><span class="badge hidden" data-gpu-sleep>${t('home.gpu_sleep')}</span></div>
+      <div class="card" data-gpu-tile><div class="tile-head">${icon('gpu')}<b>GPU</b><span class="badge hidden" data-gpu-sleep>${t('home.gpu_sleep')}</span></div>
         <div class="stats" data-gpu-stats>
           <div class="stat"><span class="k">${t('home.usage')}</span><span class="v" data-gpu-use>–</span></div>
           <div class="stat"><span class="k">${t('home.clock')}</span><span class="v" data-gpu-clk>–</span></div>
@@ -69,6 +69,30 @@ export function home(): Page {
   const v = (n: string, unit: string) => (n === '–' ? n : `${n}<small>${unit}</small>`)
   const setHtml = (sel: string, html: string) => { const n = root.querySelector(sel)!; if (n.innerHTML !== html) n.innerHTML = html }
 
+  // Only what the machine has: no mode card without firmware profiles, no dGPU
+  // gauge/tile without a GPU backend, fan gauges for controllable fans or fans
+  // that report RPM (models whose fans are read-only).
+  const seenFan = new Set<string>()
+  const layout = () => {
+    const hasModes = profiles().length > 0, gpu = !!caps().gpu?.nvml
+    root.querySelector('[data-mode-card]')!.classList.toggle('hidden', !hasModes)
+    root.querySelector('[data-gauge-card]')!.classList.toggle('mt', hasModes)
+    root.querySelector('[data-gpu-tile]')!.classList.toggle('hidden', !gpu)
+    root.querySelector('[data-tiles]')!.classList.toggle('three', !gpu)
+    const show: Record<string, boolean> = {
+      cpuT: true,
+      gpuT: gpu,
+      cpuF: fanIds().includes('cpu') || seenFan.has('cpu'),
+      gpuF: fanIds().includes('gpu') || seenFan.has('gpu'),
+    }
+    let n = 0
+    for (const [k, on] of Object.entries(show)) {
+      root.querySelector(`[data-g="${k}"]`)!.classList.toggle('hidden', !on)
+      if (on) n++
+    }
+    root.querySelector('[data-gauge-grid]')!.className = `grid g${n}`
+  }
+
   return {
     el: root,
     live: true,
@@ -77,10 +101,14 @@ export function home(): Page {
       setText(root, '[data-model]', [md.vendor, md.product].filter(Boolean).join(' '))
       const key = JSON.stringify([s.mode, profiles(), document.documentElement.lang])
       if (key !== modesKey) { modesKey = key; modes.innerHTML = modesHtml() }
+      layout()
     },
     sample(x: Dict) {
       const cpu = x.cpu ?? {}, gpu = x.gpu ?? {}, fans = x.fans ?? {}
       const gpuOn = gpu.active !== false
+      const newFan = ['cpu', 'gpu'].some(id => fans[id] !== undefined && !seenFan.has(id))
+      for (const id of ['cpu', 'gpu']) if (fans[id] !== undefined) seenFan.add(id)
+      if (newFan) layout()
       setGauge(root, 'cpuT', (cpu.temp ?? 0) / 100, tempNum(cpu.temp), tempUnit(), '', cpu.temp >= 90)
       setGauge(root, 'gpuT', gpuOn ? (gpu.temp ?? 0) / 100 : 0, gpuOn ? tempNum(gpu.temp) : '–', gpuOn ? tempUnit() : t('home.gpu_sleep'), '', gpu.temp >= 87)
       rpmMax = Math.max(rpmMax, fans.cpu ?? 0, fans.gpu ?? 0)

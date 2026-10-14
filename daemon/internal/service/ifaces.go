@@ -30,52 +30,57 @@ func (s *systemIface) Reload(sender dbus.Sender) *dbus.Error {
 	return nil
 }
 
-// SetNitroKey chooses what the Nitro key does: "cycle" the thermal profile
-// or "app" (the session agent opens the app on NitroKeyPressed).
-func (s *systemIface) SetNitroKey(sender dbus.Sender, action string) *dbus.Error {
+// SetSenseKey chooses what the Sense key does: "cycle" the thermal profile
+// or "app" (the session agent opens the app on SenseKeyPressed).
+func (s *systemIface) SetSenseKey(sender dbus.Sender, action string) *dbus.Error {
 	d := s.d
-	if !d.hw.NitroKey {
-		return errNotSupported("Nitro key")
+	if !d.hw.SenseKey {
+		return errNotSupported("Sense key")
 	}
 	if action != "app" && action != "cycle" {
-		return errInvalid("nitro key action %q: use app or cycle", action)
+		return errInvalid("sense key action %q: use app or cycle", action)
+	}
+	if action == "cycle" && d.hw.Profiles == nil {
+		return errNotSupported("cycling thermal profiles")
 	}
 	if err := d.authorize(sender, actionControl); err != nil {
 		return err
 	}
-	d.st.Update(func(s *state.Data) { s.NitroKey = action })
-	d.setProp(ifSystem, "NitroKey", action)
+	d.st.Update(func(s *state.Data) { s.SenseKey = action })
+	d.setProp(ifSystem, "SenseKey", action)
 	return nil
 }
 
-// nitroKey is the effective action: the stored choice, else the flag.
-func (d *Daemon) nitroKey() string {
+// senseKey is the effective action: the stored choice, else the flag; "app"
+// on models without thermal profiles (nothing to cycle, e.g. the Aspire
+// AG15-71P), as the key does in the original app.
+func (d *Daemon) senseKey() string {
 	var k string
-	d.st.View(func(s state.Data) { k = s.NitroKey })
+	d.st.View(func(s state.Data) { k = s.SenseKey })
 	if k == "" {
-		k = d.cfg.NitroKey
+		k = d.cfg.SenseKey
 	}
-	if k == "none" {
+	if k == "none" || (k == "cycle" && d.hw.Profiles == nil) {
 		k = "app"
 	}
 	return k
 }
 
-// onNitroKey runs on every press: the signal always goes out (the session
-// agent decides with NitroKey), the cycle only in "cycle" mode.
-func (d *Daemon) onNitroKey() {
-	action := d.nitroKey()
-	if err := d.conn.Emit(objPath, ifSystem+".NitroKeyPressed", action); err != nil {
-		slog.Warn("nitro key: signal", "err", err)
+// onSenseKey runs on every press: the signal always goes out (the session
+// agent decides with SenseKey), the cycle only in "cycle" mode.
+func (d *Daemon) onSenseKey() {
+	action := d.senseKey()
+	if err := d.conn.Emit(objPath, ifSystem+".SenseKeyPressed", action); err != nil {
+		slog.Warn("sense key: signal", "err", err)
 	}
 	if action != "cycle" {
-		slog.Info("nitro key", "action", action)
+		slog.Info("sense key", "action", action)
 		return
 	}
 	if next, err := d.cycle(); err != nil {
-		slog.Warn("nitro key: cycle failed", "err", err)
+		slog.Warn("sense key: cycle failed", "err", err)
 	} else {
-		slog.Info("nitro key", "profile", next)
+		slog.Info("sense key", "profile", next)
 	}
 }
 

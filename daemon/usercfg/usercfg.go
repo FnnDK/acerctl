@@ -1,6 +1,6 @@
 // Package usercfg is the per-user settings file shared by the GUI and the
 // session agent (acer-tray): ~/.config/acerctl/settings.json. System-wide
-// choices (the Nitro key action) live in the daemon instead.
+// choices (the Sense key action) live in the daemon instead.
 package usercfg
 
 import (
@@ -13,6 +13,9 @@ import (
 type Settings struct {
 	// TrayHidden hides the tray icon (shown by default).
 	TrayHidden bool `json:"tray_hidden,omitempty"`
+	// Lang is the language chosen in the GUI for the GUI and the tray: "pt" or
+	// "en"; empty follows the system locale.
+	Lang string `json:"lang,omitempty"`
 }
 
 // Path is the settings file of the current user.

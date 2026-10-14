@@ -1,7 +1,7 @@
 // acer-tray is the session agent of acerctl: the tray icon
 // (StatusNotifierItem) with the quick modes, and the process that opens the
-// app when the Nitro key is set to "app" (a system service cannot start
-// desktop apps; acerd sends System.NitroKeyPressed). It exits when neither
+// app when the Sense key is set to "app" (a system service cannot start
+// desktop apps; acerd sends System.SenseKeyPressed). It exits when neither
 // is wanted: tray icon hidden in the user settings and the key cycling modes.
 package main
 
@@ -52,6 +52,7 @@ func main() {
 		return
 	}
 	a := &agent{session: *session, sbus: sbus, cfg: usercfg.Load(), refresh: make(chan struct{}, 1)}
+	setLang(a.cfg.Lang)
 	if err := sbus.Export(a, agentPath, agentName); err != nil {
 		slog.Error("export", "err", err)
 		os.Exit(1)
@@ -62,7 +63,7 @@ func main() {
 	go func() { <-sigs; a.quit() }()
 
 	if a.cfg.TrayHidden {
-		a.daemonLoop() // only for the Nitro key
+		a.daemonLoop() // only for the Sense key
 		return
 	}
 	systray.Run(a.onReady, nil)
@@ -75,7 +76,7 @@ type agent struct {
 
 	mu      sync.Mutex
 	cl      *client.Client
-	keyMode string // System.NitroKey of the daemon, "" until known
+	keyMode string // System.SenseKey of the daemon, "" until known
 
 	menu    *menu // nil without the tray icon
 	refresh chan struct{}
@@ -86,8 +87,8 @@ func (a *agent) Reload() *dbus.Error {
 	cfg := usercfg.Load()
 	go func() {
 		time.Sleep(100 * time.Millisecond) // let the reply go out
-		if cfg.TrayHidden != a.cfg.TrayHidden {
-			a.restart() // the icon is set up once, at start
+		if cfg.TrayHidden != a.cfg.TrayHidden || cfg.Lang != a.cfg.Lang {
+			a.restart() // the icon and its texts are set up once, at start
 		}
 		a.mu.Lock()
 		a.cfg = cfg
@@ -120,7 +121,7 @@ func (a *agent) exitIfIdle() {
 	idle := a.cfg.TrayHidden && a.keyMode != "" && a.keyMode != "app"
 	a.mu.Unlock()
 	if idle {
-		slog.Info("tray hidden and Nitro key cycling modes: nothing to do")
+		slog.Info("tray hidden and Sense key cycling modes: nothing to do")
 		a.quit()
 	}
 }
@@ -175,7 +176,7 @@ func (a *agent) serve(cl *client.Client) {
 		dbus.WithMatchInterface("org.freedesktop.DBus.Properties"), dbus.WithMatchMember("PropertiesChanged"))
 	// Only acerd itself may send the key press (the bus resolves the name to its owner).
 	_ = conn.AddMatchSignal(dbus.WithMatchSender(client.BusName), dbus.WithMatchObjectPath(client.ObjPath),
-		dbus.WithMatchInterface(client.IfSystem), dbus.WithMatchMember("NitroKeyPressed"))
+		dbus.WithMatchInterface(client.IfSystem), dbus.WithMatchMember("SenseKeyPressed"))
 	_ = conn.AddMatchSignal(dbus.WithMatchSender("org.freedesktop.DBus"),
 		dbus.WithMatchMember("NameOwnerChanged"), dbus.WithMatchArg(0, client.BusName))
 	owner := ""
@@ -199,7 +200,7 @@ func (a *agent) serve(cl *client.Client) {
 				if pending == nil {
 					pending = time.After(80 * time.Millisecond)
 				}
-			case client.IfSystem + ".NitroKeyPressed":
+			case client.IfSystem + ".SenseKeyPressed":
 				if s.Sender == owner && len(s.Body) == 1 && s.Body[0] == "app" {
 					openApp()
 				}
@@ -221,7 +222,7 @@ func (a *agent) update() {
 	if cl == nil {
 		return
 	}
-	if v, err := cl.Property(client.IfSystem, "NitroKey"); err == nil {
+	if v, err := cl.Property(client.IfSystem, "SenseKey"); err == nil {
 		k, _ := v.Value().(string)
 		a.mu.Lock()
 		a.keyMode = k
@@ -266,7 +267,36 @@ func (a *agent) do(err error) {
 
 // ---- menu ------------------------------------------------------------------
 
+// layout is which sections the machine's menu has. The menu is built once
+// with it; when the daemon later reports another one (a module loaded after
+// login, a different daemon) the agent restarts to rebuild it.
+type layout struct{ modes, fans, scenarios bool }
+
+func layoutOf(caps map[string]interface{}) layout {
+	_, f := caps["fans"]
+	_, k := caps["kbd_backlight"]
+	p := len(strList(caps["profiles"])) > 0
+	// a scenario combines mode, fans and keyboard
+	return layout{modes: p, fans: f, scenarios: p || f || k}
+}
+
+// probeLayout asks the daemon what the machine has; without a daemon the
+// menu starts minimal and is rebuilt once it shows up.
+func (a *agent) probeLayout() layout {
+	cl, err := client.Connect(a.session)
+	if err != nil {
+		return layout{}
+	}
+	defer cl.Close()
+	v, err := cl.Property(client.IfSystem, "Capabilities")
+	if err != nil {
+		return layout{}
+	}
+	return layoutOf(client.PlainMap(v))
+}
+
 type menu struct {
+	lay                                        layout
 	status, open, fansMax, scen, appSync, quit *systray.MenuItem
 	modes                                      map[string]*systray.MenuItem
 
@@ -277,35 +307,43 @@ type menu struct {
 func (a *agent) onReady() {
 	systray.SetIcon(iconPNG)
 	systray.SetTooltip("Nitro Control Center")
-	m := &menu{modes: map[string]*systray.MenuItem{}, scenItems: map[string]*systray.MenuItem{}}
+	m := &menu{lay: a.probeLayout(), modes: map[string]*systray.MenuItem{}, scenItems: map[string]*systray.MenuItem{}}
 	m.status = systray.AddMenuItem("Nitro Control Center", "")
 	m.status.Disable()
 	m.open = systray.AddMenuItem(tr("open"), "")
-	systray.AddSeparator()
-	for _, p := range allProfiles {
-		it := systray.AddMenuItemCheckbox(profileName(p), "", false)
-		it.Hide()
-		m.modes[p] = it
-		go a.onClick(it, func() error { return a.call(client.IfMode, "Set", p) })
+	if m.lay.modes {
+		systray.AddSeparator()
+		for _, p := range allProfiles {
+			it := systray.AddMenuItemCheckbox(profileName(p), "", false)
+			it.Hide()
+			m.modes[p] = it
+			go a.onClick(it, func() error { return a.call(client.IfMode, "Set", p) })
+		}
 	}
-	systray.AddSeparator()
-	m.fansMax = systray.AddMenuItemCheckbox(tr("fans_max"), "", false)
-	m.scen = systray.AddMenuItem(tr("scenarios"), "")
-	m.appSync = m.scen.AddSubMenuItemCheckbox("App Sync", tr("appsync_hint"), false)
-	m.scen.AddSeparator()
+	if m.lay.fans || m.lay.scenarios {
+		systray.AddSeparator()
+	}
+	if m.lay.fans {
+		m.fansMax = systray.AddMenuItemCheckbox(tr("fans_max"), "", false)
+		go a.onClick(m.fansMax, func() error {
+			mode := "max"
+			if m.fansMax.Checked() {
+				mode = "auto"
+			}
+			return a.call(client.IfFans, "SetMode", "all", mode)
+		})
+	}
+	if m.lay.scenarios {
+		m.scen = systray.AddMenuItem(tr("scenarios"), "")
+		m.appSync = m.scen.AddSubMenuItemCheckbox("App Sync", tr("appsync_hint"), false)
+		m.scen.AddSeparator()
+		go a.onClick(m.appSync, func() error { return a.call(client.IfScenarios, "SetAppSync", !m.appSync.Checked()) })
+	}
 	systray.AddSeparator()
 	m.quit = systray.AddMenuItem(tr("quit"), "")
 	a.menu = m
 
 	go a.onClick(m.open, func() error { openApp(); return nil })
-	go a.onClick(m.fansMax, func() error {
-		mode := "max"
-		if m.fansMax.Checked() {
-			mode = "auto"
-		}
-		return a.call(client.IfFans, "SetMode", "all", mode)
-	})
-	go a.onClick(m.appSync, func() error { return a.call(client.IfScenarios, "SetAppSync", !m.appSync.Checked()) })
 	go func() {
 		for range m.quit.ClickedCh {
 			systray.Quit()
@@ -345,13 +383,22 @@ func (a *agent) redraw() {
 		for _, it := range m.modes {
 			it.Disable()
 		}
-		m.fansMax.Disable()
-		m.scen.Disable()
+		if m.fansMax != nil {
+			m.fansMax.Disable()
+		}
+		if m.scen != nil {
+			m.scen.Disable()
+		}
 		return
 	}
 	sys, _ := cl.Properties(client.IfSystem)
 	mode, _ := cl.Properties(client.IfMode)
 	caps := client.PlainMap(sys["Capabilities"])
+	if layoutOf(caps) != m.lay {
+		slog.Info("menu sections changed, rebuilding")
+		a.restart()
+		return
+	}
 	md := client.PlainMap(mode)
 
 	current, _ := md["Current"].(string)
@@ -359,7 +406,10 @@ func (a *agent) redraw() {
 	extras := strList(md["Extras"])
 	supported := strList(caps["profiles"])
 	for _, p := range allProfiles {
-		it := m.modes[p]
+		it, ok := m.modes[p]
+		if !ok {
+			continue
+		}
 		if !contains(supported, p) {
 			it.Hide()
 			continue
@@ -383,11 +433,14 @@ func (a *agent) redraw() {
 	if md["PowerSource"] == "battery" {
 		src = tr("battery")
 	}
-	status := fmt.Sprintf("%s · %s %% · %s", profileName(current), pct, src)
+	status := fmt.Sprintf("%s %% · %s", pct, src)
+	if current != "" {
+		status = profileName(current) + " · " + status
+	}
 	m.status.SetTitle(status)
 	systray.SetTooltip("Nitro Control Center — " + status)
 
-	if _, ok := caps["fans"]; ok {
+	if m.fansMax != nil {
 		st, _ := cl.Property(client.IfFans, "State")
 		fans := client.PlainMap(st)
 		allMax := len(fans) > 0
@@ -398,11 +451,11 @@ func (a *agent) redraw() {
 		}
 		setChecked(m.fansMax, allMax)
 		m.fansMax.Enable()
-		m.fansMax.Show()
-	} else {
-		m.fansMax.Hide()
 	}
 
+	if m.scen == nil {
+		return
+	}
 	sc, _ := cl.Properties(client.IfScenarios)
 	scp := client.PlainMap(sc)
 	active, _ := scp["Active"].(string)
@@ -461,7 +514,15 @@ func contains(list []string, s string) bool {
 
 // ---- texts -------------------------------------------------------------------
 
-var pt = strings.HasPrefix(firstEnv("LC_ALL", "LC_MESSAGES", "LANG"), "pt")
+var pt bool
+
+// setLang picks the texts: the language chosen in the GUI, else the locale.
+func setLang(lang string) {
+	if lang == "" {
+		lang = firstEnv("LC_ALL", "LC_MESSAGES", "LANG")
+	}
+	pt = strings.HasPrefix(lang, "pt")
+}
 
 func firstEnv(keys ...string) string {
 	for _, k := range keys {

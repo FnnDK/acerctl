@@ -1,5 +1,5 @@
 // Package rules holds the pure policy of the daemon: which thermal profiles
-// are allowed on which power source, how the Nitro key cycles, and how the
+// are allowed on which power source, how the Sense key cycles, and how the
 // five Acer modes map onto the three power-profiles-daemon profiles.
 // See docs/api-dbus.md §4 and §11.
 package rules

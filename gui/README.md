@@ -6,7 +6,7 @@ acerctl GUI in Go + Wails v2: a window on top of `acerd`'s D-Bus API (`docs/api-
 
 ```
 main.go             window options, single instance, icon; --session, --minimized
-agent.go            session agent (daemon/cmd/acer-tray): "Tray icon" and "Nitro key"
+agent.go            session agent (daemon/cmd/acer-tray): "Tray icon" and "Sense key"
                     options, agent Reload or starting it when it becomes needed
 titlebar.go         window decoration per desktop; frameless: button order (GNOME
                     button-layout, via the settings portal or gsettings) and the theme's

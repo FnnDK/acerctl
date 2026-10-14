@@ -11,7 +11,7 @@ import (
 )
 
 // The session agent (acer-tray) shows the tray icon and opens this app on
-// the Nitro key. It starts at login (XDG autostart) and exits when neither
+// the Sense key. It starts at login (XDG autostart) and exits when neither
 // is wanted; the GUI tells it about changes and starts it when needed.
 
 const (
@@ -34,9 +34,26 @@ func (a *App) SetTrayShown(on bool) error {
 	return nil
 }
 
-// SetNitroKey chooses what the Nitro key does: "app" or "cycle" (daemon).
-func (a *App) SetNitroKey(action string) error {
-	if err := a.call(client.IfSystem, "SetNitroKey", action); err != nil {
+// Lang is the language chosen in Settings ("" follows the system).
+func (a *App) Lang() string { return usercfg.Load().Lang }
+
+// SetLang saves the language for the GUI and the tray agent.
+func (a *App) SetLang(lang string) error {
+	if lang != "pt" && lang != "en" {
+		lang = ""
+	}
+	s := usercfg.Load()
+	s.Lang = lang
+	if err := usercfg.Save(s); err != nil {
+		return uiError(err)
+	}
+	a.ensureAgent()
+	return nil
+}
+
+// SetSenseKey chooses what the Sense key does: "app" or "cycle" (daemon).
+func (a *App) SetSenseKey(action string) error {
+	if err := a.call(client.IfSystem, "SetSenseKey", action); err != nil {
 		return err
 	}
 	a.ensureAgent()
@@ -60,7 +77,7 @@ func (a *App) ensureAgent() {
 	}
 	need := !usercfg.Load().TrayHidden
 	if cl, err := a.client(); err == nil {
-		if v, err := cl.Property(client.IfSystem, "NitroKey"); err == nil && v.Value() == "app" {
+		if v, err := cl.Property(client.IfSystem, "SenseKey"); err == nil && v.Value() == "app" {
 			need = true
 		}
 	}

@@ -1,0 +1,10 @@
+# Sense key (the NitroSense / AcerSense button) on Acer models that systemd's
+# 60-keyboard.hwdb does not list yet. It sends scancode 0xF5, which the generic
+# Acer rule maps to KEY_PRESENTATION; upstream maps it to KEY_PROG1 on the Nitro
+# and Predator models, and acerd watches KEY_PROG1. Installed into
+# /etc/udev/hwdb.d/ by packaging/install-daemon.sh; entries should move to
+# systemd once accepted there.
+
+# Aspire AG15-71P (Aspire Go 15)
+evdev:atkbd:dmi:bvn*:bvr*:bd*:svnAcer*:pnAspire*AG15-71P:pvr*
+ KEYBOARD_KEY_f5=prog1                                  # AcerSense button

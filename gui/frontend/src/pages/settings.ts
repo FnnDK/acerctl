@@ -57,14 +57,15 @@ export function settings(): Page {
   langSeg.onclick = e => {
     const b = (e.target as HTMLElement).closest('button') as HTMLButtonElement | null
     if (!b || b.dataset.l === savedLang()) return
-    setLang(b.dataset.l as Lang | '')
-    location.reload()
+    const l = b.dataset.l as Lang | ''
+    // settings.json carries it to the tray; localStorage is the startup cache
+    App.SetLang(l).catch(() => {}).finally(() => { setLang(l); location.reload() })
   }
 
   const key = root.querySelector('[data-key]') as HTMLElement
   key.onclick = e => {
     const b = (e.target as HTMLElement).closest('button') as HTMLButtonElement | null
-    if (b && !b.classList.contains('on')) act(App.SetNitroKey(b.dataset.k!))
+    if (b && !b.classList.contains('on')) act(App.SetSenseKey(b.dataset.k!))
   }
   const tray = root.querySelector('[data-tray]') as HTMLInputElement
   App.TrayShown().then(v => { tray.checked = v })
@@ -87,12 +88,18 @@ export function settings(): Page {
       }
       usb.querySelectorAll<HTMLElement>('button').forEach(b => b.classList.toggle('on', Number(b.dataset.p) === s.battery?.UsbCharging))
 
-      root.querySelector('[data-key-row]')!.classList.toggle('hidden', !caps().nitro_key)
-      key.querySelectorAll<HTMLElement>('button').forEach(b => b.classList.toggle('on', b.dataset.k === s.system?.NitroKey))
+      root.querySelector('[data-key-row]')!.classList.toggle('hidden', !caps().sense_key)
+      // without thermal profiles the key can only open the app
+      key.querySelector('[data-k="cycle"]')!.classList.toggle('hidden', !caps().profiles?.length)
+      key.querySelectorAll<HTMLElement>('button').forEach(b => b.classList.toggle('on', b.dataset.k === s.system?.SenseKey))
 
       const sys = s.system ?? {}, md = sys.Model ?? {}
       setText(root, '[data-version]', sys.Version ? `acerd ${sys.Version}` : '')
-      const mods = Object.entries<string>(md.modules ?? {}).map(([n, v]) => `${n} ${v === 'absent' ? `<span class="faint">(${t('set.absent')})</span>` : esc(v)}`).join(', ')
+      // acerd reports "absent", "loaded" or the module's version (loaded too)
+      const modState = (v: string) => v === 'absent'
+        ? `<span class="badge">${t('set.absent')}</span>`
+        : `<span class="badge ok">${t('set.loaded')}</span>${v === 'loaded' ? '' : `<span class="faint num">${esc(v)}</span>`}`
+      const mods = `<div class="mods">${Object.entries<string>(md.modules ?? {}).map(([n, v]) => `<span>${esc(n)} ${modState(v)}</span>`).join('')}</div>`
       const rows: [string, string][] = [
         [t('set.model'), esc([md.vendor, md.product].filter(Boolean).join(' '))],
         [t('set.bios'), esc(md.bios ?? '')],

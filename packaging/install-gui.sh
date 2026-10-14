@@ -1,6 +1,6 @@
 #!/bin/sh
 # Builds the GUI (nitro-control-center, Go + Wails) and the session agent
-# (acer-tray: tray icon and Nitro key) and installs them with the desktop
+# (acer-tray: tray icon and Sense key) and installs them with the desktop
 # entry, icon and agent autostart (/usr/local and /etc, writable on Fedora
 # Silverblue).
 # Node, Wails and the WebKitGTK headers live in the distrobox; installing needs

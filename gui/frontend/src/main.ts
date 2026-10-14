@@ -1,6 +1,6 @@
 import './style.css'
-import { App, el, esc, onSample, onState, profileName, start, state, type State } from './core'
-import { lang, setLang, t } from './i18n'
+import { App, caps, el, esc, onSample, onState, profileName, profiles, start, state, type State } from './core'
+import { lang, savedLang, setLang, t, type Lang } from './i18n'
 import { icon, mark } from './icons'
 import type { Page } from './widgets'
 import { titlebar } from './titlebar'
@@ -13,6 +13,14 @@ import { scenarios } from './pages/scenarios'
 import { settings } from './pages/settings'
 
 setLang((() => { try { return (localStorage.getItem('lang') ?? '') as never } catch { return '' as never } })())
+// The language lives in ~/.config/acerctl/settings.json, shared with the tray;
+// localStorage only avoids a flash at startup. A choice saved only in
+// localStorage (before it moved to settings.json) is carried over.
+App.Lang().then(cfg => {
+  const local = savedLang()
+  if (!cfg && local) App.SetLang(local).catch(() => {})
+  else if (cfg !== local) { setLang(cfg as Lang | ''); location.reload() }
+}).catch(() => {})
 
 const NAV: { id: string, icon: string, make: () => Page, show?: () => boolean }[] = [
   { id: 'home', icon: 'home', make: home },
@@ -20,7 +28,8 @@ const NAV: { id: string, icon: string, make: () => Page, show?: () => boolean }[
   { id: 'fans', icon: 'fan', make: fans, show: () => !!state.system?.Capabilities?.fans },
   { id: 'lighting', icon: 'light', make: lighting, show: () => !!state.system?.Capabilities?.kbd_backlight },
   { id: 'battery', icon: 'battery', make: battery },
-  { id: 'scenarios', icon: 'scenarios', make: scenarios },
+  // a scenario combines mode, fans and keyboard: nothing to save without them
+  { id: 'scenarios', icon: 'scenarios', make: scenarios, show: () => profiles().length > 0 || !!caps().fans || !!caps().kbd_backlight },
   { id: 'settings', icon: 'settings', make: settings },
 ]
 

@@ -214,6 +214,10 @@ input[type=range]:disabled { opacity: .4; }
 .badge.active { background: rgba(255,160,0,.15); color: var(--accent-2); }
 .badge.ok { background: rgba(62,207,142,.14); color: var(--ok); }
 .badge.warn { background: rgba(255,176,32,.14); color: var(--warn); }
+.mods { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.mods > span { display: inline-flex; align-items: center; gap: 6px; }
+/* module states read as text: same size, regular weight, no capitals */
+.mods .badge { font-size: inherit; font-weight: 400; letter-spacing: normal; text-transform: none; padding: 1px 8px; }
 
 .chip { display: inline-block; font-size: 12px; padding: 3px 9px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); }
 .chip b { color: var(--text); font-weight: 600; }
@@ -253,6 +257,7 @@ input[type=range]:disabled { opacity: .4; }
 
 .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (min-width: 1650px) { .tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.tiles.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .stats { display: grid; gap: 12px 14px; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); }
 .stat { display: grid; gap: 2px; min-width: 0; }
 .stat .k { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -339,4 +344,5 @@ input[type=range]:disabled { opacity: .4; }
 @keyframes pulse { 50% { opacity: .45; } }
 
 @media (max-width: 900px) { .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .g5 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .tiles.three { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .overlay code { white-space: nowrap; }

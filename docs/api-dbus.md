@@ -37,7 +37,7 @@ Revised on 2026-10-12 from v0, against `docs/firmware-wmi.md` (§1, §4–§8) a
 | GPU (temp, usage, clocks, power) | NVML (go-nvml); fallback `nvidia-smi --query-gpu` | missing ⇒ `gpu.nvml=false` and fields omitted |
 | CPU (usage, freq, power) | `/proc/stat`, `/sys/devices/system/cpu/*/cpufreq/scaling_cur_freq`, RAPL `/sys/class/powercap/intel-rapl:0/energy_uj` (root only) | — |
 | RAM, network | `/proc/meminfo`, `/proc/net/dev` (sum of the physical interfaces) | — |
-| Nitro key | evdev `KEY_PROG1` (148) on the internal keyboard (`AT Translated Set 2 keyboard`) | no `EVIOCGRAB`: the desktop still receives the key |
+| Sense key | evdev `KEY_PROG1` (148) on the internal keyboard (`AT Translated Set 2 keyboard`), present when scancode `0xF5` maps to it (systemd hwdb, or `packaging/61-acerctl-keyboard.hwdb` for models not listed there yet) | no `EVIOCGRAB`: the desktop still receives the key |
 
 ## 2. Interface `io.github.fnndk.Acerd1.System`
 
@@ -46,9 +46,9 @@ Revised on 2026-10-12 from v0, against `docs/firmware-wmi.md` (§1, §4–§8) a
 | prop `Version` | `s` | daemon version |
 | prop `Capabilities` | `a{sv}` | see §3; changes only on a module reload (`PropertiesChanged` signal) |
 | prop `Model` | `a{sv}` | `vendor`, `product`, `bios` (DMI), `kernel`, `modules: a{ss}` (name → version/“absent”), `acer_wmi_caps: u` (effective `force_caps`, if readable) |
-| prop `NitroKey` | `s` | Nitro key action: `app` (the session agent opens the app, as in the original) or `cycle` (the daemon cycles the profile); persisted in `state.json`, default from the `--nitro-key` option |
-| method `SetNitroKey(s action)` | | `app` or `cycle`; `NotSupported` without `capabilities.nitro_key`; polkit `control` |
-| signal `NitroKeyPressed` | `s` | on every press, with the action in effect; the session agent (`acer-tray`) opens the app when it is `app` and only accepts the signal from the owner of the name `io.github.fnndk.Acerd1` |
+| prop `SenseKey` | `s` | Sense key action: `app` (the session agent opens the app, as in the original) or `cycle` (the daemon cycles the profile); persisted in `state.json`, default from the `--sense-key` option (a `nitro_key` saved before the rename is moved over) |
+| method `SetSenseKey(s action)` | | `app` or `cycle`; `NotSupported` without `capabilities.sense_key`, and for `cycle` on models without thermal profiles (there the effective action is always `app`); polkit `control` |
+| signal `SenseKeyPressed` | `s` | on every press, with the action in effect; the session agent (`acer-tray`) opens the app when it is `app` and only accepts the signal from the owner of the name `io.github.fnndk.Acerd1` |
 | method `Reload()` | | reprobe of modules and capabilities (after `insmod`/update); polkit `control` |
 
 ## 3. Capabilities (`System.Capabilities`)
@@ -65,7 +65,7 @@ Each key appears only when the backend was detected. Detection is by **presence 
 | `battery` | `a{sv}` | `charge_limit: b` (`health_mode` ≥ 0), `calibration: b` (`calibration_mode` ≥ 0), `sensors: b` (hwmon `acer_battery`) | all `true` |
 | `gpu` | `a{sv}` | `nvml: b` (NVML initialized), `oc: b` (always `false` in v1) | `nvml=true` |
 | `cpu_power_limit` | `b` | writable RAPL; `false` in v1 | `false` |
-| `nitro_key` | `b` | evdev found the internal keyboard | `true` |
+| `sense_key` | `b` | the internal keyboard maps scancode `0xF5` to `KEY_PROG1` | `true` |
 
 No Turbo (`performance`) in `profiles` ⇒ the GUI does not even show the button. This holds for any model: the list is the firmware's.
 
@@ -83,7 +83,7 @@ Names are the `platform_profile` ones (what the daemon writes). Acer mapping: `q
 | prop `Allowed` | `as` | profiles allowed **now** (capabilities ∩ power rules); this is what the GUI enables |
 | prop `Extras` | `as` | items of `Allowed` that exist only because of an extended daemon rule (today: `balanced-performance` on battery); the GUI flags them as an extra feature |
 | method `Set(s profile)` | | `NotSupported` if outside `profiles`; `NotAllowed` if outside `Allowed` |
-| method `Cycle()` | `→ s` | next one in `Allowed`, in `profiles` order; used by the Nitro key |
+| method `Cycle()` | `→ s` | next one in `Allowed`, in `profiles` order; used by the Sense key |
 
 **Power rules** (from the daemon, applied in `Set`, `Cycle` and on every AC↔battery switch):
 
@@ -178,7 +178,7 @@ Stored in `/var/lib/acerd/scenarios.json` (system-wide, since the daemon is a sy
 
 **Semantics (implemented 2026-10-12).**
 - `Apply` writes the scenario's modes and fans into the saved state (§11), so source switches, resume and boot follow the scenario; the mode applied now is the one for the current source (with `Fallback` if it is not allowed). `Active` becomes the name.
-- Any manual change to something a scenario controls (`Mode.Set/Cycle`, Nitro key, external PPD/sysfs, `Fans.*`, `SetKeyboardTimeout`) clears `Active`. So does `Delete` of the active scenario.
+- Any manual change to something a scenario controls (`Mode.Set/Cycle`, Sense key, external PPD/sysfs, `Fans.*`, `SetKeyboardTimeout`) clears `Active`. So does `Delete` of the active scenario.
 - **App Sync** (`SetAppSync`, persisted; resumed at startup): proc connector (`NETLINK_CONNECTOR`, `CAP_NET_ADMIN`; on kernel ≥ 6.6 with an `exec`/`exit`-only filter). On each `exec` it reads `/proc/<pid>/comm`; `cmdline` only when `comm` is truncated (15 characters) or is Wine/Proton (`argv[0]` and, after a Wine loader, `argv[1]`). Wine processes that did not match are reread after 2 s (Wine changes `comm`/argv after the `exec`). Case-insensitive matching, optional `.exe`, truncated `comm` matched by prefix. Only processes of seat0's active user (`ACTIVE_UID` in `/run/systemd/seats/seat0`). `/proc/<pid>/exe` is not used: it would require `CAP_SYS_PTRACE`.
 - The most recently started app decides the scenario. On the first one, the daemon saves a snapshot of the state (modes, fans, timeout, `Active`) and applies the scenario; when the last one exits, it applies the snapshot back — **unless the user changed something in the meantime** (`Active` ≠ App Sync scenario), in which case it just discards the snapshot. Turning App Sync off also reverts. The snapshot lives in `state.json`: if the daemon crashes with the game open, at startup it reverts when no matched app is running.
 - Cost: ~0.1–0.2 ms of daemon CPU per `exec` on the system (measured with 2 000 `exec`s); nothing without `exec`s.
@@ -192,14 +192,14 @@ Two actions, in `/usr/share/polkit-1/actions/io.github.fnndk.acerd.policy`:
 | `io.github.fnndk.acerd.control` | `Mode.Set/Cycle`, `Fans.*`, `Lighting.*`, `Scenarios.*`, `System.Reload` | `allow_active=yes`, `allow_inactive=no`, `allow_any=auth_admin` |
 | `io.github.fnndk.acerd.settings` | `Battery.SetChargeLimit`, `Start/StopCalibration`, `SetUsbCharging` | `allow_active=auth_admin_keep`, others `auth_admin` |
 
-Reason for the split: switching mode and fan is an everyday action (the Nitro key does it without a password); charge limit, calibration and USB charging persist in the EC and affect the machine while it is off. Reads and `Monitor.Subscribe` do not go through polkit. D-Bus policy in `/usr/share/dbus-1/system.d/io.github.fnndk.Acerd1.conf`: only root owns the name; any user can send.
+Reason for the split: switching mode and fan is an everyday action (the Sense key does it without a password); charge limit, calibration and USB charging persist in the EC and affect the machine while it is off. Reads and `Monitor.Subscribe` do not go through polkit. D-Bus policy in `/usr/share/dbus-1/system.d/io.github.fnndk.Acerd1.conf`: only root owns the name; any user can send.
 
 ## 11. Daemon behavior
 
 - **Boot/resume.** Restores only what does not live in the EC: thermal profile (per power source) and fan mode. Timeout, USB charging and charge limit live in the EC and are only read. Fans in `manual` are **not** restored at boot (risk of a slow fan under load); they go back to `auto` and the daemon logs it. On resume, it reapplies the profile and rereads everything. State in `/var/lib/acerd/state.json`.
 - **AC/battery.** Kernel uevents via netlink (`NETLINK_KOBJECT_UEVENT`, group 1, filter `SUBSYSTEM=power_supply`; no libudev) with a safety reread every 30 s; on each event it recalculates `Allowed`, reapplies the profile saved for the source and emits `PropertiesChanged` on `Mode`.
-- **Nitro key.** In the original app the key **opens the app**; cycling modes belongs to the "Mode Switch Key" of other models. The daemon reads `KEY_PROG1` via evdev (internal keyboard, no grab, reopens if the device disappears), emits `System.NitroKeyPressed` and, in `cycle`, calls `Mode.Cycle()` without polkit. Opening an app is not a system service's job: in `app`, the session agent `acer-tray` opens it (XDG autostart; the GUI is single-instance, so opening it again only brings the window forward). The choice is `System.SetNitroKey` (GUI: Settings → Nitro key); `--nitro-key` only sets the default (`cycle`; `none` is a synonym for `app`).
-- **Session agent (`acer-tray`).** Tray icon (StatusNotifierItem; on GNOME, the AppIndicator extension) with quick modes, fans at max, scenarios and App Sync, and the Nitro key's "open the app". It starts at login and exits on its own when the icon is off (`~/.config/acerctl/settings.json`, `tray_hidden`) and the key is set to `cycle`; the GUI notifies it of changes (`io.github.fnndk.AcerTray.Reload` on the session bus) and starts it when it becomes needed.
+- **Sense key** (the NitroSense / PredatorSense / AcerSense button; renamed from "Nitro key" on 2026-10-13, after the name the Windows service uses). In the original app the key **opens the app**; cycling modes belongs to the "Mode Switch Key" of other models. The daemon reads `KEY_PROG1` via evdev (internal keyboard, no grab, reopens if the device disappears), emits `System.SenseKeyPressed` and, in `cycle`, calls `Mode.Cycle()` without polkit. Opening an app is not a system service's job: in `app`, the session agent `acer-tray` opens it (XDG autostart; the GUI is single-instance, so opening it again only brings the window forward). The choice is `System.SetSenseKey` (GUI: Settings → Sense key); `--sense-key` only sets the default (`cycle`; `none` is a synonym for `app`).
+- **Session agent (`acer-tray`).** Tray icon (StatusNotifierItem; on GNOME, the AppIndicator extension) with quick modes, fans at max, scenarios and App Sync, and the Sense key's "open the app". It starts at login and exits on its own when the icon is off (`~/.config/acerctl/settings.json`, `tray_hidden`) and the key is set to `cycle`; the GUI notifies it of changes (`io.github.fnndk.AcerTray.Reload` on the session bus) and starts it when it becomes needed.
 - **Coexistence with `tuned-ppd`/`power-profiles-daemon` (decided 2026-10-12).** The daemon writes **directly** to `platform_profile` and keeps PPD in sync both ways. The full selection (5 modes) lives in our app; PPD has only 3 profiles, so the mapping is many-to-one going out and resolved by the power source coming back.
 
   Facts about tuned-ppd 2.28 (Fedora 44): PPD `power-saver` → tuned `powersave` → `platform_profile=low-power|quiet` (the first one present in `choices`); `balanced` → `balanced`; `performance` → `throughput-performance` → `performance` (= Turbo) plus governor etc. On battery, PPD `balanced` becomes `balanced-battery`, with no `[acpi]` section; when switching profiles tuned **restores** the value it read when applying the previous one. With `sysfs_acpi_monitor=true` it watches the file through inotify and, if another process writes `low-power`/`balanced`/`performance`, switches `ActiveProfile` to follow; it ignores `quiet` and `balanced-performance`.
@@ -257,4 +257,4 @@ Reason for the split: switching mode and fan is an everyday action (the Nitro ke
 - **Validation with tuned-ppd (2026-10-12), on AC:** `Set quiet` → PPD `power-saver`; `Set balanced-performance` → PPD `performance`; `Set balanced` → `balanced`; stable 5 s later, no loop. Through PPD: `power-saver` → `quiet`, `performance` → `balanced-performance`, `balanced` → `balanced`. Watching `platform_profile` every 20 ms during the outgoing switch to `performance`, the value never showed `performance`: tuned writes (there is a `sysfs_notify`), but the value read stays the previous one, i.e. the firmware/driver rejects the nonexistent Turbo. The "PPD first, sysfs after" order stays. Battery (unplugging/plugging the cable) validated later (see STATUS).
 - **Suspend/resume (S3) on the ANV15-52, validated 2026-10-12.** The firmware **resets the profile**: ~0.8 s after `suspend exit` `platform_profile` goes back to `balanced` and tuned follows (PPD → `balanced`). The **fans survive**: `pwm*_enable` 0 (max) and 1 with the PWM (40 % = 102) stay as they were. The daemon listens to logind's `PrepareForSleep` (no inhibitor) and, from `true` until the resume finishes, ignores writes to `platform_profile` and PPD switches (otherwise it would save `balanced` as the user's choice). On resume it waits 3 s, rereads source and profile, reapplies the profile saved for the source and the saved fans (manual included) and rereads the rest. At daemon startup, a fan saved as `manual` goes back to `auto` and the state becomes `auto`.
 - **GPU:** the first `nvidia-smi` read after the dGPU wakes up (D3cold) returns `power.draw` = 590.01 W; the next one, ~10 W. The daemon omits `power` when the value exceeds 400 W. The initial probe (`nvidia-smi`) wakes the GPU and takes ~1.5 s; with NVML (go-nvml) both problems can be avoided.
-- **Nitro key on GNOME:** `KEY_PROG1` may be bound to a desktop shortcut; check whether it needs its own `hwdb` or whether the desktop ignores it.
+- **Sense key on GNOME:** `KEY_PROG1` may be bound to a desktop shortcut; check whether it needs its own `hwdb` or whether the desktop ignores it.

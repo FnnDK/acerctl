@@ -22,6 +22,10 @@ export function IsMaximised() {
   return window['go']['main']['App']['IsMaximised']();
 }
 
+export function Lang() {
+  return window['go']['main']['App']['Lang']();
+}
+
 export function Minimise() {
   return window['go']['main']['App']['Minimise']();
 }
@@ -62,12 +66,16 @@ export function SetKeyboardTimeout(arg1) {
   return window['go']['main']['App']['SetKeyboardTimeout'](arg1);
 }
 
+export function SetLang(arg1) {
+  return window['go']['main']['App']['SetLang'](arg1);
+}
+
 export function SetMode(arg1) {
   return window['go']['main']['App']['SetMode'](arg1);
 }
 
-export function SetNitroKey(arg1) {
-  return window['go']['main']['App']['SetNitroKey'](arg1);
+export function SetSenseKey(arg1) {
+  return window['go']['main']['App']['SetSenseKey'](arg1);
 }
 
 export function SetTrayShown(arg1) {

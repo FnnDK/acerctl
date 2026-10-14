@@ -31,7 +31,7 @@ Thermal profile
   mode                            current, allowed and extra profiles
   mode <profile>                  set: low-power|eco, quiet, balanced,
                                   balanced-performance, performance|turbo
-  mode cycle                      next allowed profile (what the Nitro key does)
+  mode cycle                      next allowed profile (what the Sense key does)
 
 Fans
   fan                             rpm, mode and speed of each fan
@@ -163,6 +163,13 @@ func cmdStatus(args []string) error {
 		row("Keyboard", fmt.Sprintf("backlight %s, timeout %s", on, timeout(k["timeout_s"])))
 	}
 	row("Battery", batteryLine(caps, bat))
+	// a scenario combines mode, fans and keyboard: nothing to show without them
+	_, p := caps["profiles"]
+	_, f := caps["fans"]
+	_, k := caps["kbd_backlight"]
+	if !p && !f && !k {
+		return nil
+	}
 	active := str(sc["Active"].Value())
 	if active == "" {
 		active = "none"
@@ -229,6 +236,16 @@ func batteryLine(caps map[string]interface{}, bat map[string]dbus.Variant) strin
 	return strings.Join(parts, "; ")
 }
 
+// hasCap reports whether the daemon lists name in System.Capabilities.
+func hasCap(name string) (bool, error) {
+	v, err := cl.Property(client.IfSystem, "Capabilities")
+	if err != nil {
+		return false, err
+	}
+	_, ok := plainMap(v)[name]
+	return ok, nil
+}
+
 func cmdCaps(args []string) error {
 	v, err := cl.Property(client.IfSystem, "Capabilities")
 	if err != nil {
@@ -268,6 +285,12 @@ func cmdMode(args []string) error {
 		if jsonOut {
 			return printJSON(plain(mode))
 		}
+		if ok, err := hasCap("profiles"); err != nil {
+			return err
+		} else if !ok {
+			fmt.Println("no thermal profiles: the firmware exposes none on this machine")
+			return nil
+		}
 		fmt.Println(profileLine(mode))
 		return nil
 	}
@@ -302,6 +325,12 @@ func cmdFan(args []string) error {
 		if jsonOut {
 			return printJSON(plain(v))
 		}
+		if ok, err := hasCap("fans"); err != nil {
+			return err
+		} else if !ok {
+			fmt.Println("no fan control: the firmware exposes none on this machine")
+			return nil
+		}
 		fmt.Println(fanLine(plainMap(v)))
 		return nil
 	}
@@ -329,6 +358,12 @@ func cmdKbd(args []string) error {
 		}
 		if jsonOut {
 			return printJSON(plain(v))
+		}
+		if ok, err := hasCap("kbd_backlight"); err != nil {
+			return err
+		} else if !ok {
+			fmt.Println("no keyboard backlight control: the firmware exposes none on this machine")
+			return nil
 		}
 		k := plainMap(v)
 		fmt.Printf("backlight %s, timeout %s\n", onOff(k["on"]), timeout(k["timeout_s"]))

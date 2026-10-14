@@ -10,7 +10,7 @@ Technical reference for what the BIOS of an Acer Nitro/Predator exposes to the o
 | Fan RPM, temperatures | hwmon `acer` (`fan1`=CPU, `fan2`=GPU, `temp1` CPU, `temp2` GPU, `temp3` external) | GPU reads 0 while the dGPU is powered off. |
 | Manual/max fan | hwmon `acer` `pwm1`/`pwm2` + `pwm*_enable` (0 max, 1 manual, 2 auto) | Only with the `.pwm` quirk or `force_caps=0x1C26` (bits wireless, bluetooth, function-mode, profile, hwmon, pwm). The model is not in the driver's DMI table. |
 | Airplane mode key | `acer_wireless` (ACPI `10251229`) + `acer_wmi` rfkill | — |
-| Nitro key | PS/2 keyboard, scancode `0xF5` → `KEY_PROG1` (148) via systemd hwdb | **Not** a WMI event on this model; up to user space. |
+| Sense key (NitroSense button) | PS/2 keyboard, scancode `0xF5` → `KEY_PROG1` (148) via systemd hwdb | **Not** a WMI event on this model; up to user space. |
 | Fn hotkeys | EC `_Qxx` → `HKEV` → WMI event `676AA15E…` handled by `acer_wmi` (0x84 = keyboard backlight toggle, 0x61/0x62/0x63 brightness) | — |
 | 80 % charge limit, calibration, battery temperature | `acer-wmi-battery` (battery GUID, methods 19/20/21) | Out-of-tree module, coexists with `acer_wmi`. |
 | Audio, Wi-Fi, GPU | `sof-hda-dsp` + Realtek, `mt7921`, `nvidia`/`i915` | — |

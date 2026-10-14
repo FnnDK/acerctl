@@ -30,6 +30,8 @@ func Probe() *Hardware {
 	if f := probeFans(); f != nil {
 		h.Fans = f
 		h.Thermal = f
+	} else if t := probeCPUThermal(); t != nil {
+		h.Thermal = t
 	}
 	if exists(filepath.Join(extrasDir, "kbd_backlight_timeout")) {
 		h.Keyboard = &extrasKeyboard{}
@@ -46,7 +48,7 @@ func Probe() *Hardware {
 	} else if g := probeGPU(); g != nil {
 		h.GPU = gateRuntimePM(g) // nvidia-smi fallback
 	}
-	h.NitroKey = probeNitroKey()
+	h.SenseKey = probeSenseKey()
 	slog.Info("probe done", "caps", h.Capabilities())
 	return h
 }
@@ -314,6 +316,30 @@ func (f *acerHwmon) Temps() (map[string]float64, error) {
 	return out, nil
 }
 
+// ---- CPU temperature without the acer hwmon --------------------------------
+
+// cpuThermal reads the CPU package temperature from the CPU's own hwmon
+// driver, for models whose firmware exposes no sensors through acer_wmi (the
+// Aspire AG15-71P). temp1 is "Package id 0" on coretemp and Tctl on k10temp.
+type cpuThermal struct{ input string }
+
+func probeCPUThermal() *cpuThermal {
+	for _, name := range []string{"coretemp", "k10temp"} {
+		if dir := hwmonByName(name); dir != "" && exists(filepath.Join(dir, "temp1_input")) {
+			return &cpuThermal{input: filepath.Join(dir, "temp1_input")}
+		}
+	}
+	return nil
+}
+
+func (c *cpuThermal) Temps() (map[string]float64, error) {
+	v, err := readInt(c.input)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]float64{"cpu": float64(v) / 1000}, nil
+}
+
 // ---- acer-wmi-extras: keyboard timeout, USB charging -----------------------
 
 type extrasKeyboard struct{}
@@ -538,7 +564,11 @@ func (g *smiGPU) Sample() (GPUSample, error) {
 		MemClock: uint32(num(f[3])), Power: num(f[4])}, nil
 }
 
-// ---- Nitro key -------------------------------------------------------------
+// ---- Sense key -------------------------------------------------------------
 
-// probeNitroKey checks that the internal keyboard exists (see nitrokey.go).
-func probeNitroKey() bool { return nitroKeyDevice() != "" }
+// probeSenseKey checks that the internal keyboard has the NitroSense /
+// PredatorSense button mapped (see sensekey.go).
+func probeSenseKey() bool {
+	dev := senseKeyDevice()
+	return dev != "" && senseKeyMapped(dev)
+}

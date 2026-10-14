@@ -125,7 +125,7 @@ type Hardware struct {
 	BatteryCtl BatteryControl
 	Battery    BatteryInfo
 	GPU        GPU
-	NitroKey   bool
+	SenseKey   bool
 }
 
 // Capabilities builds the System.Capabilities dictionary from what was
@@ -168,7 +168,7 @@ func (h *Hardware) Capabilities() map[string]interface{} {
 	}
 	caps["gpu"] = map[string]interface{}{"nvml": h.GPU != nil, "oc": false}
 	caps["cpu_power_limit"] = false
-	caps["nitro_key"] = h.NitroKey
+	caps["sense_key"] = h.SenseKey
 	return caps
 }
 

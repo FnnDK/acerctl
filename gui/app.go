@@ -68,7 +68,7 @@ func (a *App) shutdown(ctx context.Context) {
 }
 
 // secondInstance brings the window back when the app is launched again
-// (desktop shortcut on the Nitro key, launcher).
+// (desktop shortcut on the Sense key, launcher).
 func (a *App) secondInstance(options.SecondInstanceData) {
 	runtime.WindowUnminimise(a.ctx)
 	runtime.Show(a.ctx)

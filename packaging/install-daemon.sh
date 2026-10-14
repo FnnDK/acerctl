@@ -57,10 +57,17 @@ install_all() {
   install -D -m 0644 "$R/packaging/io.github.fnndk.Acerd1.conf" /etc/dbus-1/system.d/io.github.fnndk.Acerd1.conf
   install -D -m 0644 "$R/packaging/io.github.fnndk.acerd.policy" /usr/local/share/polkit-1/actions/io.github.fnndk.acerd.policy
   install -D -m 0644 "$R/packaging/acerd.service" /etc/systemd/system/acerd.service
+  install -D -m 0644 "$R/packaging/61-acerctl-keyboard.hwdb" /etc/udev/hwdb.d/61-acerctl-keyboard.hwdb
   if command -v restorecon >/dev/null 2>&1; then
     restorecon -v "$BIN" /usr/local/bin/acerctl /etc/dbus-1/system.d/io.github.fnndk.Acerd1.conf \
-      /usr/local/share/polkit-1/actions/io.github.fnndk.acerd.policy /etc/systemd/system/acerd.service || true
+      /usr/local/share/polkit-1/actions/io.github.fnndk.acerd.policy /etc/systemd/system/acerd.service \
+      /etc/udev/hwdb.d/61-acerctl-keyboard.hwdb || true
   fi
+  # Sense key mapping for models systemd's hwdb does not list yet (acerd probes
+  # the keymap at startup, so this goes before the restart below).
+  systemd-hwdb update
+  udevadm trigger --subsystem-match=input --action=change
+  udevadm settle --timeout=5 || true
   systemctl daemon-reload
   # polkitd only watches action directories that existed when it started;
   # a restart makes it read /usr/local/share/polkit-1/actions.

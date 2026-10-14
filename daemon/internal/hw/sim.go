@@ -21,7 +21,7 @@ func Simulate(model string) (*Hardware, error) {
 	return &Hardware{
 		Model: map[string]interface{}{"vendor": "Acer", "product": "Nitro ANV15-52 (simulated)", "bios": "V1.31",
 			"kernel": "simulated", "modules": map[string]string{"acer_wmi": "sim", "acer_wmi_extras": "sim", "acer_wmi_battery": "sim"}},
-		Profiles: s, Fans: s, Thermal: s, Keyboard: s, USB: simUSB{s}, BatteryCtl: s, Battery: s, GPU: s, NitroKey: true,
+		Profiles: s, Fans: s, Thermal: s, Keyboard: s, USB: simUSB{s}, BatteryCtl: s, Battery: s, GPU: s, SenseKey: true,
 	}, nil
 }
 

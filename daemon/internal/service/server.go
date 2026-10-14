@@ -56,10 +56,10 @@ type Config struct {
 	Version  string
 	// Reprobe rebuilds the hardware view (System.Reload); nil when simulating.
 	Reprobe func() *hw.Hardware
-	// NitroKey is the default action on KEY_PROG1 until System.SetNitroKey
+	// SenseKey is the default action on KEY_PROG1 until System.SetSenseKey
 	// stores one: "cycle" the profile or "app" (the session agent opens the
 	// app, as the original one does).
-	NitroKey string
+	SenseKey string
 }
 
 // Daemon is the exported object with its state.
@@ -134,14 +134,16 @@ func (d *Daemon) Run(ctx context.Context) error {
 	go d.refreshLoop(ctx)
 	go d.modeLoop(ctx)
 	go d.watchNameOwners(ctx)
-	if d.ppd != nil {
+	// The PPD (power-profiles-daemon or tuned-ppd) is only mirrored onto
+	// firmware profiles; without them it is left entirely to the desktop.
+	if d.ppd != nil && d.hw.Profiles != nil {
 		go d.watchPPD(ctx)
 	}
 	if !d.cfg.Session {
 		go d.watchSleep(ctx)
 	}
-	if d.hw.NitroKey && d.cfg.Reprobe != nil && !d.cfg.Session {
-		go hw.WatchNitroKey(ctx, d.onNitroKey)
+	if d.hw.SenseKey && d.cfg.Reprobe != nil && !d.cfg.Session {
+		go hw.WatchSenseKey(ctx, d.onSenseKey)
 	}
 	d.restoreMode()
 	d.restoreFans(true)
@@ -163,7 +165,7 @@ func (d *Daemon) export() error {
 			"Version":      {Value: d.cfg.Version, Emit: prop.EmitTrue},
 			"Capabilities": {Value: variants(d.hw.Capabilities()), Emit: prop.EmitTrue},
 			"Model":        {Value: variants(d.hw.Model), Emit: prop.EmitTrue},
-			"NitroKey":     {Value: d.nitroKey(), Emit: prop.EmitTrue},
+			"SenseKey":     {Value: d.senseKey(), Emit: prop.EmitTrue},
 		},
 		ifMode: {
 			"Current":        {Value: d.current, Emit: prop.EmitTrue},
@@ -215,7 +217,7 @@ func (d *Daemon) export() error {
 		case ifMonitor:
 			iface.Signals = []introspect.Signal{{Name: "Sample", Args: []introspect.Arg{{Name: "sample", Type: "a{sv}"}}}}
 		case ifSystem:
-			iface.Signals = []introspect.Signal{{Name: "NitroKeyPressed", Args: []introspect.Arg{{Name: "action", Type: "s"}}}}
+			iface.Signals = []introspect.Signal{{Name: "SenseKeyPressed", Args: []introspect.Arg{{Name: "action", Type: "s"}}}}
 		}
 		node.Interfaces = append(node.Interfaces, iface)
 	}
@@ -490,6 +492,9 @@ func (d *Daemon) watchPPD(ctx context.Context) {
 // PPD to the nearest profile (the tuned write that follows is ignored), then
 // writes the real mode, then remembers it per source when asked.
 func (d *Daemon) applyMode(profile string, remember bool) error {
+	if d.hw.Profiles == nil {
+		return fmt.Errorf("no thermal profiles on this machine")
+	}
 	if d.ppd != nil {
 		target := rules.NearestPPD(profile)
 		if cur, err := d.ppd.Active(); err == nil && cur != target {
@@ -539,7 +544,7 @@ func (d *Daemon) waitSysfsSettle() {
 	}
 }
 
-// cycle is Mode.Cycle without authorization (used by the Nitro key).
+// cycle is Mode.Cycle without authorization (used by the Sense key).
 func (d *Daemon) cycle() (string, error) {
 	d.mu.Lock()
 	next := rules.Next(d.allowed, d.current)
