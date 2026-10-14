@@ -1,14 +1,21 @@
 #!/bin/sh
 # Builds the companion modules (acer-wmi-extras, acer-wmi-battery) against the
 # kernel headers of each supported distribution, in throwaway containers.
-# Only compiles: nothing is loaded. Needs podman (or CONTAINER=docker).
+# Only compiles: nothing is loaded. Needs podman or docker (from a distrobox,
+# the host's podman); CONTAINER overrides.
 #   sh tools/modules-matrix.sh                 # every target below
 #   sh tools/modules-matrix.sh debian:13 ...   # some of them
-# Prints one line per target and keeps the logs in $OUT (default: a temp dir).
+# Prints one line per target and keeps the logs in $OUT (default: .ci/modules).
+# Exits 1 when a target fails; with STRICT=1 (CI) code warnings fail it too.
 set -eu
 R=$(cd "$(dirname "$0")/.." && pwd)
-CONTAINER=${CONTAINER:-podman}
-OUT=${OUT:-$(mktemp -d)}
+if [ -z "${CONTAINER:-}" ]; then
+  if command -v podman >/dev/null 2>&1; then CONTAINER=podman
+  elif command -v docker >/dev/null 2>&1; then CONTAINER=docker
+  elif command -v distrobox-host-exec >/dev/null 2>&1; then CONTAINER="distrobox-host-exec podman"
+  else echo "needs podman or docker"; exit 1; fi
+fi
+OUT=${OUT:-$R/.ci/modules}
 MODULES="acer-wmi-extras acer-wmi-battery"
 
 # target: image|setup command|glob of the kernel build directory
@@ -24,7 +31,9 @@ fedora:44|dnf -y -q install make gcc kernel-devel|/usr/src/kernels/*
 EOF
 }
 
+mkdir -p "$OUT"
 echo "logs: $OUT"
+: > "$OUT/failed"
 # a copy, so the bind mount does not relabel the checkout (SELinux :z)
 mkdir -p "$OUT/src"
 for m in $MODULES; do cp -r "$R/drivers/$m" "$OUT/src/"; done
@@ -41,9 +50,15 @@ targets | while IFS='|' read -r target setup kdirs; do
   if $CONTAINER run --rm -v "$OUT/src:/src:ro,z" "$image" sh -c "$setup >/dev/null 2>&1 && $build" >"$log" 2>&1; then
     printf '%-18s ok    %s\n' "$target" "$(grep -m1 '^kernel:' "$log")"
     # code warnings only; a different compiler or pahole in the container is expected
-    grep -E 'warning:' "$log" | grep -v -E 'compiler differs|pahole version' | sed 's/^/                    /' || true
+    if grep -E 'warning:' "$log" | grep -v -E 'compiler differs|pahole version' | sed 's/^/                    /' | grep .; then
+      [ "${STRICT:-0}" = 1 ] && echo "$target (warnings)" >> "$OUT/failed"
+    fi
   else
+    echo "$target" >> "$OUT/failed"
     printf '%-18s FAIL  %s\n' "$target" "$(grep -m1 '^kernel:' "$log" || echo 'setup failed')"
     grep -m3 -E 'error|Error|E: ' "$log" | sed 's/^/                    /'
   fi
 done
+# the loop runs in a subshell (pipe): failures go through a file
+[ -s "$OUT/failed" ] && { echo "failed: $(tr '\n' ' ' < "$OUT/failed")"; exit 1; }
+exit 0

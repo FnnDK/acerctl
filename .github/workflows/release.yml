@@ -1,0 +1,58 @@
+# On a version tag: archives, Debian/Ubuntu packages (tested in containers)
+# and Fedora RPMs, attached to a draft pre-release; the notes are written and
+# the release published by hand. Locally: tools/release.sh, then
+# tools/debs-install-test.sh dist and tools/build-rpms.sh dist VERSION.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+env:
+  CONTAINER: docker
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: The specs carry the tag's version
+        run: |
+          v=${GITHUB_REF_NAME#v}
+          for s in packaging/rpm/*.spec; do
+            grep -q "^Version: *$v$" "$s" || { echo "$s: Version is not $v"; exit 1; }
+          done
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: gui/go.mod
+          cache-dependency-path: |
+            daemon/go.sum
+            gui/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq libgtk-3-dev libwebkit2gtk-4.1-dev
+          go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
+      - name: Archives and .deb packages
+        run: sh tools/release.sh "$GITHUB_REF_NAME"
+      - name: The .deb packages in Debian and Ubuntu containers
+        run: sh tools/debs-install-test.sh dist
+      - name: RPMs
+        run: sh tools/build-rpms.sh dist "${GITHUB_REF_NAME#v}"
+      - name: Draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd dist
+          rm -f SHA256SUMS
+          sha256sum -- * > SHA256SUMS
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" -- * --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" --draft --prerelease --title "acerctl ${GITHUB_REF_NAME#v}" \
+              --notes "Built by the release workflow. Write the notes, then publish." -- *
+          fi

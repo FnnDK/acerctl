@@ -1,0 +1,66 @@
+# Every push and pull request: the steps of tools/ci.sh (run it locally the
+# same way). Free on public repositories.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CONTAINER: docker
+
+jobs:
+  code:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: gui/go.mod
+          cache-dependency-path: |
+            daemon/go.sum
+            gui/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: gui/frontend/package-lock.json
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq libgtk-3-dev libwebkit2gtk-4.1-dev
+      - run: sh tools/ci.sh code
+
+  modules:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [debian:12, debian:13, ubuntu:22.04, ubuntu:24.04, ubuntu:24.04-hwe, ubuntu:26.04, fedora:44]
+    steps:
+      - uses: actions/checkout@v4
+      - run: sh tools/ci.sh modules ${{ matrix.target }}
+
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: gui/go.mod
+          cache-dependency-path: |
+            daemon/go.sum
+            gui/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq libgtk-3-dev libwebkit2gtk-4.1-dev
+          go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
+      - run: sh tools/ci.sh release
+      - run: sh tools/ci.sh debs debian:13 ubuntu:24.04

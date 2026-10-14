@@ -3,12 +3,20 @@
 # them: dependencies resolve, the binaries start, the app finds its libraries,
 # DKMS builds the modules for the image's kernel headers, and removal works.
 # No systemd runs in the containers, so the service is only installed, not
-# started. Needs podman (or CONTAINER=docker).
+# started. Needs podman or docker (from a distrobox, the host's podman);
+# CONTAINER overrides. Logs in $OUT (default: .ci/debs).
 #   sh tools/debs-install-test.sh DIR [image...]   # DIR holds the .deb files
+# Exits 1 when an image fails.
 set -eu
+R=$(cd "$(dirname "$0")/.." && pwd)
 DEBS=$(cd "$1" && pwd); shift
-CONTAINER=${CONTAINER:-podman}
-OUT=${OUT:-$(mktemp -d)}
+if [ -z "${CONTAINER:-}" ]; then
+  if command -v podman >/dev/null 2>&1; then CONTAINER=podman
+  elif command -v docker >/dev/null 2>&1; then CONTAINER=docker
+  elif command -v distrobox-host-exec >/dev/null 2>&1; then CONTAINER="distrobox-host-exec podman"
+  else echo "needs podman or docker"; exit 1; fi
+fi
+OUT=${OUT:-$R/.ci/debs}
 IMAGES=${*:-"debian:12 debian:13 ubuntu:22.04 ubuntu:24.04 ubuntu:26.04"}
 mkdir -p "$OUT"
 echo "logs: $OUT"
@@ -31,6 +39,7 @@ echo "dkms built for $K: $(ls /var/lib/dkms/acerctl/$V/$K/x86_64/module/ | tr "\
 test -f /usr/lib/systemd/system/acerd.service && test -f /usr/share/dbus-1/system-services/io.github.fnndk.Acerd1.service
 apt-get purge -y -qq nitro-control-center acerctl-tray acerctl acerctl-dkms >/dev/null
 ! test -e /usr/bin/acerd && echo "purge ok"'
+failed=
 for img in $IMAGES; do
   log="$OUT/$(echo "$img" | tr ':/' '__').log"
   if $CONTAINER run --rm -v "$DEBS:/debs:ro,z" "$img" sh -c "$CHECK" >"$log" 2>&1; then
@@ -38,5 +47,7 @@ for img in $IMAGES; do
   else
     printf '%-14s FAIL\n' "$img"
     tail -6 "$log" | sed 's/^/               /'
+    failed="$failed $img"
   fi
 done
+[ -z "$failed" ] || { echo "failed:$failed"; exit 1; }

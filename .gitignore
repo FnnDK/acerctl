@@ -28,3 +28,5 @@ keywatch-*.txt
 .claude/launch.json
 # tools/release.sh output
 dist/
+# tools/ci.sh work and logs
+.ci/
