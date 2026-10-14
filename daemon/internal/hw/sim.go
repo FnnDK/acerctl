@@ -5,12 +5,21 @@ import (
 	"sync"
 )
 
+// simModels are the models Simulate knows, with the product name and BIOS
+// as DMI reports them. The ANV15-52 values were read from the real machine;
+// the PHN16-72 is a mock with the same capabilities, to develop the Predator
+// flavor of the GUI without a Predator.
+var simModels = map[string][2]string{
+	"ANV15-52": {"Nitro ANV15-52", "V1.31"},
+	"PHN16-72": {"Predator PHN16-72", "V1.31"},
+}
+
 // Simulate returns an in-memory Hardware with the capabilities of a known
-// model, for developing clients without the hardware. Only "ANV15-52" exists
-// for now; its values are the ones read from the real machine.
+// model (simModels), for developing clients without the hardware.
 func Simulate(model string) (*Hardware, error) {
-	if model != "ANV15-52" {
-		return nil, fmt.Errorf("unknown simulated model %q", model)
+	m, ok := simModels[model]
+	if !ok {
+		return nil, fmt.Errorf("unknown simulated model %q (ANV15-52 or PHN16-72)", model)
 	}
 	s := &sim{
 		profile: "balanced",
@@ -19,7 +28,7 @@ func Simulate(model string) (*Hardware, error) {
 		power: Power{Source: "ac", Percent: 80},
 	}
 	return &Hardware{
-		Model: map[string]interface{}{"vendor": "Acer", "product": "Nitro ANV15-52 (simulated)", "bios": "V1.31",
+		Model: map[string]interface{}{"vendor": "Acer", "product": m[0] + " (simulated)", "bios": m[1],
 			"kernel": "simulated", "modules": map[string]string{"acer_wmi": "sim", "acer_wmi_extras": "sim", "acer_wmi_battery": "sim"}},
 		Profiles: s, Fans: s, Thermal: s, Keyboard: s, USB: simUSB{s}, BatteryCtl: s, Battery: s, GPU: s, SenseKey: true,
 	}, nil

@@ -25,6 +25,9 @@ var iconNitro []byte
 //go:embed build/appicon-a.png
 var iconAcer []byte
 
+//go:embed build/appicon-p.png
+var iconPredator []byte
+
 // winMargin is the transparent border around the page where the frontend
 // draws the window shadow (--win-margin in style.css); window sizes include
 // it. Only with client-side decorations.

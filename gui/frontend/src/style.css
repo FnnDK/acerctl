@@ -1,5 +1,5 @@
-/* nitro-control-center / acer-control-center — own art: dark panels, the accent of the
-   flavor's mark (red→orange [N], green→lime [a]; :root[data-flavor] below).
+/* nitro-, predator- and acer-control-center — own art: dark panels, the accent of the
+   flavor's mark (red→orange [N], blue-grey [P], green→lime [a]; :root[data-flavor] below).
    Fonts: the system UI font (no bundled font). */
 
 :root {
@@ -18,6 +18,12 @@
   --accent-2: var(--g3);
   --orange: #ff7417;
   --grad: linear-gradient(90deg, var(--g1), var(--g2) 55%, var(--g3));
+  --g-hi: #ffb380; /* light accent: hover border of the active mode */
+  /* Monitor series (hex: uPlot draws on a canvas); kept apart from the palette's hue */
+  --c-cpu: var(--g2);
+  --c-cpu2: var(--g3);
+  --c-gpu: #4aa8ff;
+  --c-bat: #3ecf8e;
   --ok: #3ecf8e;
   --info: #4aa8ff;
   --warn: #ffb020;
@@ -28,8 +34,10 @@
   --mono: ui-monospace, "Cascadia Mono", "Noto Sans Mono", "DejaVu Sans Mono", monospace;
   color-scheme: dark;
 }
+/* blue-grey flavor (predator-control-center): the [P] icon's palette */
+:root[data-flavor="predator"] { --g1: #5a95d8; --g2: #8bb1da; --g3: #b4cbe0; --orange: #5a95d8; --g-hi: #b9d3f0; --c-cpu: #5a95d8; --c-cpu2: #8bb1da; --c-gpu: #f0a63c; }
 /* green flavor (acer-control-center): the [a] icon's palette */
-:root[data-flavor="acer"] { --g1: #22c55e; --g2: #5bd12f; --g3: #8fd400; --orange: #45c93c; }
+:root[data-flavor="acer"] { --g1: #22c55e; --g2: #5bd12f; --g3: #8fd400; --orange: #45c93c; --g-hi: #b6ee9c; --c-bat: #c084fc; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: transparent; }
@@ -171,9 +179,8 @@ main { grid-column: 2; grid-row: 2; overflow-y: auto; padding: 10px 30px 40px; m
 }
 .btn svg { width: 17px; height: 17px; }
 .btn:hover:not(:disabled) { background: var(--surface-3); border-color: #3c3542; }
-.btn.primary { background: var(--grad); border-color: transparent; color: #fff; font-weight: 600; }
+.btn.primary { background: var(--orange); border-color: transparent; color: #1a1418; font-weight: 600; }
 .btn.primary:hover:not(:disabled) { filter: brightness(1.08); }
-.btn.primary.solid { background: var(--orange); color: #1a1418; }
 .btn.danger:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
 .btn.ghost { background: none; border-color: transparent; color: var(--muted); }
 .btn.ghost:hover:not(:disabled) { color: var(--text); background: var(--surface-2); }
@@ -247,7 +254,7 @@ input[type=range]:disabled { opacity: .4; }
 .mode .badge { position: absolute; top: 12px; right: 12px; }
 /* active: 2px gradient border (padding shrinks to keep the size); light border on hover */
 .mode.on { border: 2px solid transparent; padding: 15px 15px 13px; background: linear-gradient(var(--surface-3), var(--surface-3)) padding-box, var(--grad) border-box; }
-.mode.on:hover:not(:disabled) { border-color: transparent; background: linear-gradient(var(--surface-3), var(--surface-3)) padding-box, linear-gradient(#ffb380, #ffb380) border-box; }
+.mode.on:hover:not(:disabled) { border-color: transparent; background: linear-gradient(var(--surface-3), var(--surface-3)) padding-box, linear-gradient(var(--g-hi), var(--g-hi)) border-box; }
 .mode.on svg { color: var(--accent-2); }
 .mode:disabled { cursor: not-allowed; opacity: .42; }
 
@@ -294,7 +301,7 @@ input[type=range]:disabled { opacity: .4; }
 /* ---------- lighting ---------- */
 .kbd-art { width: 100%; max-width: 560px; margin: 0 auto; display: block; }
 .kbd-art .key { fill: #26212b; stroke: #36303c; stroke-width: 1; transition: fill .4s, filter .4s; }
-.kbd-art.lit .key { fill: #2e2420; stroke: #ff7a2a; filter: drop-shadow(0 0 3px rgba(255,120,30,.55)); }
+.kbd-art.lit .key { fill: color-mix(in srgb, var(--g2) 8%, #26212b); stroke: var(--g2); filter: drop-shadow(0 0 3px color-mix(in srgb, var(--g2) 55%, transparent)); }
 .kbd-art .body { fill: #18151b; stroke: var(--border); }
 
 /* ---------- battery ---------- */

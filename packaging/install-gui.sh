@@ -2,10 +2,11 @@
 # Builds the GUI (Go + Wails) and the session agent (acer-tray: tray icon and
 # Sense key) and installs them with the desktop entry, icon and agent autostart
 # (/usr/local and /etc, writable on Fedora Silverblue).
-# The same build ships in two flavors (branding only; capabilities still come
-# from the firmware, see daemon/flavor): nitro-control-center (red [N]) on
-# Nitro and Predator laptops, acer-control-center (green [a]) on the other
-# lines. FLAVOR=nitro|acer overrides the choice.
+# The same build ships in three flavors (branding only; capabilities still
+# come from the firmware, see daemon/flavor): nitro-control-center (red [N])
+# on Nitro, predator-control-center (blue-grey [P]) on Predator and
+# acer-control-center (green [a]) on the other lines. FLAVOR=nitro|predator|acer
+# overrides the choice.
 # Node, Wails and the WebKitGTK headers live in the distrobox; installing needs
 # root on the host, which only has to provide the webkit2gtk-4.1 runtime:
 #   sh packaging/install-gui.sh build                         # in the container
@@ -26,15 +27,16 @@ build() {
   (cd "$R/daemon" && go build -trimpath -ldflags "-s -w" -o "$TRAY" ./cmd/acer-tray)
 }
 
-# flavor: nitro on Nitro/Predator, acer on the other lines (product name in DMI).
+# flavor: by product line (product name in DMI).
 flavor() {
   case "${FLAVOR:-}" in
-    nitro|acer) echo "$FLAVOR"; return ;;
+    nitro|predator|acer) echo "$FLAVOR"; return ;;
     "") ;;
-    *) echo "FLAVOR must be nitro or acer" >&2; exit 2 ;;
+    *) echo "FLAVOR must be nitro, predator or acer" >&2; exit 2 ;;
   esac
   case "$(cat /sys/class/dmi/id/product_name 2>/dev/null)" in
-    Nitro*|Predator*) echo nitro ;;
+    Nitro*) echo nitro ;;
+    Predator*) echo predator ;;
     *) echo acer ;;
   esac
 }
@@ -43,6 +45,7 @@ flavor() {
 set_flavor() {
   case "$1" in
     nitro) APP=nitro-control-center ID=io.github.fnndk.NitroControlCenter NAME="Nitro Control Center" ICON_SVG=n-icon-cut.svg ;;
+    predator) APP=predator-control-center ID=io.github.fnndk.PredatorControlCenter NAME="Predator Control Center" ICON_SVG=p-icon-cut.svg ;;
     acer) APP=acer-control-center ID=io.github.fnndk.AcerControlCenter NAME="Acer Control Center" ICON_SVG=a-icon-cut.svg ;;
   esac
 }
@@ -72,7 +75,7 @@ install_all() {
   migrate_nitro_tray
   FL=$(flavor)
   # one flavor per machine: the tray and the Sense key open whichever is installed
-  for other in nitro acer; do
+  for other in nitro predator acer; do
     [ "$other" = "$FL" ] || remove_flavor "$other"
   done
   set_flavor "$FL"
@@ -100,6 +103,7 @@ uninstall() {
   [ "$(id -u)" -eq 0 ] || { echo "run as root (distrobox-host-exec sudo ...)"; exit 1; }
   pkill -x acer-tray 2>/dev/null || true
   remove_flavor nitro
+  remove_flavor predator
   remove_flavor acer
   rm -fv /usr/local/bin/acer-tray "$AUTOSTART"
   command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q /usr/local/share/applications || true

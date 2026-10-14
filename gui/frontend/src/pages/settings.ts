@@ -3,9 +3,10 @@ import { savedLang, setLang, t, type Lang } from '../i18n'
 // App icon, same file the installer puts in the icon theme.
 import iconNitro from '../../../../assets/logo/n-icon-cut.svg'
 import iconAcer from '../../../../assets/logo/a-icon-cut.svg'
+import iconPredator from '../../../../assets/logo/p-icon-cut.svg'
 import { appName, flavor } from '../flavor'
 
-const appIcon = flavor === 'acer' ? iconAcer : iconNitro
+const appIcon = { nitro: iconNitro, predator: iconPredator, acer: iconAcer }[flavor]
 import type { Page } from '../widgets'
 
 export function settings(): Page {

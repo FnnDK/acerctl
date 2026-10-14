@@ -1,8 +1,9 @@
 // Package flavor is the branding of the desktop app and the tray agent. The
-// same code ships as nitro-control-center (red [N], Nitro and Predator) or
-// acer-control-center (green [a], the other lines); packaging/install-gui.sh
-// picks one per product line. Only names, icons and colours change:
-// capabilities always come from the firmware.
+// same code ships as nitro-control-center (red [N], Nitro),
+// predator-control-center (blue-grey [P], Predator) or acer-control-center
+// (green [a], the other lines); packaging/install-gui.sh picks one per
+// product line. Only names, icons and colours change: capabilities always
+// come from the firmware.
 package flavor
 
 import (
@@ -13,37 +14,47 @@ import (
 
 // Flavor is one branding of the app.
 type Flavor struct {
-	ID     string // "nitro" or "acer"
+	ID     string // "nitro", "predator" or "acer"
 	Name   string // window title, launcher and tray name
 	AppID  string // desktop file and icon name, Wayland app_id, single-instance id
 	Binary string // installed executable
 }
 
 var (
-	Nitro = Flavor{ID: "nitro", Name: "Nitro Control Center", AppID: "io.github.fnndk.NitroControlCenter", Binary: "nitro-control-center"}
-	Acer  = Flavor{ID: "acer", Name: "Acer Control Center", AppID: "io.github.fnndk.AcerControlCenter", Binary: "acer-control-center"}
+	Nitro    = Flavor{ID: "nitro", Name: "Nitro Control Center", AppID: "io.github.fnndk.NitroControlCenter", Binary: "nitro-control-center"}
+	Predator = Flavor{ID: "predator", Name: "Predator Control Center", AppID: "io.github.fnndk.PredatorControlCenter", Binary: "predator-control-center"}
+	Acer     = Flavor{ID: "acer", Name: "Acer Control Center", AppID: "io.github.fnndk.AcerControlCenter", Binary: "acer-control-center"}
+
+	// All lists the flavors; the first one is the default.
+	All = []Flavor{Nitro, Predator, Acer}
 )
 
-// Detect picks the flavor: ACERCTL_FLAVOR (nitro|acer), else the name of the
-// running executable when it is one of the apps (the GUI), else the app that
-// is installed (the tray; the installer keeps only one), else Nitro.
+// Detect picks the flavor: ACERCTL_FLAVOR (nitro|predator|acer), else the
+// name of the running executable when it is one of the apps (the GUI), else
+// the one app that is installed (the tray; the installer keeps only one),
+// else Nitro.
 func Detect() Flavor {
-	switch os.Getenv("ACERCTL_FLAVOR") {
-	case Acer.ID:
-		return Acer
-	case Nitro.ID:
-		return Nitro
-	}
-	if exe, err := os.Executable(); err == nil {
-		switch filepath.Base(exe) {
-		case Acer.Binary:
-			return Acer
-		case Nitro.Binary:
-			return Nitro
+	env := os.Getenv("ACERCTL_FLAVOR")
+	for _, f := range All {
+		if env == f.ID {
+			return f
 		}
 	}
-	if installed(Acer.Binary) && !installed(Nitro.Binary) {
-		return Acer
+	if exe, err := os.Executable(); err == nil {
+		for _, f := range All {
+			if filepath.Base(exe) == f.Binary {
+				return f
+			}
+		}
+	}
+	var found []Flavor
+	for _, f := range All {
+		if installed(f.Binary) {
+			found = append(found, f)
+		}
+	}
+	if len(found) == 1 {
+		return found[0]
 	}
 	return Nitro
 }

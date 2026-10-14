@@ -30,12 +30,16 @@ import (
 // sources in assets/logo (needs rsvg-convert, from librsvg).
 //go:generate rsvg-convert -w 64 -h 64 -o icon.png ../../../assets/logo/n-tray.svg
 //go:generate rsvg-convert -w 64 -h 64 -o icon-a.png ../../../assets/logo/a-tray.svg
+//go:generate rsvg-convert -w 64 -h 64 -o icon-p.png ../../../assets/logo/p-tray.svg
 
 //go:embed icon.png
 var iconNitro []byte
 
 //go:embed icon-a.png
 var iconAcer []byte
+
+//go:embed icon-p.png
+var iconPredator []byte
 
 // brand is the flavor of the installed app (the installer keeps one):
 // its name, icon and the executable the Sense key and the menu open.
@@ -47,8 +51,11 @@ const (
 )
 
 func trayIcon() []byte {
-	if brand.ID == flavor.Acer.ID {
+	switch brand.ID {
+	case flavor.Acer.ID:
 		return iconAcer
+	case flavor.Predator.ID:
+		return iconPredator
 	}
 	return iconNitro
 }

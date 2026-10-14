@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="190 -708 1420 860" width="142" height="86">
+  <!-- The [P] mark of the blue-grey app icon (p-icon-cut.svg) without the background: P and
+       brackets from Source Code Pro Black (SIL OFL 1.1) as outlines, on the same baseline.
+       P in currentColor, brackets in the accent CSS variable (default #5a95d8). -->
+  <g transform="scale(1 -1)">
+    <path fill="currentColor" d="M648 0H820V206H892C1028 206 1152 275 1152 434C1152 598 1032 650 892 650H648ZM820 342V514H884C948 514 984 492 984 434C984 376 952 342 884 342Z"/>
+    <path style="fill:var(--accent,#5a95d8)" d="M190,-152 L494,-152 L494,-62 L320,-62 L320,618 L494,618 L494,708 L190,708Z M1306,-152 L1610,-152 L1610,708 L1306,708 L1306,618 L1480,618 L1480,-62 L1306,-62Z"/>
+  </g>
+</svg>

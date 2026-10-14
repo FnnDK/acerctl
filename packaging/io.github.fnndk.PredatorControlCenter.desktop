@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=Predator Control Center
+GenericName=Laptop control center
+GenericName[pt_BR]=Central de controle do notebook
+Comment=Operating modes, fans, battery and sensors (acerd)
+Comment[pt_BR]=Modos de operação, ventoinhas, bateria e sensores (acerd)
+Exec=predator-control-center
+Icon=io.github.fnndk.PredatorControlCenter
+Terminal=false
+Categories=System;Settings;HardwareSettings;
+Keywords=fan;thermal;battery;performance;predator;
+Keywords[pt_BR]=ventoinha;térmico;bateria;desempenho;predator;
+StartupWMClass=io.github.fnndk.PredatorControlCenter
+SingleMainWindow=true

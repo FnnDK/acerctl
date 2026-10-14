@@ -18,14 +18,18 @@ import (
 // rsvg-convert, from librsvg).
 //go:generate rsvg-convert -w 512 -h 512 -o build/appicon.png ../assets/logo/n-icon-cut.svg
 //go:generate rsvg-convert -w 512 -h 512 -o build/appicon-a.png ../assets/logo/a-icon-cut.svg
+//go:generate rsvg-convert -w 512 -h 512 -o build/appicon-p.png ../assets/logo/p-icon-cut.svg
 
 // brand is this build's flavor: the installed name of the executable decides
-// (nitro-control-center or acer-control-center); ACERCTL_FLAVOR overrides it.
+// (nitro-, predator- or acer-control-center); ACERCTL_FLAVOR overrides it.
 var brand = flavor.Detect()
 
 func appIcon() []byte {
-	if brand.ID == flavor.Acer.ID {
+	switch brand.ID {
+	case flavor.Acer.ID:
 		return iconAcer
+	case flavor.Predator.ID:
+		return iconPredator
 	}
 	return iconNitro
 }
