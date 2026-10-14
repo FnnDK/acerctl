@@ -7,22 +7,18 @@ acerctl shows each feature only when the laptop's firmware offers it, so support
 ```bash
 git clone https://github.com/FnnDK/acerctl.git
 cd acerctl
-sudo sh tools/survey.sh
-```
-
-This needs nothing beyond a standard Linux install and takes a few seconds. It prints a summary, writes `acer-report-<model>-<date>.tar.gz` in the current directory and prints a link to a new *Hardware report* issue with the model and the summary already filled in (also saved as `issue-url.txt`): open it and drag the `.tar.gz` into the form.
-
-### Optional: firmware probes
-
-```bash
 sudo sh tools/survey.sh --probes
 ```
 
-With `--probes` the script also asks the firmware what it supports, by calling about 90 **read-only** ("Get") WMI methods through the research module in `drivers/acer-wmi-lab`. The module is built, loaded for the run and unloaded at the end. This tells us much more (supported fans, sensors, modes, lighting, battery functions), but it needs:
+It takes a few seconds, prints a summary, writes `acer-report-<model>-<date>.tar.gz` in the current directory and prints a link to a new *Hardware report* issue with the model and the summary already filled in (also saved as `issue-url.txt`): open it and drag the `.tar.gz` into the form.
+
+`--probes` asks the firmware what it supports by calling about 90 **read-only** ("Get") WMI methods through the research module in `drivers/acer-wmi-lab`, which is built, loaded for the run and unloaded at the end. This is the most useful part of the report (supported fans, sensors, modes, lighting, battery functions). It needs:
 
 - `make`, a C compiler and the headers of the running kernel (`kernel-devel` on Fedora, `linux-headers-$(uname -r)` on Debian/Ubuntu, `linux-headers` on Arch);
-- **Secure Boot off**, or a module signed with a key you have enrolled (MOK). With Secure Boot on, the script says so and skips the probes; the rest of the report is still useful;
-- the acerctl daemon stopped, if you have it installed (`sudo systemctl stop acerd`), and no other Acer WMI module loaded (`linuwu_sense`, `facer`): concurrent WMI calls can corrupt each other's results on some firmware. The script checks both and skips the probes otherwise.
+- **Secure Boot off**, or a module signed with a key you have enrolled (MOK);
+- the acerctl daemon stopped, if you have it installed (`sudo systemctl stop acerd`), and no other Acer WMI module loaded (`linuwu_sense`, `facer`): concurrent WMI calls can corrupt each other's results on some firmware.
+
+If something is missing, the script says what and still writes the rest of the report, which is useful on its own. Without `--probes` (`sudo sh tools/survey.sh`) it only reads files and needs nothing beyond a standard Linux install.
 
 On image-based systems without a compiler on the host (Fedora Silverblue, Bluefin, Kinoite…), build the module in a toolbox and pass it to the script:
 

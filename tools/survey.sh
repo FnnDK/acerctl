@@ -4,8 +4,8 @@
 # machine. Run it as root on the laptop and attach the resulting .tar.gz to a
 # "Hardware report" issue (see docs/hardware-reports.md):
 #
+#   sudo sh tools/survey.sh --probes    # recommended: plus read-only firmware calls
 #   sudo sh tools/survey.sh             # data only, nothing to build
-#   sudo sh tools/survey.sh --probes    # plus read-only firmware calls
 #
 # Guarantees:
 # - Read-only. Nothing is written to the firmware and no setting is changed.
@@ -24,7 +24,7 @@ ISSUE_URL=https://github.com/FnnDK/acerctl/issues/new?template=hardware-report.y
 usage() {
   cat <<EOF
 usage: sudo sh $0 [--probes] [--lab-module FILE.ko] [-o DIR]
-  --probes             also run read-only firmware calls (builds and loads
+  --probes             recommended: also run read-only firmware calls (builds and loads
                        drivers/acer-wmi-lab temporarily; needs make, a C
                        compiler and the kernel headers, or --lab-module)
   --lab-module FILE    use an already built acer-wmi-lab.ko (implies --probes)
@@ -252,7 +252,7 @@ probe() {
   done
 }
 
-PROBE_NOTE="not requested (run with --probes)"
+PROBE_NOTE="not requested (run again with --probes: it is the most useful part)"
 LOADED_BY_US=0
 if [ "$PROBES" = 1 ]; then
   if pgrep -x acerd >/dev/null 2>&1; then
@@ -410,6 +410,7 @@ echo
 cat "$OUT/summary.txt"
 echo
 echo "report: $OUT.tar.gz"
+[ "$PROBES" = 1 ] || echo "tip: run 'sudo sh $0 --probes' instead; the firmware probes are the most useful part of the report"
 echo "review it if you like, then open this link (model and summary already filled in)"
 echo "and drag the .tar.gz into the form:"
 echo

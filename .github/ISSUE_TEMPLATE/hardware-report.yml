@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for helping! Run `sudo sh tools/survey.sh` (optionally with `--probes`) as described in
+        Thanks for helping! Run `sudo sh tools/survey.sh --probes` as described in
         [docs/hardware-reports.md](https://github.com/FnnDK/acerctl/blob/main/docs/hardware-reports.md),
         and open the link it prints: the model and the summary are already filled in, you only need to
         attach the `.tar.gz`. The script is read-only and collects no personal data.
