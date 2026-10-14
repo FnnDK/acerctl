@@ -5,6 +5,8 @@
 #   acerctl-<ver>-linux-x86_64.tar.gz   prebuilt acerd, acerctl, acer-tray and the
 #                                       app, the install scripts and the kernel
 #                                       modules as source (packaging/INSTALL-binary.md)
+#   *.deb                               Debian/Ubuntu packages of the same binaries
+#                                       (tools/build-debs.sh)
 #   SHA256SUMS
 # Everything is built from the tag, not from the working tree:
 #   sh tools/release.sh v0.1.0
@@ -54,7 +56,14 @@ cp "$SRC/README.md" "$SRC/LICENSE" "$SRC/VERSION" "$BIN/"
 mv "$BIN/packaging/INSTALL-binary.md" "$BIN/INSTALL.md"
 tar -C "$WORK" -czf "$DIST/$NAME-linux-$ARCH.tar.gz" "$NAME-linux-$ARCH"
 
+echo "== Debian/Ubuntu packages"
+D="$WORK/debbin"
+mkdir -p "$D"
+cp "$B/daemon/acerd" "$B/daemon/acerctl" "$B/daemon/acer-tray" "$D/"
+cp "$B/gui/build/bin/nitro-control-center" "$D/control-center"
+sh "$SRC/tools/build-debs.sh" "$D" "$SRC" "$VER" "$DIST" >/dev/null
+
 cd "$DIST"
-sha256sum "$NAME.tar.gz" "$NAME-linux-$ARCH.tar.gz" > SHA256SUMS
+sha256sum "$NAME.tar.gz" "$NAME-linux-$ARCH.tar.gz" ./*_"${VER}"_*.deb | sed 's| \./| |' > SHA256SUMS
 echo "== $DIST"
-ls -l "$NAME.tar.gz" "$NAME-linux-$ARCH.tar.gz" SHA256SUMS
+ls -l "$NAME.tar.gz" "$NAME-linux-$ARCH.tar.gz" ./*_"${VER}"_*.deb SHA256SUMS

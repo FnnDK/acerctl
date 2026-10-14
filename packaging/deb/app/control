@@ -1,0 +1,14 @@
+Package: @APP@
+Version: @VERSION@
+Architecture: amd64
+Maintainer: FnnDK <fernando.resende.k@gmail.com>
+Installed-Size: @SIZE@
+Depends: libc6 (>= 2.34), acerctl (= @VERSION@), acerctl-tray (= @VERSION@), libgtk-3-0t64 | libgtk-3-0, libwebkit2gtk-4.1-0
+Conflicts: @OTHERS@
+Section: admin
+Priority: optional
+Homepage: https://github.com/FnnDK/acerctl
+Description: @NAME@, the acerctl app for @LINE@
+ Desktop app of acerctl with the @BRAND@ branding. The same app ships as
+ nitro-control-center, predator-control-center and acer-control-center;
+ install the one of your laptop's product line.

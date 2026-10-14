@@ -1,0 +1,13 @@
+Package: acerctl-tray
+Version: @VERSION@
+Architecture: amd64
+Maintainer: FnnDK <fernando.resende.k@gmail.com>
+Installed-Size: @SIZE@
+Depends: libc6 (>= 2.34), acerctl (= @VERSION@)
+Section: admin
+Priority: optional
+Homepage: https://github.com/FnnDK/acerctl
+Description: tray icon and Sense key agent of acerctl
+ acer-tray is the session agent of acerctl: tray icon with quick modes and
+ scenarios, and the Sense key's "open the app". It is started by the app
+ packages (nitro-, predator- or acer-control-center).

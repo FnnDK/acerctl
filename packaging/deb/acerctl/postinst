@@ -1,0 +1,21 @@
+#!/bin/sh
+# acerd.service: enabled on install and (re)started, as dh_installsystemd does;
+# the hwdb entry maps the Sense key on models systemd does not list yet.
+set -e
+if [ "$1" = configure ] || [ "$1" = abort-upgrade ] || [ "$1" = abort-deconfigure ] || [ "$1" = abort-remove ]; then
+	systemd-hwdb update >/dev/null 2>&1 || true
+	deb-systemd-helper unmask acerd.service >/dev/null || true
+	if deb-systemd-helper --quiet was-enabled acerd.service; then
+		deb-systemd-helper enable acerd.service >/dev/null || true
+	else
+		deb-systemd-helper update-state acerd.service >/dev/null || true
+	fi
+	if [ -d /run/systemd/system ]; then
+		udevadm trigger --subsystem-match=input --action=change >/dev/null 2>&1 || true
+		systemctl --system daemon-reload >/dev/null || true
+		# the new D-Bus policy and activation file
+		systemctl reload dbus.service >/dev/null 2>&1 || systemctl reload dbus-broker.service >/dev/null 2>&1 || true
+		if [ -n "$2" ]; then action=restart; else action=start; fi
+		deb-systemd-invoke $action acerd.service >/dev/null || true
+	fi
+fi

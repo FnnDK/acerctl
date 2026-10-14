@@ -39,6 +39,18 @@ func TestPredatorV4In(t *testing.T) {
 	}
 }
 
+func TestIsDKMSPath(t *testing.T) {
+	for p, want := range map[string]bool{
+		"/lib/modules/6.12.48+deb13-amd64/updates/dkms/acer-wmi-extras.ko.xz\n":  true,
+		"/lib/modules/7.0.0-38-generic/updates/dkms/acer-wmi-extras.ko.zst\n":    true,
+		"/lib/modules/7.2.9-201.fc44.x86_64/extra/acerctl/acer-wmi-extras.ko.xz": false,
+	} {
+		if isDKMSPath(p) != want {
+			t.Errorf("%s: want %v", p, want)
+		}
+	}
+}
+
 func TestOneTimeCode(t *testing.T) {
 	for i := 0; i < 50; i++ {
 		c, err := oneTimeCode()

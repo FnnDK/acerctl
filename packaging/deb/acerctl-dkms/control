@@ -1,0 +1,16 @@
+Package: acerctl-dkms
+Version: @VERSION@
+Architecture: all
+Maintainer: FnnDK <fernando.resende.k@gmail.com>
+Installed-Size: @SIZE@
+Depends: dkms (>= 2.8)
+Recommends: acerctl
+Section: kernel
+Priority: optional
+Homepage: https://github.com/FnnDK/acerctl
+Description: kernel modules of acerctl (DKMS)
+ Companion modules of acerctl, next to the in-tree acer_wmi driver:
+ acer-wmi-extras (keyboard backlight timeout, USB charging, supported thermal
+ profiles, battery sensors) and acer-wmi-battery (80 % charge limit,
+ calibration). DKMS rebuilds them for every installed kernel and, with Secure
+ Boot, signs them with its own key.

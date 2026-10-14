@@ -38,9 +38,13 @@ const (
 	scriptModules = "/var/lib/acer-wmi-modules" // packaging/install-modules.sh
 )
 
-// The akmods public key, where Fedora keeps it and where the akmods-keys
-// package puts it for image-based systems.
-var akmodsCerts = []string{"/etc/pki/akmods/certs/public_key.der", "/etc/pki/akmods-keys/certs/public_key.der"}
+// The public keys that sign the modules, by how they were built: akmods
+// (Fedora; akmods-keys copies it for image-based systems) or DKMS (Debian's
+// own key; Ubuntu signs with the shim-signed MOK).
+var (
+	akmodsCerts = []string{"/etc/pki/akmods/certs/public_key.der", "/etc/pki/akmods-keys/certs/public_key.der"}
+	dkmsCerts   = []string{"/var/lib/dkms/mok.pub", "/var/lib/shim-signed/mok/MOK.der"}
+)
 
 // acerWMIGUIDs are the Acer WMI interfaces the companion modules use; one of
 // them present means the modules belong on this machine.
@@ -195,8 +199,14 @@ func sigRequired() bool {
 	return strings.Contains(l, "[integrity]") || strings.Contains(l, "[confidentiality]")
 }
 
-func akmodsCert() string {
-	for _, c := range akmodsCerts {
+// signingCert is the public key the modules are signed with: DKMS installs
+// them under updates/dkms, akmods and the script install elsewhere.
+func signingCert() string {
+	certs := akmodsCerts
+	if out, err := exec.Command("modinfo", "-n", "acer_wmi_extras").Output(); err == nil && isDKMSPath(string(out)) {
+		certs = dkmsCerts
+	}
+	for _, c := range certs {
 		if exists(c) {
 			return c
 		}
@@ -204,11 +214,13 @@ func akmodsCert() string {
 	return ""
 }
 
-// keyState of the akmods key in the firmware's MOK list: enrolled,
+func isDKMSPath(p string) bool { return strings.Contains(p, "/updates/dkms/") }
+
+// keyState of the signing key in the firmware's MOK list: enrolled,
 // notenrolled, pending (enrollment requested, waiting for the next boot),
 // nokey or nomokutil.
 func keyState() string {
-	cert := akmodsCert()
+	cert := signingCert()
 	if cert == "" {
 		return "nokey"
 	}
@@ -238,14 +250,14 @@ func parseTestKey(out string) string {
 	return ""
 }
 
-// enrollSigningKey requests the enrollment of the akmods key (the one akmods
-// already signs with; no key is ever created here) with a fresh one-time
+// enrollSigningKey requests the enrollment of the key akmods or DKMS already
+// signs the modules with (no key is ever created here) with a fresh one-time
 // code; a pending request is replaced. The firmware asks for the code at the
 // next boot.
 func enrollSigningKey() (string, error) {
-	cert := akmodsCert()
+	cert := signingCert()
 	if cert == "" {
-		return "", fmt.Errorf("no akmods key (%s)", strings.Join(akmodsCerts, ", "))
+		return "", fmt.Errorf("no module signing key (%s, %s)", strings.Join(akmodsCerts, ", "), strings.Join(dkmsCerts, ", "))
 	}
 	code, err := oneTimeCode()
 	if err != nil {

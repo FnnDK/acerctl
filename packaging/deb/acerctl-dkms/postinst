@@ -1,0 +1,15 @@
+#!/bin/sh
+# Adds, builds and installs the modules for the installed kernels, as dh_dkms does.
+set -e
+NAME=acerctl
+VERSION=@VERSION@
+if [ "$1" = configure ]; then
+	for p in /usr/lib/dkms/common.postinst /usr/share/$NAME-dkms/postinst; do
+		if [ -f "$p" ]; then
+			"$p" "$NAME" "$VERSION" /usr/share/$NAME-dkms "" "$2"
+			exit 0
+		fi
+	done
+	echo "ERROR: /usr/lib/dkms/common.postinst not found: DKMS is too old, the modules were not built." >&2
+	exit 1
+fi

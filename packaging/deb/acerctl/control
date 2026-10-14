@@ -1,0 +1,16 @@
+Package: acerctl
+Version: @VERSION@
+Architecture: amd64
+Maintainer: FnnDK <fernando.resende.k@gmail.com>
+Installed-Size: @SIZE@
+Depends: libc6 (>= 2.34), dbus, polkitd | policykit-1, systemd, udev
+Recommends: acerctl-dkms
+Section: admin
+Priority: optional
+Homepage: https://github.com/FnnDK/acerctl
+Description: daemon and CLI for the firmware features of Acer laptops
+ acerd exposes the firmware features of Acer laptops (operating modes, fans,
+ keyboard backlight, USB charging, battery charge limit and calibration, RGB
+ lighting where present) over D-Bus, next to the in-tree acer_wmi driver;
+ acerctl is its command-line client. Each feature appears only when the
+ firmware offers it.
