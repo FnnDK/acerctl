@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only queries to the EC's vendor HID channel (Acer "2025 HID" protocol).
+"""Read-only queries to the EC's vendor HID channel (report 0xA0 of 1025:174B).
 
 Newer non-gaming Acer laptops (e.g. Aspire AG15-71P) expose operating modes and
 battery settings through the EC's HID-over-I2C device 1025:174B instead of WMI.
@@ -24,7 +24,7 @@ REPORT_ID = 0xA0
 REPORT_LEN = 65      # report ID + 64 bytes
 STATUS_OK = 0xE000
 
-# (label, command id, sub-function, args); args as sent by the Windows app.
+# (label, command id, sub-function, args).
 QUERIES = [
     ('HID spec version',             0x0000, 0x00, []),
     ('battery boost status',         0x0000, 0x02, [0, 0, 0]),
@@ -36,15 +36,13 @@ QUERIES = [
     ('current system usage mode',    0x0001, 0x02, [0, 0, 0]),
     ('fan table capability',         0x0004, 0x02, [0, 0, 0]),
     ('fan control status',           0x0004, 0x02, [0, 0, 2]),
-    # The Windows app writes the id as the decimal token "11" (0x0B); the last
-    # argument (battery index?) is not confirmed.
+    # The last argument (battery index?) is not confirmed.
     ('battery information',          0x0B00, 0x02, [0, 0, 0]),
     ('battery boundary',             0x0B03, 0x02, [0, 0, 0]),
 ]
 
-# Mode sets the Windows app builds from the capability level (byte 5 of the
-# capability answer). The byte each mode takes in the set command is not
-# confirmed yet.
+# Modes offered at each capability level (byte 5 of the capability answer).
+# The byte each mode takes in the set command is not confirmed yet.
 MODE_SETS = {
     0: 'Normal', 1: 'Normal', 2: 'Normal',
     3: 'Silent, Normal, Performance',
@@ -170,7 +168,7 @@ def main():
         out('battery design: %d mAh, %d mV; cells: %s mV' % (
             u16(26), u16(28), ' '.join(str(u16(o)) for o in (36, 38, 40))))
     if bnd:
-        # Layout as parsed by the Windows app: enabled flag, upper, lower.
+        # Enabled flag, upper and lower limit (only zeros seen so far).
         out('battery boundary: enabled=%d upper=%d lower=%d' % (bnd[7] == 1, bnd[8], bnd[9]))
 
     if opt.output:
