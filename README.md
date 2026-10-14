@@ -4,6 +4,10 @@
 
 <p align="center">All-in-one Linux alternative to Acer's AcerSense, NitroSense and PredatorSense: one daemon, CLI and app for operating modes, fans, battery, keyboard and sensors, showing only the features the laptop's firmware offers.</p>
 
+<p align="center"><b>Download:</b> <a href="#acer">Acer</a> · <a href="#nitro">Nitro</a> · <a href="#predator">Predator</a></p>
+
+**Contents:** [Download](#download) ([Acer](#acer), [Nitro](#nitro), [Predator](#predator)) · [What it does](#what-it-does) · [Screenshots](#screenshots) · [Compared with other tools](#compared-with-other-tools) · [GNOME integration](#gnome-integration) · [Components](#components) · [Documentation](#documentation) · [Building from source](#building-from-source) · [License](#license)
+
 Acer ships a different Windows-only app per product line: **AcerSense** (Aspire, Swift and the other non-gaming lines), **NitroSense** (Nitro) and **PredatorSense** (Predator). The laptops themselves share the same Acer WMI firmware interfaces (the ones the kernel's `acer_wmi` driver already uses across product lines), so acerctl covers all three with a single stack: each feature shows up only if the machine's firmware reports it, with no per-brand switch and no hard-coded model list.
 
 | Windows app | Laptops | Status in acerctl |
@@ -17,6 +21,67 @@ Your model is not on the list? Run the read-only [hardware report](docs/hardware
 acerctl works **by complementing the in-tree `acer_wmi` driver** instead of replacing it: what the kernel lacks comes from small companion modules, a daemon applies the rules, and an app and a CLI (`acerctl`) talk to it over D-Bus. The app comes in three flavors built from the same code, differing only in name and colors: `Acer Control Center` (green `[a]`) for Aspire and the other lines, `Nitro Control Center` (red `[N]`) for Nitro and `Predator Control Center` (blue-grey `[P]`) for Predator; the installer picks one from the product name.
 
 > Independent open-source project, not affiliated with Acer. "Acer", "Aspire", "Nitro", "Predator", "AcerSense", "NitroSense" and "PredatorSense" are trademarks of Acer Inc., mentioned only to identify the hardware.
+
+## Download
+
+Latest: **[0.1.1](https://github.com/FnnDK/acerctl/releases/tag/v0.1.1)** (pre-release), ready-built packages for **Fedora 44** (Workstation, Silverblue, Kinoite). Pick your laptop's product line: each one gets the app with its own name and colors, on top of the same daemon and kernel modules. The kernel modules come as an akmod, rebuilt for every new kernel and signed with the local akmods key when Secure Boot needs it.
+
+Then see [After installing](#after-installing). Upgrading from an install made with the scripts? Remove it first, as the [0.1.1 release notes](https://github.com/FnnDK/acerctl/releases/tag/v0.1.1#coming-from-the-script-install) show. Another distribution? See [Building from source](#building-from-source).
+
+### Acer
+
+Aspire, Swift, TravelMate, Extensa and the other non-gaming lines: **Acer Control Center**. Tested on the Aspire AG15-71P (charge limit, Sense key, app and tray).
+
+```bash
+v=0.1.1; app=acer-control-center
+mkdir acerctl-rpms && cd acerctl-rpms
+for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x86_64 \
+         akmod-acerctl-$v-1.fc44.x86_64 acerctl-kmod-common-$v-1.fc44.noarch; do
+  curl -LO https://github.com/FnnDK/acerctl/releases/download/v$v/$p.rpm
+done
+sudo dnf install ./*.rpm                   # Silverblue/Kinoite: rpm-ostree install ./*.rpm, then reboot
+sudo systemctl enable --now acerd
+```
+
+### Nitro
+
+**Nitro Control Center**. Tested on the Nitro ANV15-52 (modes, fans, sensors, keyboard, USB charging, battery, scenarios).
+
+```bash
+v=0.1.1; app=nitro-control-center
+mkdir acerctl-rpms && cd acerctl-rpms
+for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x86_64 \
+         akmod-acerctl-$v-1.fc44.x86_64 acerctl-kmod-common-$v-1.fc44.noarch; do
+  curl -LO https://github.com/FnnDK/acerctl/releases/download/v$v/$p.rpm
+done
+sudo dnf install ./*.rpm                   # Silverblue/Kinoite: rpm-ostree install ./*.rpm, then reboot
+sudo systemctl enable --now acerd
+```
+
+### Predator
+
+**Predator Control Center**. Not tested on a Predator yet: the features come from the firmware, and a [hardware report](docs/hardware-reports.md) from your machine helps a lot.
+
+```bash
+v=0.1.1; app=predator-control-center
+mkdir acerctl-rpms && cd acerctl-rpms
+for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x86_64 \
+         akmod-acerctl-$v-1.fc44.x86_64 acerctl-kmod-common-$v-1.fc44.noarch; do
+  curl -LO https://github.com/FnnDK/acerctl/releases/download/v$v/$p.rpm
+done
+sudo dnf install ./*.rpm                   # Silverblue/Kinoite: rpm-ostree install ./*.rpm, then reboot
+sudo systemctl enable --now acerd
+```
+
+### After installing
+
+Nitro and Predator models need `acer_wmi` with `predator_v4` for operating modes and fans, e.g. on the Nitro ANV15-52 (`/etc/modprobe.d/acer-wmi.conf`, then reboot):
+
+```
+options acer_wmi predator_v4=1 force_caps=0x1C26
+```
+
+Before enabling `platform-profile`, check the `tuned`/`power-profiles-daemon` profile: Linux's `performance` mode maps to Acer's Turbo, which not every model has. Then `acerctl status` shows what the daemon found and `acerctl help` lists the commands.
 
 ## What it does
 
@@ -132,13 +197,17 @@ Tested with UPower 1.91.5 on Fedora 44.
 
 Mainline layer used: `acer_wmi` with `predator_v4=1` (profiles in `platform-profile`, fans and temperatures in hwmon) and, until the model's quirk lands upstream, `force_caps=0x1C26` to unlock manual fan control.
 
-## Installation
+## Documentation
 
-Reference machine: Acer Nitro ANV15-52 with Fedora Silverblue 44. The scripts install to `/usr/local`, `/etc` and `/var/lib` (writable on Silverblue).
+- `STATUS.md`: project state, what has been done and next steps.
+- `docs/firmware-wmi.md`: technical reference for the firmware (WMI classes, formats, capabilities).
+- `docs/api-dbus.md`: `acerd` D-Bus API.
 
-**Fedora 44 RPMs:** since 0.1.1 the [releases](https://github.com/FnnDK/acerctl/releases) carry `acerctl`, `acerctl-tray`, the app of each product line (`nitro-`, `predator-` or `acer-control-center`), `akmod-acerctl` (the modules, rebuilt by akmods for each kernel) and `acerctl-kmod-common`; the release notes have the `dnf`/`rpm-ostree` commands and how to remove a script install first. The specs are in `packaging/rpm/`.
+## Building from source
 
-**From a release:** the [releases](https://github.com/FnnDK/acerctl/releases) also carry `acerctl-<version>-linux-x86_64.tar.gz` with the daemon, CLI, tray and app already built, the same scripts and the modules as source; its `INSTALL.md` has the steps (no Go, Node or Wails needed). `acerctl-<version>.tar.gz` is the source with vendored Go modules and the built frontend, for building without network.
+For other distributions, or to build from the repository. The scripts install to `/usr/local`, `/etc` and `/var/lib` (writable on Silverblue too); the reference machine is an Acer Nitro ANV15-52 with Fedora Silverblue 44.
+
+**Prebuilt binaries for other distributions** (glibc ≥ 2.34, x86_64): [`acerctl-0.1.1-linux-x86_64.tar.gz`](https://github.com/FnnDK/acerctl/releases/download/v0.1.1/acerctl-0.1.1-linux-x86_64.tar.gz) holds the daemon, CLI, tray and app already built, these scripts and the kernel modules as source; its `INSTALL.md` has the steps (no Go, Node or Wails needed). The app is picked from the laptop's product name.
 
 **From the repository:**
 
@@ -157,15 +226,7 @@ sh packaging/install-gui.sh build             # needs Go, Node, Wails and libweb
 sudo sh packaging/install-gui.sh              # FLAVOR=nitro|predator|acer overrides; 'uninstall' removes it
 ```
 
-`acer_wmi` options on the reference machine (`/etc/modprobe.d/acer-wmi.conf`):
-
-```
-options acer_wmi predator_v4=1 force_caps=0x1C26
-```
-
-Before enabling `platform-profile`, check the `tuned`/`power-profiles-daemon` profile: Linux's `performance` mode maps to Acer's Turbo, which not every model has.
-
-Once installed: `acerctl status` shows the state; `acerctl help` lists the commands.
+The RPM specs are in `packaging/rpm/`; `acerctl-<version>.tar.gz` in each release is the source with vendored Go modules and the built frontend, for building without network.
 
 ### Building a module by hand
 
@@ -179,12 +240,6 @@ sudo /usr/src/kernels/$(uname -r)/scripts/sign-file sha256 \
 sudo insmod drivers/acer-wmi-extras/acer-wmi-extras.ko
 ls /sys/devices/platform/acer-wmi-extras/
 ```
-
-## Documentation
-
-- `STATUS.md`: project state, what has been done and next steps.
-- `docs/firmware-wmi.md`: technical reference for the firmware (WMI classes, formats, capabilities).
-- `docs/api-dbus.md`: `acerd` D-Bus API.
 
 ## License
 

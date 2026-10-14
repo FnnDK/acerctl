@@ -29,7 +29,7 @@ sudo sh packaging/install-gui.sh              # FLAVOR=nitro|predator|acer overr
 
 Then `acerctl status` shows what the daemon found. After a kernel update, run `sudo sh packaging/build-sign.sh` again. To remove the app: `sudo sh packaging/install-gui.sh uninstall`.
 
-On Nitro and Predator models, `platform_profile` and the fans also need `acer_wmi` with `predator_v4` (see README, "Installation").
+On Nitro and Predator models, `platform_profile` and the fans also need `acer_wmi` with `predator_v4` (see README, "After installing").
 
 ## Hardware reports
 
