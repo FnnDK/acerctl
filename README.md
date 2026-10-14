@@ -83,6 +83,8 @@ options acer_wmi predator_v4=1 force_caps=0x1C26
 
 Before enabling `platform-profile`, check the `tuned`/`power-profiles-daemon` profile: Linux's `performance` mode maps to Acer's Turbo, which not every model has. Then `acerctl status` shows what the daemon found and `acerctl help` lists the commands.
 
+The kernel decides part of it: `acer_wmi` exposes the modes from Linux 6.9 and fan control from 6.19 (Debian 13 has the modes only; Ubuntu 24.04 HWE, 26.04 and Fedora have both). The companion modules build from 5.15 on.
+
 From the next release on, the app does this for you: when it opens, it lists what is left (the `acer_wmi` option, enrolling the akmods key for Secure Boot) and applies it with one password and one restart.
 
 ## What it does

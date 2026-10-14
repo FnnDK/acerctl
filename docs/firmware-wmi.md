@@ -84,6 +84,7 @@ Detection at probe: `kbd timeout: yes, usb charging: yes, profiles: yes (mask 0x
 
 ## 8. Mainline `acer-wmi`: facts and candidate patches
 
+- **By kernel version** (checked in the torvalds tree, 2026-10-14): `predator_v4` and its `platform_profile` from **6.9** (absent in 6.8); fan control (`ACER_CAP_PWM`, hwmon `pwmN`) from **6.19** (absent in 6.18). Older kernels still load `acer_wmi` (hotkeys, rfkill) and our companion modules, which build from 5.15 on (`tools/modules-matrix.sh`). What that means per distribution: Debian 12 (6.1) and Ubuntu 22.04 (5.15) and 24.04 GA (6.8) have neither; Debian 13 (6.12) has the modes but not fan control; Ubuntu 24.04 HWE and 26.04 (7.0) and Fedora 44 (7.2) have both.
 - `acer_predator_v4_platform_profile_probe` does `set_bit` on all 5 profiles without querying `ACER_WMID_MISC_SETTING_SUPPORTED_PROFILES` (0x0A), a constant that is defined but unused.
 - Mapping: `performance`=Turbo 5, `balanced-performance`=Performance 4, `balanced`=1, `quiet`=0, `low-power`=Eco 6.
 - The driver ignores `WMID_AC_EVENT`; `platform_profile_cycle()` goes through every choice (Eco on AC, Turbo on battery). The AC/battery rule belongs in user space.

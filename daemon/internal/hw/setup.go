@@ -92,11 +92,16 @@ func acerWMIOptions() string {
 
 // acerWMIItem: the firmware reports thermal profiles (acer-wmi-extras reads
 // its profile mask) but acer_wmi does not expose them, because predator_v4
-// is off for a model its quirk table does not know.
+// is off for a model its quirk table does not know. Older kernels have no
+// predator_v4 at all (the parameter is missing from sysfs): then only a newer
+// kernel helps, and writing the option would do nothing.
 func acerWMIItem() (SetupItem, bool) {
 	sp, err := readStr(filepath.Join(extrasDir, "supported_profiles"))
 	if err != nil || sp == "" || !exists("/sys/module/acer_wmi") || hasPlatformProfile() {
 		return SetupItem{}, false
+	}
+	if !exists("/sys/module/acer_wmi/parameters/predator_v4") {
+		return SetupItem{ID: "acer_wmi", State: "manual", Detail: "oldkernel"}, true
 	}
 	it := SetupItem{ID: "acer_wmi", State: "needed", Detail: acerWMIOptions()}
 	if modprobeHasPredatorV4() {

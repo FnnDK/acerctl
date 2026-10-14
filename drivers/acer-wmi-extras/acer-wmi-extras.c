@@ -25,7 +25,13 @@
 #include <linux/mutex.h>
 #include <linux/slab.h>
 #include <linux/sysfs.h>
+#include <linux/version.h>
+/* moved from asm/ to linux/ in 6.12 */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6,12,0)
+#include <asm/unaligned.h>
+#else
 #include <linux/unaligned.h>
+#endif
 
 #define DRV_NAME	"acer-wmi-extras"
 
@@ -407,7 +413,12 @@ static int extras_hwmon_read_string(struct device *dev,
 	return 0;
 }
 
+/* hwmon_chip_info.info points to const pointers from 6.4 on */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6,4,0)
+static const struct hwmon_channel_info *extras_hwmon_info[] = {
+#else
 static const struct hwmon_channel_info *const extras_hwmon_info[] = {
+#endif
 	HWMON_CHANNEL_INFO(temp, HWMON_T_INPUT | HWMON_T_LABEL),
 	HWMON_CHANNEL_INFO(in, HWMON_I_INPUT | HWMON_I_LABEL),
 	HWMON_CHANNEL_INFO(curr, HWMON_C_INPUT | HWMON_C_LABEL),
