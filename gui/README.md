@@ -43,6 +43,8 @@ ACERCTL_SESSION=1 ACERCTL_FLAVOR=acer wails dev -tags webkit2_41    # the green 
 
 `wails dev` rejects unknown flags, so the session bus comes from `ACERCTL_SESSION=1` (equivalent to `--session`).
 
+**Screenshots** for the README (`docs/screenshots/<flavor>/`) are always in English: `python3 -I tools/gui-screenshots.py nitro` (or `predator`, both simulated; `acer --dry-run` on an Aspire). The tool starts and stages its own daemon and `wails dev`, captures every page through headless Chrome and stops them; it needs `google-chrome` or `chromium` and `python3-websocket`.
+
 ## Installing
 
 ```bash
