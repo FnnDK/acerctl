@@ -22,3 +22,7 @@ daemon/acer-tray
 acer-report-*
 # EC HID query output (tools/ec-hid-probe.py)
 ec-hid-probe-*.txt
+# key captures (drivers/acer-wmi-lab/keywatch.py)
+keywatch-*.txt
+# local dev server config for the GUI preview
+.claude/launch.json
