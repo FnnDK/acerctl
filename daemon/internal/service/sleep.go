@@ -51,7 +51,7 @@ func (d *Daemon) watchSleep(ctx context.Context) {
 }
 
 // onResume logs what the firmware kept across the sleep, then reapplies the
-// profile and the fans and re-reads everything else (docs/api-dbus.md §11).
+// profile, the fans and the lighting and re-reads everything else (docs/api-dbus.md §11).
 // Profile writes by the firmware and tuned are ignored until it is done.
 func (d *Daemon) onResume() {
 	defer func() {
@@ -86,6 +86,7 @@ func (d *Daemon) onResume() {
 	d.restoreMode()
 	d.restoreFans(false)
 	d.refreshFans(true)
+	d.restoreLights()
 	d.refreshSlow()
 }
 

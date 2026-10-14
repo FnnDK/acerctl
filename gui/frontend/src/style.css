@@ -180,10 +180,10 @@ main { grid-column: 2; grid-row: 2; overflow-y: auto; padding: 10px 30px 40px; m
 .btn svg { width: 17px; height: 17px; }
 .btn:hover:not(:disabled) { background: var(--surface-3); border-color: #3c3542; }
 .btn.primary { background: var(--orange); border-color: transparent; color: #1a1418; font-weight: 600; }
-.btn.primary:hover:not(:disabled) { filter: brightness(1.08); }
-.btn.danger:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
+.btn.primary:hover:not(:disabled) { background: var(--g2); border-color: transparent; } /* beats the generic .btn:hover */
 .btn.ghost { background: none; border-color: transparent; color: var(--muted); }
 .btn.ghost:hover:not(:disabled) { color: var(--text); background: var(--surface-2); }
+.btn.danger:hover:not(:disabled) { border-color: var(--g1); color: var(--g-hi); }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .btn.sm { padding: 5px 11px; font-size: 13px; }
 
@@ -303,6 +303,22 @@ input[type=range]:disabled { opacity: .4; }
 .kbd-art .key { fill: #26212b; stroke: #36303c; stroke-width: 1; transition: fill .4s, filter .4s; }
 .kbd-art.lit .key { fill: color-mix(in srgb, var(--g2) 8%, #26212b); stroke: var(--g2); filter: drop-shadow(0 0 3px color-mix(in srgb, var(--g2) 55%, transparent)); }
 .kbd-art .body { fill: #18151b; stroke: var(--border); }
+.kbd-art.rgb .key { transition: fill .3s, stroke .3s; }
+.setting > select { flex: none; min-width: 180px; }
+.light-slider { flex: 0 1 320px; }
+.colors { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+.colors .color { display: grid; justify-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
+.colors input[type=color] { width: 44px; height: 30px; padding: 2px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); cursor: pointer; }
+.swatch { display: inline-block; background: var(--surface-3); box-shadow: 0 0 10px -2px currentColor; }
+.swatch.bar { width: 120px; height: 8px; border-radius: 4px; }
+.swatch.dot { width: 14px; height: 14px; border-radius: 50%; }
+/* effect previews: breathing pulses, colourless effects cycle the hue */
+[data-fx=breathing], .kbd-art[data-fx=breathing] .keys { animation: fx-breathe var(--fx-dur, 3s) ease-in-out infinite; }
+[data-fx=neon], [data-fx=wave], .kbd-art[data-fx=neon] .keys, .kbd-art[data-fx=wave] .keys { animation: fx-hue var(--fx-dur, 3s) linear infinite; }
+.kbd-art[data-fx] { animation: none; }
+@keyframes fx-breathe { 50% { opacity: .3; } }
+@keyframes fx-hue { to { filter: hue-rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { [data-fx], [data-fx] .keys { animation: none !important; } }
 
 /* ---------- battery ---------- */
 .batt-big { display: flex; align-items: center; gap: 26px; }
@@ -317,10 +333,10 @@ input[type=range]:disabled { opacity: .4; }
 
 /* ---------- scenarios ---------- */
 .scn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
-.scn { display: grid; gap: 12px; align-content: start; }
+.scn { display: flex; flex-direction: column; gap: 12px; }
 .scn.on { background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--grad) border-box; border: 1px solid transparent; }
 .scn .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.scn .actions { display: flex; gap: 8px; margin-top: 4px; }
+.scn .actions { display: flex; gap: 8px; margin-top: auto; padding-top: 4px; } /* bottom of the card, whatever its content */
 .empty { text-align: center; padding: 50px 20px; color: var(--muted); }
 .empty svg { width: 46px; height: 46px; color: var(--faint); }
 

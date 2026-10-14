@@ -27,7 +27,7 @@ const NAV: { id: string, icon: string, make: () => Page, show?: () => boolean }[
   { id: 'home', icon: 'home', make: home },
   { id: 'monitor', icon: 'monitor', make: monitor },
   { id: 'fans', icon: 'fan', make: fans, show: () => !!state.system?.Capabilities?.fans },
-  { id: 'lighting', icon: 'light', make: lighting, show: () => !!state.system?.Capabilities?.kbd_backlight },
+  { id: 'lighting', icon: 'light', make: lighting, show: () => !!caps().kbd_backlight || !!caps().lighting },
   { id: 'battery', icon: 'battery', make: battery },
   // a scenario combines mode, fans and keyboard: nothing to save without them
   { id: 'scenarios', icon: 'scenarios', make: scenarios, show: () => profiles().length > 0 || !!caps().fans || !!caps().kbd_backlight },

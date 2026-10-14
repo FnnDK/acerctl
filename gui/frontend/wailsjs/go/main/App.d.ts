@@ -36,6 +36,8 @@ export function SetKeyboardTimeout(arg1:number):Promise<void>;
 
 export function SetLang(arg1:string):Promise<void>;
 
+export function SetLight(arg1:string,arg2:Record<string, any>):Promise<void>;
+
 export function SetMode(arg1:string):Promise<void>;
 
 export function SetSenseKey(arg1:string):Promise<void>;

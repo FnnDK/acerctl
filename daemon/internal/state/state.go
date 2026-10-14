@@ -1,5 +1,6 @@
 // Package state persists what does not live in the EC: the last thermal
-// profile per power source and the fan setting (docs/api-dbus.md §11).
+// profile per power source, the fan setting and the lighting
+// (docs/api-dbus.md §11).
 package state
 
 import (
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"acerctl/daemon/internal/hw"
 	"acerctl/daemon/internal/scenarios"
 )
 
@@ -27,6 +29,9 @@ type Data struct {
 	ModeAC      string         `json:"mode_ac,omitempty"`
 	ModeBattery string         `json:"mode_battery,omitempty"`
 	Fans        map[string]Fan `json:"fans,omitempty"`
+	// Lights is the last effect applied per lighting device: some firmware
+	// forgets it at boot and on resume, and USB keyboards cannot be read.
+	Lights map[string]hw.LightState `json:"lights,omitempty"`
 	// Scenario is the active scenario ("" once something is changed by hand).
 	Scenario string `json:"scenario,omitempty"`
 	AppSync  bool   `json:"app_sync,omitempty"`
@@ -112,6 +117,17 @@ func (s *Store) FansSnapshot() map[string]Fan {
 	out := make(map[string]Fan, len(s.Data.Fans))
 	for id, f := range s.Data.Fans {
 		out[id] = f
+	}
+	return out
+}
+
+// LightsSnapshot returns a copy of the remembered lighting.
+func (s *Store) LightsSnapshot() map[string]hw.LightState {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := make(map[string]hw.LightState, len(s.Data.Lights))
+	for id, l := range s.Data.Lights {
+		out[id] = l
 	}
 	return out
 }

@@ -6,7 +6,7 @@ in the chosen flavor and captures every page its menu shows through headless
 Chrome (DevTools Protocol), then stops everything it started:
 
   python3 -I tools/gui-screenshots.py nitro             # simulated ANV15-52
-  python3 -I tools/gui-screenshots.py predator          # simulated PHN16-72 (Predator mock)
+  python3 -I tools/gui-screenshots.py predator          # simulated PHN16-72 (4-zone RGB keyboard)
   python3 -I tools/gui-screenshots.py acer --dry-run    # this machine, read-only
 
 Screenshots are always in English (a temporary XDG_CONFIG_HOME with

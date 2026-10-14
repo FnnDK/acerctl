@@ -60,7 +60,8 @@ Each key appears only when the backend was detected. Detection is by **presence 
 | `profiles` | `as` | `acer-wmi-extras/supported_profiles`; if the module is missing, `platform-profile/choices` **with** `profiles_from_firmware=false` | `low-power quiet balanced balanced-performance` |
 | `profiles_from_firmware` | `b` | see above | `true` |
 | `fans` | `a{sv}` | hwmon `acer` with `pwmN_enable`; `ids: as` (`cpu`, `gpu`), `modes: as` (`auto max manual`), `range: a{s(uu)}` (min/max in % per fan; 0–100 when there is no per-model table), `curve: b` (always `false` until there is a module for `GetGamingFanTable`) | `cpu gpu`, `0–100`, no curve |
-| `kbd_backlight` | `a{sv}` | `acer-wmi-extras/kbd_backlight_timeout`; `timeouts: au` (`0 30`), `rgb: b`, `zones: u` | timeout, `rgb=false` |
+| `kbd_backlight` | `a{sv}` | `acer-wmi-extras/kbd_backlight_timeout`; `timeouts: au` (`0 30`), `rgb: b` and `zones: u` (copied from `lighting.keyboard` when there is one) | timeout, `rgb=false` |
+| `lighting` | `a{sa{sv}}` | RGB lighting devices (`keyboard`, `lightbar`, `logo`), each with `effects: as` (display order), `with_color`/`with_speed`/`with_direction: as` (effects that use each field), `zones: u` (colours `static` takes; 0 = one), `speed: (uu)` (firmware steps), `directions: as`, `readback: b`. Today only the simulated Predators have it (§7, firmware-wmi §11) | absent |
 | `usb_charging` | `au` | `acer-wmi-extras/usb_charging`; accepted values | `0 10 20 30` |
 | `battery` | `a{sv}` | `charge_limit: b` (`health_mode` ≥ 0), `calibration: b` (`calibration_mode` ≥ 0), `sensors: b` (hwmon `acer_battery`) | all `true` |
 | `gpu` | `a{sv}` | `nvml: b` (NVML initialized), `oc: b` (always `false` in v1) | `nvml=true` |
@@ -131,11 +132,12 @@ With no subscribers the daemon does **not** sample (NVML and RAPL cost CPU).
 
 | Member | Type | Description |
 |---|---|---|
-| prop `Keyboard` | `a{sv}` | `on: b` (RO, firmware state), `timeout_s: u`; on RGB models (future): `zones`, `effect`, `brightness`, `speed` |
+| prop `Keyboard` | `a{sv}` | single-colour backlight: `on: b` (RO, firmware state), `timeout_s: u` |
 | method `SetKeyboardTimeout(u seconds)` | | only values from `capabilities.kbd_backlight.timeouts` (today 0 or 30); others ⇒ `InvalidArgument` |
-| method `SetKeyboardZones(...)` / `SetKeyboardEffect(...)` | | signature to be defined when there is an RGB module; `NotSupported` until then |
+| prop `Devices` | `a{sa{sv}}` | RGB devices of `capabilities.lighting` whose state is known: `effect: s`, `brightness: u` (%), `speed: u` and `direction: s` (when the effect uses them), `colors: as` (`#rrggbb`; one per zone for `static` on a zoned device), `readback: b` (false: this is what the daemon last applied, the device cannot be read). A device that cannot be read and was never set is missing |
+| method `SetLight(s device, a{sv} fields)` | | changes only the given fields (`effect`, `speed`, `brightness`, `direction`, `colors`); the rest is kept and fitted to the effect: one colour is spread over the zones of a zoned `static`, other effects keep the first colour, unused fields are dropped. Unknown device/field or a value outside the capabilities ⇒ `InvalidArgument`; polkit `control` |
 
-`on` changes via the Fn key; the daemon rereads `kbd_backlight_state` every 2 s while the GUI is on the lighting screen (the client calls the Monitor's `Subscribe`) and emits `PropertiesChanged`.
+`on` changes via the Fn key; the daemon rereads `kbd_backlight_state` every 2 s while the GUI is on the lighting screen (the client calls the Monitor's `Subscribe`) and emits `PropertiesChanged`. `Devices` is reread with the slow refresh (30 s) and after each `SetLight`. Every `SetLight` is remembered (`state.json`, `lights`) and reapplied at startup and after a resume, skipping readable devices that already show it: some firmware forgets the lighting (firmware-wmi §11).
 
 ## 8. Interface `io.github.fnndk.Acerd1.Battery`
 
@@ -196,7 +198,7 @@ Reason for the split: switching mode and fan is an everyday action (the Sense ke
 
 ## 11. Daemon behavior
 
-- **Boot/resume.** Restores only what does not live in the EC: thermal profile (per power source) and fan mode. Timeout, USB charging and charge limit live in the EC and are only read. Fans in `manual` are **not** restored at boot (risk of a slow fan under load); they go back to `auto` and the daemon logs it. On resume, it reapplies the profile and rereads everything. State in `/var/lib/acerd/state.json`.
+- **Boot/resume.** Restores only what does not live in the EC: thermal profile (per power source), fan mode and RGB lighting (§7). Timeout, USB charging and charge limit live in the EC and are only read. Fans in `manual` are **not** restored at boot (risk of a slow fan under load); they go back to `auto` and the daemon logs it. On resume, it reapplies the profile and rereads everything. State in `/var/lib/acerd/state.json`.
 - **AC/battery.** Kernel uevents via netlink (`NETLINK_KOBJECT_UEVENT`, group 1, filter `SUBSYSTEM=power_supply`; no libudev) with a safety reread every 30 s; on each event it recalculates `Allowed`, reapplies the profile saved for the source and emits `PropertiesChanged` on `Mode`.
 - **Sense key** (the NitroSense / PredatorSense / AcerSense button; renamed from "Nitro key" on 2026-10-13, since the key is not Nitro-only). In the original app the key **opens the app**; cycling modes belongs to the "Mode Switch Key" of other models. The daemon reads `KEY_PROG1` via evdev (internal keyboard, no grab, reopens if the device disappears), emits `System.SenseKeyPressed` and, in `cycle`, calls `Mode.Cycle()` without polkit. Opening an app is not a system service's job: in `app`, the session agent `acer-tray` opens it (XDG autostart; the GUI is single-instance, so opening it again only brings the window forward). The choice is `System.SetSenseKey` (GUI: Settings → Sense key); `--sense-key` only sets the default (`cycle`; `none` is a synonym for `app`).
 - **Session agent (`acer-tray`).** Tray icon (StatusNotifierItem; on GNOME, the AppIndicator extension) with quick modes, fans at max, scenarios and App Sync, and the Sense key's "open the app". It starts at login and exits on its own when the icon is off (`~/.config/acerctl/settings.json`, `tray_hidden`) and the key is set to `cycle`; the GUI notifies it of changes (`io.github.fnndk.AcerTray.Reload` on the session bus) and starts it when it becomes needed.

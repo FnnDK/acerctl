@@ -104,3 +104,26 @@ Detection at probe: `kbd timeout: yes, usb charging: yes, profiles: yes (mask 0x
 - [acer-wmi-battery](https://github.com/frederik-h/acer-wmi-battery): standalone battery module (vendored in `drivers/`).
 - [Div-Acer-Manager-Max](https://github.com/PXDiv/Div-Acer-Manager-Max) (GPL-3): Avalonia GUI + Python daemon on top of Linuwu.
 - [wobqqq/predator-sense](https://github.com/wobqqq/predator-sense): CLI + DKMS on top of Linuwu.
+- [cleyton1986/predator-sense](https://github.com/cleyton1986/predator-sense) (GPL-3.0): Rust GUI + `facer` module; its `PH16-71-FINDINGS.md` is the main source of §11.
+- [nekro-sense](https://github.com/fredac100/nekro-sense) (GPL-3.0): Linuwu fork for the PHN16-72 (4-zone keyboard, logo).
+
+## 11. Predator lighting (public sources; not verified here)
+
+No Predator has been tested by this project. The simulated Predators (`acerd --simulate PHN16-72` or `PH16-71`) reproduce what these public projects report:
+
+- [cleyton1986/predator-sense](https://github.com/cleyton1986/predator-sense) (GPL-3.0), `PH16-71-FINDINGS.md`, measured on a **Predator PH16-71** (sections cited as PS §n);
+- [Linuwu-Sense](https://github.com/0x7375646F/Linuwu-Sense) `four_zone_mode` / `per_zone_mode`, and [nekro-sense](https://github.com/fredac100/nekro-sense) (GPL-3.0, its fork for the **PHN16-72**: 4-zone keyboard and RGB logo).
+
+| Method | Layout | Notes |
+|---|---|---|
+| 20 SetGamingKBBacklight (u8[16]) | 0 effect, 1 speed, 2 brightness 0–100, 4 direction, 5–7 R G B, **9 target**: 1 keyboard, 2 light bar (logo on the PHN16-72) | PH16-71 (PS §4, §6): bytes 3, 8 and 10–15 are ignored; effects 0x08–0xFE are a silent no-op; brightness 0 is dark |
+| 21 GetGamingKBBacklight | argument = target; answer: [0] status, [1] effect, [2] speed, [3] brightness, [5] direction, [6..8] R G B | keyboard and light bar keep separate states (PS §6); status 1 on the ANV15-52 (§4) |
+| 6 SetGamingRgbKb (u64) / 7 Get | `[zone, R, G, B]`, zone 1/2/4/8 | Linuwu `per_zone_mode`: one colour per zone, brightness through method 20 static. PH16-71: stored and read back, but nothing lights (its keyboard is USB; PS §6, §9) |
+
+- **Effects** (byte 0, Linuwu-Sense): 0 static, 1 breathing, 2 neon, 3 wave, 4 shifting, 5 zoom, 6 meteor, 7 twinkling. Speed 1–9 on the keyboard (unused by static), direction 1 = right to left, 2 = left to right; neon and wave carry no colour.
+- **Light bar, PH16-71** (PS §4, §10): speed 1–5, brightness 0–100; effect 0 is a solid colour, not off. After boot or after being dark it stays off until **one breathing frame** is sent, although the readback already shows the new state. The bar has three physical zones but no per-zone path is known (PS §9, §11).
+- **USB keyboard, PH16-71** (Chicony `04F2:0117`, PS §7): SET_REPORT session `B1 00 00 00 00 00 00 4E`, `14 00 00 RR GG BB 00 00`, `08 02 <effect> <speed 1-9> <brightness 0-0x32> 01 <dir> <checksum>`; 13 effects plus off (predator-sense `keyboard_rgb.rs`: only wave and rainbow ignore the colour, only wave takes a direction, static has no speed); **no readback**; its own ~30 s idle timer (PS §24), which the keyboard timeout of §5 does not reach.
+- **Boot and resume** (PS §20, §22): the PH16-71 loses its lighting; `acerd` reapplies the last effect it set (`state.json`).
+- **Keys** (PS §14, §15, §25): the mode key is WMI event 0x7 / key 5, cycled by `acer_wmi` with `predator_v4` (the profile indices are those of §4: 0, 1, 4, 5, 6). The PredatorSense key arrives as HID usage `0xFF81` on the keyboard's interface 2, with no evdev key: `acerd`'s Sense key detection (`KEY_PROG1`) does not see it yet.
+
+How `acerd` maps this (`daemon/internal/hw/light.go`): devices `keyboard`, `lightbar`, `logo`; effect names as above, plus the USB keyboard's (`snake`, `ripple`, `rainbow`, `rain`, `lightning`, `spot`, `stars`, `fireball`, `snow`, `heartbeat`); brightness always in percent (scaling to 0–0x32 is a backend's job); direction `left` = 1, `right` = 2. There is no real backend yet: one needs a module or hidraw path tested on the hardware.

@@ -10,6 +10,13 @@ export interface Page {
   shown?(): void
 }
 
+// paintRange fills a range input up to its value with the flavor gradient.
+export function paintRange(range: HTMLInputElement) {
+  const lo = Number(range.min), hi = Number(range.max)
+  const p = hi > lo ? ((Number(range.value) - lo) * 100) / (hi - lo) : 0
+  range.style.background = `linear-gradient(90deg, var(--g1), var(--g3) ${p}%, var(--surface-3) ${p}%)`
+}
+
 const R = 62
 const C = 2 * Math.PI * R
 const ARC = 0.75 * C

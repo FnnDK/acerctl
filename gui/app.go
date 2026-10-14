@@ -280,6 +280,28 @@ func (a *App) SetKeyboardTimeout(seconds uint32) error {
 	return a.call(client.IfLighting, "SetKeyboardTimeout", seconds)
 }
 
+// SetLight changes the given fields of one lighting device (effect,
+// speed, brightness, direction, colors), as Lighting.SetLight does.
+func (a *App) SetLight(id string, fields map[string]interface{}) error {
+	m := map[string]dbus.Variant{}
+	for k, v := range fields {
+		switch x := v.(type) {
+		case float64: // JSON numbers: speed, brightness
+			m[k] = dbus.MakeVariant(uint32(x))
+		case []interface{}: // colors
+			colors := make([]string, 0, len(x))
+			for _, c := range x {
+				s, _ := c.(string)
+				colors = append(colors, s)
+			}
+			m[k] = dbus.MakeVariant(colors)
+		default:
+			m[k] = dbus.MakeVariant(v)
+		}
+	}
+	return a.call(client.IfLighting, "SetLight", id, m)
+}
+
 func (a *App) SetChargeLimit(on bool) error { return a.call(client.IfBattery, "SetChargeLimit", on) }
 
 func (a *App) StartCalibration() error { return a.call(client.IfBattery, "StartCalibration") }

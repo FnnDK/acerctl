@@ -2,16 +2,74 @@ package hw
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 	"sync"
 )
 
-// simModels are the models Simulate knows, with the product name and BIOS
-// as DMI reports them. The ANV15-52 values were read from the real machine;
-// the PHN16-72 is a mock with the same capabilities, to develop the Predator
-// flavor of the GUI without a Predator.
-var simModels = map[string][2]string{
-	"ANV15-52": {"Nitro ANV15-52", "V1.31"},
-	"PHN16-72": {"Predator PHN16-72", "V1.31"},
+// simModel is what Simulate gives one model.
+type simModel struct {
+	product, bios string
+	profiles      []string
+	kbdTimeout    bool // single-colour backlight timeout (acer-wmi-extras)
+	lights        []LightDevice
+	initial       map[string]LightState // what the readable devices report at start
+}
+
+var (
+	predatorProfiles = []string{"low-power", "quiet", "balanced", "balanced-performance", "performance"}
+	ecEffects        = []string{"static", "breathing", "neon", "wave", "shifting", "zoom", "meteor", "twinkling"}
+	lightbarEffects  = []string{"static", "breathing", "neon", "wave", "twinkling"}
+	lr               = []string{"left", "right"}
+)
+
+// simModels are the models Simulate knows. The ANV15-52 values were read
+// from the real machine. The two Predators follow what public sources report
+// (docs/firmware-wmi.md §11), not a machine we could test:
+//   - PHN16-72: 4-zone keyboard (methods 6/20, target 1) and logo (method 20,
+//     target 2, the light bar channel of other models);
+//   - PH16-71: USB keyboard that cannot be read back, and a light bar
+//     (method 20, target 2); no single-colour backlight timeout.
+var simModels = map[string]simModel{
+	"ANV15-52": {
+		product: "Nitro ANV15-52", bios: "V1.31",
+		profiles:   []string{"low-power", "quiet", "balanced", "balanced-performance"},
+		kbdTimeout: true,
+	},
+	"PHN16-72": {
+		product: "Predator PHN16-72", bios: "V1.31",
+		profiles: predatorProfiles, kbdTimeout: true,
+		lights: []LightDevice{
+			{ID: "keyboard", Effects: ecEffects, Zones: 4, Speed: Range{1, 9}, Directions: lr, Readback: true},
+			{ID: "logo", Effects: lightbarEffects, Speed: Range{1, 5}, Directions: lr, Readback: true},
+		},
+		initial: map[string]LightState{
+			"keyboard": {Effect: "static", Brightness: 80, Colors: []string{"#00a2ff", "#3d7bff", "#7a54ff", "#b833ff"}},
+			"logo":     {Effect: "static", Brightness: 100, Colors: []string{"#00a2ff"}},
+		},
+	},
+	"PH16-71": {
+		product: "Predator PH16-71", bios: "V1.31",
+		profiles: predatorProfiles,
+		lights: []LightDevice{
+			{ID: "keyboard", Effects: []string{"static", "breathing", "wave", "snake", "ripple", "rainbow", "rain",
+				"lightning", "spot", "stars", "fireball", "snow", "heartbeat"}, Speed: Range{1, 9}, Directions: lr},
+			{ID: "lightbar", Effects: lightbarEffects, Speed: Range{1, 5}, Directions: lr, Readback: true},
+		},
+		initial: map[string]LightState{
+			"lightbar": {Effect: "breathing", Speed: 3, Brightness: 100, Colors: []string{"#00a2ff"}},
+		},
+	},
+}
+
+// SimModels lists the model names Simulate accepts.
+func SimModels() []string {
+	out := make([]string, 0, len(simModels))
+	for k := range simModels {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
 }
 
 // Simulate returns an in-memory Hardware with the capabilities of a known
@@ -19,37 +77,49 @@ var simModels = map[string][2]string{
 func Simulate(model string) (*Hardware, error) {
 	m, ok := simModels[model]
 	if !ok {
-		return nil, fmt.Errorf("unknown simulated model %q (ANV15-52 or PHN16-72)", model)
+		return nil, fmt.Errorf("unknown simulated model %q (%s)", model, strings.Join(SimModels(), ", "))
 	}
 	s := &sim{
-		profile: "balanced",
-		fans:    map[string]FanState{"cpu": {RPM: 2100, Mode: "auto"}, "gpu": {RPM: 0, Mode: "auto"}},
-		timeout: 30, usb: 30, limit: true,
-		power: Power{Source: "ac", Percent: 80},
+		profiles: m.profiles,
+		profile:  "balanced",
+		fans:     map[string]FanState{"cpu": {RPM: 2100, Mode: "auto"}, "gpu": {RPM: 0, Mode: "auto"}},
+		timeout:  30, usb: 30, limit: true,
+		power:  Power{Source: "ac", Percent: 80},
+		lights: map[string]LightState{},
 	}
-	return &Hardware{
-		Model: map[string]interface{}{"vendor": "Acer", "product": m[0] + " (simulated)", "bios": m[1],
+	for id, st := range m.initial {
+		s.lights[id] = st
+	}
+	h := &Hardware{
+		Model: map[string]interface{}{"vendor": "Acer", "product": m.product + " (simulated)", "bios": m.bios,
 			"kernel": "simulated", "modules": map[string]string{"acer_wmi": "sim", "acer_wmi_extras": "sim", "acer_wmi_battery": "sim"}},
-		Profiles: s, Fans: s, Thermal: s, Keyboard: s, USB: simUSB{s}, BatteryCtl: s, Battery: s, GPU: s, SenseKey: true,
-	}, nil
+		Profiles: s, Fans: s, Thermal: s, USB: simUSB{s}, BatteryCtl: s, Battery: s, GPU: s, SenseKey: true,
+	}
+	if m.kbdTimeout {
+		h.Keyboard = s
+	}
+	if len(m.lights) > 0 {
+		h.Lights = simLights{s, m.lights}
+	}
+	return h, nil
 }
 
 type sim struct {
-	mu      sync.Mutex
-	profile string
-	fans    map[string]FanState
-	timeout uint32
-	on      bool
-	usb     uint32
-	limit   bool
-	calib   bool
-	power   Power
+	mu       sync.Mutex
+	profiles []string
+	profile  string
+	fans     map[string]FanState
+	timeout  uint32
+	on       bool
+	usb      uint32
+	limit    bool
+	calib    bool
+	power    Power
+	lights   map[string]LightState
 }
 
-func (s *sim) Supported() []string {
-	return []string{"low-power", "quiet", "balanced", "balanced-performance"}
-}
-func (s *sim) FromFirmware() bool { return true }
+func (s *sim) Supported() []string { return s.profiles }
+func (s *sim) FromFirmware() bool  { return true }
 func (s *sim) Current() (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -154,4 +224,53 @@ func (u simUSB) Set(p uint32) error { return u.SetUSB(p) }
 func (u simUSB) Values() []uint32   { return u.sim.Values() }
 func (u simUSB) Get() (uint32, error) {
 	return u.sim.Get()
+}
+
+// simLights is the Lighting of a simulated model: it keeps what was set and
+// answers like the firmware, including the USB keyboard that cannot be read.
+type simLights struct {
+	*sim
+	devs []LightDevice
+}
+
+func (l simLights) Devices() []LightDevice { return l.devs }
+
+func (l simLights) device(id string) (LightDevice, error) {
+	for _, d := range l.devs {
+		if d.ID == id {
+			return d, nil
+		}
+	}
+	return LightDevice{}, fmt.Errorf("unknown lighting device %q", id)
+}
+
+func (l simLights) Get(id string) (LightState, error) {
+	d, err := l.device(id)
+	if err != nil {
+		return LightState{}, err
+	}
+	if !d.Readback {
+		return LightState{}, ErrNoReadback
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	st, ok := l.lights[id]
+	if !ok {
+		return d.Default(), nil
+	}
+	return st, nil
+}
+
+func (l simLights) Set(id string, st LightState) error {
+	d, err := l.device(id)
+	if err != nil {
+		return err
+	}
+	if st, err = d.Normalize(st); err != nil {
+		return err
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.lights[id] = st
+	return nil
 }

@@ -38,8 +38,13 @@ Fans
   fan <cpu|gpu|all> auto|max      firmware curve / full speed
   fan <cpu|gpu|all> <percent>     manual speed
 
-Keyboard, battery, USB
+Keyboard, lighting, battery, USB
   kbd timeout <seconds>           backlight timeout (values in caps)
+  light                           effect of each RGB lighting device
+  light <device> [effect] [--color C[,C...]] [--speed N] [--brightness PCT]
+                [--direction left|right]
+                                  change only what is given; static on a
+                                  zoned keyboard takes one colour per zone
   battery                         charge limit, calibration, health
   battery limit on|off            stop charging at 80 %
   battery calibrate start|stop    calibration (needs AC)
@@ -93,7 +98,7 @@ func main() {
 
 	cmds := map[string]func([]string) error{
 		"status": cmdStatus, "caps": cmdCaps, "monitor": cmdMonitor,
-		"mode": cmdMode, "fan": cmdFan, "fans": cmdFan, "kbd": cmdKbd,
+		"mode": cmdMode, "fan": cmdFan, "fans": cmdFan, "kbd": cmdKbd, "light": cmdLight,
 		"battery": cmdBattery, "usb-charging": cmdUSB,
 		"scenario": cmdScenario, "scenarios": cmdScenario, "appsync": cmdAppSync,
 		"reload": cmdReload, "version": cmdVersion,
@@ -161,6 +166,12 @@ func cmdStatus(args []string) error {
 			on = "on"
 		}
 		row("Keyboard", fmt.Sprintf("backlight %s, timeout %s", on, timeout(k["timeout_s"])))
+	}
+	if lc, ok := caps["lighting"].(map[string]interface{}); ok {
+		states := plainMap(light["Devices"])
+		for _, id := range sortedKeys(lc) {
+			row(lightLabel(id), lightLine(states[id]))
+		}
 	}
 	row("Battery", batteryLine(caps, bat))
 	// a scenario combines mode, fans and keyboard: nothing to show without them
@@ -377,6 +388,115 @@ func cmdKbd(args []string) error {
 		return usagef("timeout must be a number of seconds, not %q", args[1])
 	}
 	return cl.Call(client.IfLighting, "SetKeyboardTimeout", nil, uint32(s))
+}
+
+// ---- lighting --------------------------------------------------------------
+
+func cmdLight(args []string) error {
+	if len(args) == 0 {
+		v, err := cl.Property(client.IfLighting, "Devices")
+		if err != nil {
+			return err
+		}
+		if jsonOut {
+			return printJSON(plain(v))
+		}
+		c, err := cl.Property(client.IfSystem, "Capabilities")
+		if err != nil {
+			return err
+		}
+		lc, ok := plainMap(c)["lighting"].(map[string]interface{})
+		if !ok {
+			fmt.Println("no RGB lighting: the firmware exposes none on this machine")
+			return nil
+		}
+		states := plainMap(v)
+		for _, id := range sortedKeys(lc) {
+			dc, _ := lc[id].(map[string]interface{})
+			row(id, lightLine(states[id]))
+			fmt.Printf("%-10s effects %s\n", "", compact(dc["effects"]))
+		}
+		return nil
+	}
+	if strings.HasPrefix(args[0], "-") {
+		return usagef("light <device> [effect] [options]")
+	}
+	id, rest := args[0], args[1:]
+	fields := map[string]dbus.Variant{}
+	if len(rest) > 0 && !strings.HasPrefix(rest[0], "-") {
+		fields["effect"] = dbus.MakeVariant(rest[0])
+		rest = rest[1:]
+	}
+	fs := flag.NewFlagSet("light", flag.ContinueOnError)
+	color := fs.String("color", "", "#rrggbb, or one per zone separated by commas")
+	speed := fs.Uint("speed", 0, "effect speed (range in caps)")
+	bright := fs.Uint("brightness", 0, "brightness in percent")
+	dir := fs.String("direction", "", "left or right")
+	if err := fs.Parse(rest); err != nil {
+		return usageError(err.Error())
+	}
+	if fs.NArg() > 0 {
+		return usagef("unexpected %q", fs.Arg(0))
+	}
+	fs.Visit(func(f *flag.Flag) {
+		switch f.Name {
+		case "color":
+			fields["colors"] = dbus.MakeVariant(strings.Split(*color, ","))
+		case "speed":
+			fields["speed"] = dbus.MakeVariant(uint32(*speed))
+		case "brightness":
+			fields["brightness"] = dbus.MakeVariant(uint32(*bright))
+		case "direction":
+			fields["direction"] = dbus.MakeVariant(*dir)
+		}
+	})
+	if len(fields) == 0 {
+		v, err := cl.Property(client.IfLighting, "Devices")
+		if err != nil {
+			return err
+		}
+		if jsonOut {
+			return printJSON(plain(plainMap(v)[id]))
+		}
+		fmt.Println(lightLine(plainMap(v)[id]))
+		return nil
+	}
+	return cl.Call(client.IfLighting, "SetLight", nil, id, fields)
+}
+
+func lightLabel(id string) string {
+	switch id {
+	case "keyboard":
+		return "RGB kbd"
+	case "lightbar":
+		return "Light bar"
+	}
+	return strings.ToUpper(id[:1]) + id[1:]
+}
+
+// lightLine is one device's state; nil when the daemon does not know it yet
+// (a USB keyboard nothing was applied to).
+func lightLine(v interface{}) string {
+	st, ok := v.(map[string]interface{})
+	if !ok {
+		return "unknown (not set since the daemon started using it)"
+	}
+	parts := []string{str(st["effect"])}
+	if c, ok := st["colors"].([]string); ok {
+		parts[0] += " " + strings.Join(c, " ")
+	}
+	if st["speed"] != nil {
+		parts = append(parts, fmt.Sprintf("speed %d", num(st["speed"])))
+	}
+	if d := str(st["direction"]); d != "" {
+		parts = append(parts, d)
+	}
+	parts = append(parts, fmt.Sprintf("%d %%", num(st["brightness"])))
+	line := strings.Join(parts, ", ")
+	if b, _ := st["readback"].(bool); !b {
+		line += " (last applied)"
+	}
+	return line
 }
 
 func cmdBattery(args []string) error {

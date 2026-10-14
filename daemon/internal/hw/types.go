@@ -121,6 +121,7 @@ type Hardware struct {
 	Fans       Fans
 	Thermal    Thermal
 	Keyboard   Keyboard
+	Lights     Lighting
 	USB        USBCharging
 	BatteryCtl BatteryControl
 	Battery    BatteryInfo
@@ -149,11 +150,22 @@ func (h *Hardware) Capabilities() map[string]interface{} {
 		}
 	}
 	if h.Keyboard != nil {
+		rgb, zones := false, uint32(0)
+		if h.Lights != nil {
+			for _, d := range h.Lights.Devices() {
+				if d.ID == "keyboard" {
+					rgb, zones = true, d.Zones
+				}
+			}
+		}
 		caps["kbd_backlight"] = map[string]interface{}{
 			"timeouts": h.Keyboard.Timeouts(),
-			"rgb":      false,
-			"zones":    uint32(0),
+			"rgb":      rgb,
+			"zones":    zones,
 		}
+	}
+	if h.Lights != nil {
+		caps["lighting"] = lightCaps(h.Lights.Devices())
 	}
 	if h.USB != nil {
 		caps["usb_charging"] = h.USB.Values()

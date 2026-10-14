@@ -1,7 +1,7 @@
 import { App, act, caps, el, fanIds, num, type Dict } from '../core'
 import { t } from '../i18n'
 import { icon } from '../icons'
-import type { Page } from '../widgets'
+import { paintRange as paint, type Page } from '../widgets'
 
 const fanArt = `<svg viewBox="0 0 100 100">
   <circle cx="50" cy="50" r="47" fill="#141117" stroke="#2e2833" stroke-width="2"/>
@@ -12,12 +12,6 @@ const fanArt = `<svg viewBox="0 0 100 100">
     <circle cx="50" cy="50" r="3" style="fill:var(--g3)"/>
   </g>
 </svg>`
-
-function paint(range: HTMLInputElement) {
-  const lo = Number(range.min), hi = Number(range.max)
-  const p = hi > lo ? ((Number(range.value) - lo) * 100) / (hi - lo) : 0
-  range.style.background = `linear-gradient(90deg, var(--g1), var(--g3) ${p}%, var(--surface-3) ${p}%)`
-}
 
 export function fans(): Page {
   const root = el(`<section>

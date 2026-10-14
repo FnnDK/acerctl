@@ -70,6 +70,10 @@ export function SetLang(arg1) {
   return window['go']['main']['App']['SetLang'](arg1);
 }
 
+export function SetLight(arg1, arg2) {
+  return window['go']['main']['App']['SetLight'](arg1, arg2);
+}
+
 export function SetMode(arg1) {
   return window['go']['main']['App']['SetMode'](arg1);
 }

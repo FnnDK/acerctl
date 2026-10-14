@@ -147,6 +147,7 @@ func (d *Daemon) Run(ctx context.Context) error {
 	}
 	d.restoreMode()
 	d.restoreFans(true)
+	d.restoreLights()
 	d.startAppSync()
 
 	<-ctx.Done()
@@ -179,6 +180,7 @@ func (d *Daemon) export() error {
 		},
 		ifLighting: {
 			"Keyboard": {Value: d.keyboardState(), Emit: prop.EmitTrue},
+			"Devices":  {Value: d.lightStates(), Emit: prop.EmitTrue},
 		},
 		ifBattery: {
 			"ChargeLimit": {Value: d.chargeLimit(), Emit: prop.EmitTrue},
@@ -290,6 +292,7 @@ func (d *Daemon) refreshLoop(ctx context.Context) {
 // refreshSlow re-reads the EC-backed settings; also called after a resume.
 func (d *Daemon) refreshSlow() {
 	d.setProp(ifLighting, "Keyboard", d.keyboardState())
+	d.refreshLights()
 	d.setProp(ifBattery, "ChargeLimit", d.chargeLimit())
 	d.setProp(ifBattery, "Calibrating", d.calibrating())
 	d.setProp(ifBattery, "UsbCharging", d.usbCharging())
