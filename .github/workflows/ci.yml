@@ -21,14 +21,14 @@ jobs:
   code:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: gui/go.mod
           cache-dependency-path: |
             daemon/go.sum
             gui/go.sum
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -43,20 +43,20 @@ jobs:
       matrix:
         target: [debian:12, debian:13, ubuntu:22.04, ubuntu:24.04, ubuntu:24.04-hwe, ubuntu:26.04, fedora:44]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: sh tools/ci.sh modules ${{ matrix.target }}
 
   release:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: gui/go.mod
           cache-dependency-path: |
             daemon/go.sum
             gui/go.sum
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - run: |
