@@ -136,7 +136,9 @@ Mainline layer used: `acer_wmi` with `predator_v4=1` (profiles in `platform-prof
 
 Reference machine: Acer Nitro ANV15-52 with Fedora Silverblue 44. The scripts install to `/usr/local`, `/etc` and `/var/lib` (writable on Silverblue).
 
-**From a release:** the [releases](https://github.com/FnnDK/acerctl/releases) carry `acerctl-<version>-linux-x86_64.tar.gz` with the daemon, CLI, tray and app already built, the same scripts and the modules as source; its `INSTALL.md` has the steps (no Go, Node or Wails needed). `acerctl-<version>.tar.gz` is the source with vendored Go modules and the built frontend, for building without network.
+**Fedora 44 RPMs:** since 0.1.1 the [releases](https://github.com/FnnDK/acerctl/releases) carry `acerctl`, `acerctl-tray`, the app of each product line (`nitro-`, `predator-` or `acer-control-center`), `akmod-acerctl` (the modules, rebuilt by akmods for each kernel) and `acerctl-kmod-common`; the release notes have the `dnf`/`rpm-ostree` commands and how to remove a script install first. The specs are in `packaging/rpm/`.
+
+**From a release:** the [releases](https://github.com/FnnDK/acerctl/releases) also carry `acerctl-<version>-linux-x86_64.tar.gz` with the daemon, CLI, tray and app already built, the same scripts and the modules as source; its `INSTALL.md` has the steps (no Go, Node or Wails needed). `acerctl-<version>.tar.gz` is the source with vendored Go modules and the built frontend, for building without network.
 
 **From the repository:**
 
