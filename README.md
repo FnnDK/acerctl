@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/logo/n-icon-cut.svg" width="112" alt=""></p>
+<p align="center"><img src="assets/logo/n-icon-cut.svg" width="112" alt="">&nbsp;&nbsp;<img src="assets/logo/a-icon-cut.svg" width="112" alt=""></p>
 
 <h1 align="center">acerctl</h1>
 
@@ -14,7 +14,7 @@ Acer ships a different Windows-only app per product line: **NitroSense** (Nitro)
 
 Your model is not on the list? Run the read-only [hardware report](docs/hardware-reports.md) and open a *Hardware report* issue: that is all we need to start supporting it.
 
-acerctl works **by complementing the in-tree `acer_wmi` driver** instead of replacing it: what the kernel lacks comes from small companion modules, a daemon applies the rules, and an app and a CLI (`acerctl`) talk to it over D-Bus. The app comes in two flavors built from the same code, differing only in name and colors: `Nitro Control Center` (red) for Nitro/Predator and `Acer Control Center` (green, planned) for the other lines.
+acerctl works **by complementing the in-tree `acer_wmi` driver** instead of replacing it: what the kernel lacks comes from small companion modules, a daemon applies the rules, and an app and a CLI (`acerctl`) talk to it over D-Bus. The app comes in two flavors built from the same code, differing only in name and colors: `Nitro Control Center` (red `[N]`) for Nitro/Predator and `Acer Control Center` (green `[a]`) for the other lines; the installer picks one from the product name.
 
 > Independent open-source project, not affiliated with Acer. "Acer", "Nitro", "Predator", "Aspire", "NitroSense", "PredatorSense" and "AcerSense" are trademarks of Acer Inc., mentioned only to identify the hardware.
 
@@ -52,7 +52,7 @@ The app uses its own dark theme, with an integrated title bar that follows GNOME
 | [Div-Acer-Manager-Max](https://github.com/PXDiv/Div-Acer-Manager-Max) (GUI + daemon on top of Linuwu-Sense) | Thermal profiles adjusted to AC/battery, auto/manual fans, LCD overdrive, backlight timeout, boot animation and sound toggle, live system info. |
 | [predator-sense](https://github.com/wobqqq/predator-sense) (CLI + DKMS on top of Linuwu-Sense) | Thermal profiles, Turbo button as an on/off toggle, auto/max/manual fans per fan, temperature and RPM readout, 80 % charge limit and calibration, RGB keyboard (zones, effects, brightness), USB charging while off, backlight timeout, Fn+F4 fix. |
 | Acer NitroSense / PredatorSense (Windows only) | Operating modes with AC/battery rules, auto/max/custom fans, system monitor and widget, battery health (80 % limit, calibration), RGB/keyboard lighting where present, USB charging while off, boot sound, LCD overdrive, CPU/GPU overclocking on some models, scenarios and App Sync, Nitro/Predator key. |
-| **acerctl** (this project: companion modules + `acerd` + Nitro Control Center + CLI, alongside `acer_wmi`) | Operating modes limited to what the firmware reports, with the original app's AC/battery rules and `power-profiles-daemon`/`tuned` sync; auto/max/manual fans per fan; monitor (temperatures, usage, clocks, power, RPM, RAM, network) without waking the dGPU; 80 % charge limit (shared with GNOME), calibration, health; backlight timeout; USB charging while off; scenarios and App Sync (Wine/Proton aware); configurable Sense key; tray; CLI; state restored at boot and after suspend. Not yet: RGB, boot sound, LCD overdrive, overclocking. |
+| **acerctl** (this project: companion modules + `acerd` + Nitro/Acer Control Center + CLI, alongside `acer_wmi`) | Operating modes limited to what the firmware reports, with the original app's AC/battery rules and `power-profiles-daemon`/`tuned` sync; auto/max/manual fans per fan; monitor (temperatures, usage, clocks, power, RPM, RAM, network) without waking the dGPU; 80 % charge limit (shared with GNOME), calibration, health; backlight timeout; USB charging while off; scenarios and App Sync (Wine/Proton aware); configurable Sense key; tray; CLI; state restored at boot and after suspend. Not yet: RGB, boot sound, LCD overdrive, overclocking. |
 
 <sub>Third-party features as listed in each project's README (October 2026).</sub>
 
@@ -98,7 +98,7 @@ Tested with UPower 1.91.5 on Fedora 44.
 
 | Directory | What it is |
 |---|---|
-| `gui/` | **Nitro Control Center** (Go + Wails, WebKitGTK): the graphical app. Details in `gui/README.md`. |
+| `gui/` | **Nitro Control Center / Acer Control Center** (Go + Wails, WebKitGTK): the graphical app, one code in two flavors. Details in `gui/README.md`. |
 | `daemon/` | **`acerd`** (Go): D-Bus service `io.github.fnndk.Acerd1` on the system bus, with polkit; power, fan, lighting, battery, monitor, scenario and App Sync rules. API in `docs/api-dbus.md`. Includes the **`acerctl`** CLI. |
 | `drivers/acer-wmi-extras/` | Companion module (GPL): keyboard backlight timeout, USB charging while the laptop is off, the thermal profiles the firmware actually supports, battery sensors. |
 | `drivers/acer-wmi-battery/` | Charge limit (80 %) and calibration, vendored from Frederik Himpe's project with one fix (`UPSTREAM.md`). |
@@ -121,9 +121,9 @@ sudo sh packaging/install-modules.sh          # or name the modules, e.g. acer-w
 sh packaging/install-daemon.sh build          # needs Go
 sudo sh packaging/install-daemon.sh install
 
-# 3. Nitro Control Center app
+# 3. the app (Nitro Control Center on Nitro/Predator, Acer Control Center on other lines)
 sh packaging/install-gui.sh build             # needs Go, Node, Wails and libwebkit2gtk-4.1-dev
-sudo sh packaging/install-gui.sh              # 'uninstall' removes it
+sudo sh packaging/install-gui.sh              # FLAVOR=nitro|acer overrides; 'uninstall' removes it
 ```
 
 `acer_wmi` options on the reference machine (`/etc/modprobe.d/acer-wmi.conf`):

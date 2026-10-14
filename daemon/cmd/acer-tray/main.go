@@ -22,17 +22,36 @@ import (
 	"github.com/godbus/dbus/v5"
 
 	"acerctl/daemon/client"
+	"acerctl/daemon/flavor"
 	"acerctl/daemon/usercfg"
 )
 
+// The tray takes a bitmap, not SVG: the PNGs are rendered from the SVG
+// sources in assets/logo (needs rsvg-convert, from librsvg).
+//go:generate rsvg-convert -w 64 -h 64 -o icon.png ../../../assets/logo/n-tray.svg
+//go:generate rsvg-convert -w 64 -h 64 -o icon-a.png ../../../assets/logo/a-tray.svg
+
 //go:embed icon.png
-var iconPNG []byte
+var iconNitro []byte
+
+//go:embed icon-a.png
+var iconAcer []byte
+
+// brand is the flavor of the installed app (the installer keeps one):
+// its name, icon and the executable the Sense key and the menu open.
+var brand = flavor.Detect()
 
 const (
 	agentName = "io.github.fnndk.AcerTray"
 	agentPath = dbus.ObjectPath("/io/github/fnndk/AcerTray")
-	appBinary = "nitro-control-center"
 )
+
+func trayIcon() []byte {
+	if brand.ID == flavor.Acer.ID {
+		return iconAcer
+	}
+	return iconNitro
+}
 
 // Fixed menu order; profiles missing from the capabilities stay hidden.
 var allProfiles = []string{"low-power", "quiet", "balanced", "balanced-performance", "performance"}
@@ -234,11 +253,7 @@ func (a *agent) update() {
 
 // openApp starts the GUI; a running instance just comes to the front.
 func openApp() {
-	bin, err := exec.LookPath(appBinary)
-	if err != nil {
-		bin = "/usr/local/bin/" + appBinary
-	}
-	cmd := exec.Command(bin)
+	cmd := exec.Command(brand.Path())
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 	if err := cmd.Start(); err != nil {
 		slog.Warn("open app", "err", err)
@@ -250,8 +265,8 @@ func openApp() {
 // notify shows a desktop notification (daemon refusals).
 func (a *agent) notify(title, body string) {
 	obj := a.sbus.Object("org.freedesktop.Notifications", "/org/freedesktop/Notifications")
-	obj.Call("org.freedesktop.Notifications.Notify", 0, "Nitro Control Center", uint32(0),
-		"io.github.fnndk.NitroControlCenter", title, body, []string{}, map[string]dbus.Variant{}, int32(5000))
+	obj.Call("org.freedesktop.Notifications.Notify", 0, brand.Name, uint32(0),
+		brand.AppID, title, body, []string{}, map[string]dbus.Variant{}, int32(5000))
 }
 
 func (a *agent) do(err error) {
@@ -305,12 +320,12 @@ type menu struct {
 }
 
 func (a *agent) onReady() {
-	systray.SetIcon(iconPNG)
-	systray.SetTooltip("Nitro Control Center")
+	systray.SetIcon(trayIcon())
+	systray.SetTooltip(brand.Name)
 	m := &menu{lay: a.probeLayout(), modes: map[string]*systray.MenuItem{}, scenItems: map[string]*systray.MenuItem{}}
-	m.status = systray.AddMenuItem("Nitro Control Center", "")
+	m.status = systray.AddMenuItem(brand.Name, "")
 	m.status.Disable()
-	m.open = systray.AddMenuItem(tr("open"), "")
+	m.open = systray.AddMenuItem(fmt.Sprintf(tr("open"), brand.Name), "")
 	if m.lay.modes {
 		systray.AddSeparator()
 		for _, p := range allProfiles {
@@ -379,7 +394,7 @@ func (a *agent) redraw() {
 	cl := a.client()
 	if cl == nil {
 		m.status.SetTitle(tr("disconnected"))
-		systray.SetTooltip("Nitro Control Center — " + tr("disconnected"))
+		systray.SetTooltip(brand.Name + " — " + tr("disconnected"))
 		for _, it := range m.modes {
 			it.Disable()
 		}
@@ -438,7 +453,7 @@ func (a *agent) redraw() {
 		status = profileName(current) + " · " + status
 	}
 	m.status.SetTitle(status)
-	systray.SetTooltip("Nitro Control Center — " + status)
+	systray.SetTooltip(brand.Name + " — " + status)
 
 	if m.fansMax != nil {
 		st, _ := cl.Property(client.IfFans, "State")
@@ -534,7 +549,7 @@ func firstEnv(keys ...string) string {
 }
 
 var texts = map[string][2]string{ // en, pt
-	"open":         {"Open Nitro Control Center", "Abrir o Nitro Control Center"},
+	"open":         {"Open %s", "Abrir o %s"},
 	"fans_max":     {"Fans at maximum", "Ventoinhas no máximo"},
 	"scenarios":    {"Scenarios", "Cenários"},
 	"appsync_hint": {"Apply scenarios when their apps run", "Aplicar cenários quando os apps deles abrirem"},

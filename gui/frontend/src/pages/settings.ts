@@ -1,7 +1,11 @@
 import { App, act, caps, el, esc, setText, switchHtml, useF } from '../core'
 import { savedLang, setLang, t, type Lang } from '../i18n'
 // App icon, same file the installer puts in the icon theme.
-import appIcon from '../../../../assets/logo/n-icon-cut.svg'
+import iconNitro from '../../../../assets/logo/n-icon-cut.svg'
+import iconAcer from '../../../../assets/logo/a-icon-cut.svg'
+import { appName, flavor } from '../flavor'
+
+const appIcon = flavor === 'acer' ? iconAcer : iconNitro
 import type { Page } from '../widgets'
 
 export function settings(): Page {
@@ -26,7 +30,7 @@ export function settings(): Page {
       <div class="row" style="gap:16px;align-items:flex-start">
         <img src="${appIcon}" alt="" style="width:56px;height:56px;flex:none">
         <div class="stack" style="gap:6px">
-          <div><b style="font-size:16px">Nitro Control Center</b> <span class="faint small" data-version></span></div>
+          <div><b style="font-size:16px">${appName}</b> <span class="faint small" data-version></span></div>
           <table class="small" style="border-spacing:14px 3px;margin-left:-14px"><tbody data-about></tbody></table>
           <p class="small faint" style="margin:6px 0 0;max-width:640px">${t('set.disclaimer')}</p>
         </div>

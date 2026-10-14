@@ -1,4 +1,5 @@
-// nitro-control-center is the desktop app of acerctl: a window over the
+// nitro-control-center / acer-control-center is the desktop app of acerctl
+// (one code, two flavors: see flavor.go and daemon/flavor): a window over the
 // acerd D-Bus API (docs/api-dbus.md), with the same rules and errors as the
 // CLI. It holds no hardware logic of its own.
 package main
@@ -19,9 +20,10 @@ import (
 var assets embed.FS
 
 //go:embed build/appicon.png
-var icon []byte
+var iconNitro []byte
 
-const appID = "io.github.fnndk.NitroControlCenter"
+//go:embed build/appicon-a.png
+var iconAcer []byte
 
 // winMargin is the transparent border around the page where the frontend
 // draws the window shadow (--win-margin in style.css); window sizes include
@@ -52,31 +54,31 @@ func main() {
 	// run next to the installed app.
 	var single *options.SingleInstanceLock
 	if !*session {
-		single = &options.SingleInstanceLock{UniqueId: appID, OnSecondInstanceLaunch: app.secondInstance}
+		single = &options.SingleInstanceLock{UniqueId: brand.AppID, OnSecondInstanceLaunch: app.secondInstance}
 	}
 	err := wails.Run(&options.App{
-		Title:              "Nitro Control Center",
+		Title:              brand.Name,
 		Width:              1320 + 2*margin,
 		Height:             780 + 2*margin,
 		MinWidth:           960 + 2*margin,
 		MinHeight:          640 + 2*margin,
 		WindowStartState:   start,
 		Frameless:          csd, // title bar drawn by the frontend (titlebar.go)
-		AssetServer:        &assetserver.Options{Assets: assets},
+		AssetServer:        &assetserver.Options{Assets: assets, Middleware: flavorMiddleware},
 		BackgroundColour:   bg,
 		OnStartup:          app.startup,
 		OnShutdown:         app.shutdown,
 		SingleInstanceLock: single,
 		Linux: &linux.Options{
-			Icon:                icon,
+			Icon:                appIcon(),
 			WindowIsTranslucent: csd,
-			ProgramName:         appID, // Wayland app_id = .desktop file name
+			ProgramName:         brand.AppID, // Wayland app_id = .desktop file name
 			WebviewGpuPolicy:    linux.WebviewGpuPolicyOnDemand,
 		},
 		Bind: []interface{}{app},
 	})
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "nitro-control-center:", err)
+		fmt.Fprintln(os.Stderr, brand.Binary+":", err)
 		os.Exit(1)
 	}
 }

@@ -1,4 +1,5 @@
-/* nitro-control-center — own art: dark panels, red→orange accent of the [N] mark.
+/* nitro-control-center / acer-control-center — own art: dark panels, the accent of the
+   flavor's mark (red→orange [N], green→lime [a]; :root[data-flavor] below).
    Fonts: the system UI font (no bundled font). */
 
 :root {
@@ -10,10 +11,13 @@
   --text: #ece8ef;
   --muted: #9b94a2;
   --faint: #6b6472;
-  --accent: #ff1b19;
-  --accent-2: #ffa000;
+  --g1: #ff1b19;
+  --g2: #ff6a0c;
+  --g3: #ffa000;
+  --accent: var(--g1);
+  --accent-2: var(--g3);
   --orange: #ff7417;
-  --grad: linear-gradient(90deg, #ff1b19, #ff6a0c 55%, #ffa000);
+  --grad: linear-gradient(90deg, var(--g1), var(--g2) 55%, var(--g3));
   --ok: #3ecf8e;
   --info: #4aa8ff;
   --warn: #ffb020;
@@ -24,6 +28,8 @@
   --mono: ui-monospace, "Cascadia Mono", "Noto Sans Mono", "DejaVu Sans Mono", monospace;
   color-scheme: dark;
 }
+/* green flavor (acer-control-center): the [a] icon's palette */
+:root[data-flavor="acer"] { --g1: #22c55e; --g2: #5bd12f; --g3: #8fd400; --orange: #45c93c; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: transparent; }
@@ -211,7 +217,7 @@ input[type=range]:disabled { opacity: .4; }
   padding: 2px 7px; border-radius: 99px; background: var(--surface-3); color: var(--muted);
 }
 .badge.extra { background: rgba(74,168,255,.14); color: var(--info); }
-.badge.active { background: rgba(255,160,0,.15); color: var(--accent-2); }
+.badge.active { background: color-mix(in srgb, var(--accent-2) 15%, transparent); color: var(--accent-2); }
 .badge.ok { background: rgba(62,207,142,.14); color: var(--ok); }
 .badge.warn { background: rgba(255,176,32,.14); color: var(--warn); }
 .mods { display: flex; flex-wrap: wrap; gap: 6px 16px; }
@@ -297,7 +303,7 @@ input[type=range]:disabled { opacity: .4; }
 .batt-shape::after { content: ""; position: absolute; right: -11px; top: 28px; width: 7px; height: 30px; border-radius: 0 5px 5px 0; background: #4a4250; }
 .batt-shape i { display: block; height: 100%; border-radius: 9px; background: var(--grad); transition: width .6s ease; }
 .batt-shape i.low { background: var(--danger); }
-.batt-shape i.charging { background-size: 200% 100%; background-image: linear-gradient(90deg, #ff1b19, #ffa000, #ff1b19); animation: flow 2.4s linear infinite; }
+.batt-shape i.charging { background-size: 200% 100%; background-image: linear-gradient(90deg, var(--g1), var(--g3), var(--g1)); animation: flow 2.4s linear infinite; }
 @keyframes flow { to { background-position: -200% 0; } }
 .batt-pct { font-size: 44px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 .batt-pct small { font-size: 18px; color: var(--muted); }

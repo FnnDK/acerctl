@@ -9,14 +9,14 @@ const fanArt = `<svg viewBox="0 0 100 100">
   <g class="blades">${[0, 1, 2, 3, 4, 5, 6].map(i =>
     `<path transform="rotate(${(i * 360) / 7} 50 50)" d="M50 41 C 50 30, 55 17, 67 11 C 74 17, 72 31, 58 44 Z" fill="#2c2731" stroke="url(#ggrad)" stroke-width="1.4" stroke-linejoin="round"/>`).join('')}
     <circle cx="50" cy="50" r="11" fill="#1f1b23" stroke="url(#ggrad)" stroke-width="2"/>
-    <circle cx="50" cy="50" r="3" fill="#ffa000"/>
+    <circle cx="50" cy="50" r="3" style="fill:var(--g3)"/>
   </g>
 </svg>`
 
 function paint(range: HTMLInputElement) {
   const lo = Number(range.min), hi = Number(range.max)
   const p = hi > lo ? ((Number(range.value) - lo) * 100) / (hi - lo) : 0
-  range.style.background = `linear-gradient(90deg, #ff1b19, #ffa000 ${p}%, var(--surface-3) ${p}%)`
+  range.style.background = `linear-gradient(90deg, var(--g1), var(--g3) ${p}%, var(--surface-3) ${p}%)`
 }
 
 export function fans(): Page {

@@ -5,6 +5,7 @@
 // holds the brand and the shell drops its margin, corners and shadow.
 
 import { EventsOn, WindowSetTitle } from '../wailsjs/runtime/runtime'
+import { appName } from './flavor'
 import * as App from '../wailsjs/go/main/App'
 import { el, esc } from './core'
 import { t } from './i18n'
@@ -78,5 +79,5 @@ export function titlebar(app: HTMLElement, brand: string) {
   }
 
   App.Titlebar().then(b => { bar = b as Bar; bar.client ? client() : server() }).catch(client)
-  WindowSetTitle('Nitro Control Center')
+  WindowSetTitle(appName)
 }

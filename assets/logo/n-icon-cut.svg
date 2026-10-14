@@ -1,18 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -12 272 272" width="256" height="256">
-  <!-- Ícone: face escura arredondada sobre base laranja (12 u embaixo, efeito 3D no estilo
-       dos ícones do GNOME), contorno #7a3300; marca [N] em baixo-relevo (sombra interna de 2.5 u)
-       (Source Code Pro Black, SIL OFL 1.1, em contorno). -->
+  <!-- App icon: dark rounded face over an orange base (12 u showing at the bottom, a 3D effect
+       in the style of GNOME icons), outline #7a3300; [N] mark in bas-relief (2.5 u inner shadow)
+       (Source Code Pro Black, SIL OFL 1.1, as outlines). -->
   <defs>
-    <linearGradient id="painel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2d0005"/><stop offset="1" stop-color="#3d2201"/></linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2d0005"/><stop offset="1" stop-color="#3d2201"/></linearGradient>
   </defs>
   <rect width="248" height="248" rx="36" fill="#ffa000"/>
-  <rect width="248" height="236" rx="36" fill="url(#painel)"/>
+  <rect width="248" height="236" rx="36" fill="url(#panel)"/>
   <rect x="0.75" y="0.75" width="246.5" height="246.5" rx="35.25" fill="none" stroke="#7a3300" stroke-width="1.5"/>
   <g transform="translate(22.59 149.32) scale(0.11268 -0.11268)">
-    <clipPath id="marca"><path d="M 660,0 L 824,0 L 824,188 C 824,268 808,362 800,436 L 804,436 L 857,291 L 966,0 L 1140,0 L 1140,650 L 976,650 L 976,462 C 976,382 992,284 1000,214 L 996,214 L 943,360 L 834,650 L 660,650 Z M190,-152 L494,-152 L494,-62 L320,-62 L320,618 L494,618 L494,708 L190,708Z M1306,-152 L1610,-152 L1610,708 L1306,708 L1306,618 L1480,618 L1480,-62 L1306,-62Z"/></clipPath>
+    <clipPath id="mark"><path d="M 660,0 L 824,0 L 824,188 C 824,268 808,362 800,436 L 804,436 L 857,291 L 966,0 L 1140,0 L 1140,650 L 976,650 L 976,462 C 976,382 992,284 1000,214 L 996,214 L 943,360 L 834,650 L 660,650 Z M190,-152 L494,-152 L494,-62 L320,-62 L320,618 L494,618 L494,708 L190,708Z M1306,-152 L1610,-152 L1610,708 L1306,708 L1306,618 L1480,618 L1480,-62 L1306,-62Z"/></clipPath>
     
     <path fill="#fff" d="M 660,0 L 824,0 L 824,188 C 824,268 808,362 800,436 L 804,436 L 857,291 L 966,0 L 1140,0 L 1140,650 L 976,650 L 976,462 C 976,382 992,284 1000,214 L 996,214 L 943,360 L 834,650 L 660,650 Z"/>
     <path fill="#ff1b19" d="M190,-152 L494,-152 L494,-62 L320,-62 L320,618 L494,618 L494,708 L190,708Z M1306,-152 L1610,-152 L1610,708 L1306,708 L1306,618 L1480,618 L1480,-62 L1306,-62Z"/>
-    <g clip-path="url(#marca)"><path fill="#140002" fill-opacity="0.9" fill-rule="evenodd" transform="translate(0 -22.2)" d="M-1000,-1000 H3000 V2000 H-1000Z M 660,0 L 824,0 L 824,188 C 824,268 808,362 800,436 L 804,436 L 857,291 L 966,0 L 1140,0 L 1140,650 L 976,650 L 976,462 C 976,382 992,284 1000,214 L 996,214 L 943,360 L 834,650 L 660,650 Z M190,-152 L494,-152 L494,-62 L320,-62 L320,618 L494,618 L494,708 L190,708Z M1306,-152 L1610,-152 L1610,708 L1306,708 L1306,618 L1480,618 L1480,-62 L1306,-62Z"/></g>
+    <g clip-path="url(#mark)"><path fill="#140002" fill-opacity="0.9" fill-rule="evenodd" transform="translate(0 -22.2)" d="M-1000,-1000 H3000 V2000 H-1000Z M 660,0 L 824,0 L 824,188 C 824,268 808,362 800,436 L 804,436 L 857,291 L 966,0 L 1140,0 L 1140,650 L 976,650 L 976,462 C 976,382 992,284 1000,214 L 996,214 L 943,360 L 834,650 L 660,650 Z M190,-152 L494,-152 L494,-62 L320,-62 L320,618 L494,618 L494,708 L190,708Z M1306,-152 L1610,-152 L1610,708 L1306,708 L1306,618 L1480,618 L1480,-62 L1306,-62Z"/></g>
   </g>
 </svg>

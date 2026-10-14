@@ -364,11 +364,11 @@ func (a *App) SetAutostart(on bool) error {
 	}
 	entry := fmt.Sprintf(`[Desktop Entry]
 Type=Application
-Name=Nitro Control Center
+Name=%s
 Exec=%s --minimized
 Icon=%s
 X-GNOME-Autostart-enabled=true
-`, exe, appID)
+`, brand.Name, exe, brand.AppID)
 	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
 		return uiError(err)
 	}
@@ -380,5 +380,5 @@ func autostartPath() string {
 	if err != nil {
 		dir = filepath.Join(os.Getenv("HOME"), ".config")
 	}
-	return filepath.Join(dir, "autostart", appID+".desktop")
+	return filepath.Join(dir, "autostart", brand.AppID+".desktop")
 }

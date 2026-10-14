@@ -1,10 +1,12 @@
 import uPlot from 'uplot'
 import 'uplot/dist/uPlot.min.css'
 import { caps, el, fanIds, hist, tempUnit, useF } from '../core'
+import { cssColor } from '../flavor'
 import { t } from '../i18n'
 import type { Page } from '../widgets'
 
-const CPU = '#ff6a0c', GPU = '#4aa8ff', BAT = '#3ecf8e', CPU2 = '#ffa000'
+// CPU lines in the flavor's palette (hex: uPlot draws on a canvas)
+const CPU = cssColor('--g2', '#ff6a0c'), GPU = '#4aa8ff', BAT = '#3ecf8e', CPU2 = cssColor('--g3', '#ffa000')
 
 // Axis labels: seconds only when the ticks are less than a minute apart.
 const fmtTicks = (ticks: number[]) => {

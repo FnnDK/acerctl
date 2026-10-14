@@ -1,3 +1,5 @@
+import { flavor } from './flavor'
+
 // Own line icons (24×24, stroke = currentColor).
 
 const P: Record<string, string> = {
@@ -39,12 +41,16 @@ export function icon(name: string, cls = ''): string {
   return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[name] ?? ''}</svg>`
 }
 
-// The [N] mark as in the app icon (assets/logo/n-mark-cut.svg): font brackets
-// beside the N, N in currentColor, brackets in the accent.
-export const mark = `<svg class="mark" viewBox="190 -708 1420 860" aria-hidden="true"><g transform="scale(1 -1)">
-<path fill="currentColor" d="M 660,0 L 824,0 L 824,188 C 824,268 808,362 800,436 L 804,436 L 857,291 L 966,0 L 1140,0 L 1140,650 L 976,650 L 976,462 C 976,382 992,284 1000,214 L 996,214 L 943,360 L 834,650 L 660,650 Z"/>
-<path style="fill:var(--accent,#ff1b19)" d="M190,-152 L494,-152 L494,-62 L320,-62 L320,618 L494,618 L494,708 L190,708Z M1306,-152 L1610,-152 L1610,708 L1306,708 L1306,618 L1480,618 L1480,-62 L1306,-62Z"/>
+// The flavor's mark as in its app icon (assets/logo/n-mark-cut.svg,
+// a-mark-cut.svg): font brackets beside the N or the slanted a, the letter in
+// currentColor, the brackets in the accent.
+const markSvg = (letter: string) => `<svg class="mark" viewBox="190 -708 1420 860" aria-hidden="true"><g transform="scale(1 -1)">
+<path fill="currentColor" d="${letter}"/>
+<path style="fill:var(--accent)" d="M190,-152 L494,-152 L494,-62 L320,-62 L320,618 L494,618 L494,708 L190,708Z M1306,-152 L1610,-152 L1610,708 L1306,708 L1306,618 L1480,618 L1480,-62 L1306,-62Z"/>
 </g></svg>`
+export const mark = markSvg(flavor === 'acer'
+  ? 'M772.9 -12C834.9 -12 899.3 16 955.3 52H959.3L961.2 0H1101.2L1155.3 278C1187.2 442 1108.8 512 966.8 512C882.8 512 800.1 488 715.9 446L754.2 334C819.6 362 864.3 376 906.3 376C962.3 376 993.2 360 992.2 324C761.9 312 662.6 254 640.8 142C624.9 60 668.9 -12 772.9 -12ZM854.6 120C818.6 120 803.1 133 807.6 156C814.2 190 849.6 218 972.4 222L960 158C929.1 138 894.6 120 854.6 120Z'
+  : 'M 660,0 L 824,0 L 824,188 C 824,268 808,362 800,436 L 804,436 L 857,291 L 966,0 L 1140,0 L 1140,650 L 976,650 L 976,462 C 976,382 992,284 1000,214 L 996,214 L 943,360 L 834,650 L 660,650 Z')
 
 export const profileIcon: Record<string, string> = {
   'low-power': 'leaf', quiet: 'moon', balanced: 'balance', 'balanced-performance': 'gauge', performance: 'flame',

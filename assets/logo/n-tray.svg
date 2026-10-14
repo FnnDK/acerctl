@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Tray icon (daemon/cmd/acer-tray): white [N] on a rounded black square, readable on light
+       and dark panels. Render: rsvg-convert -w 64 -h 64 <this file> -o <png>. -->
+  <rect width="64" height="64" rx="12" fill="#000"/>
+  <g transform="translate(-0.958 41.927) scale(0.03662 -0.03662)" fill="#fff">
+    <path d="M 660,0 L 824,0 L 824,188 C 824,268 808,362 800,436 L 804,436 L 857,291 L 966,0 L 1140,0 L 1140,650 L 976,650 L 976,462 C 976,382 992,284 1000,214 L 996,214 L 943,360 L 834,650 L 660,650 Z"/>
+    <path d="M190,-152 L494,-152 L494,-62 L320,-62 L320,618 L494,618 L494,708 L190,708Z M1306,-152 L1610,-152 L1610,708 L1306,708 L1306,618 L1480,618 L1480,-62 L1306,-62Z"/>
+  </g>
+</svg>

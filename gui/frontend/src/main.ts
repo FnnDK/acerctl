@@ -4,6 +4,7 @@ import { lang, savedLang, setLang, t, type Lang } from './i18n'
 import { icon, mark } from './icons'
 import type { Page } from './widgets'
 import { titlebar } from './titlebar'
+import { appName, brand } from './flavor'
 import { home } from './pages/home'
 import { monitor } from './pages/monitor'
 import { fans } from './pages/fans'
@@ -43,7 +44,8 @@ app.append(el(`<nav class="sidebar">
 </nav>`))
 const main = el('<main></main>')
 app.append(main)
-titlebar(app, `<div class="brand">${mark}<div><b>Nitro</b><span>${t('app.tagline')}</span></div></div>`)
+document.title = appName
+titlebar(app, `<div class="brand">${mark}<div><b>${brand}</b><span>${t('app.tagline')}</span></div></div>`)
 
 const pages = new Map<string, Page>()
 NAV.forEach(n => pages.set(n.id, n.make()))

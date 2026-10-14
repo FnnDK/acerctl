@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -12 272 272" width="256" height="256">
+  <!-- App icon of the green flavor (acer-control-center): same shape as n-icon-cut.svg
+       (dark rounded face over a 12 u base showing at the bottom, a 3D effect in the style of
+       GNOME icons, outline #2c4a00) with the [a] mark in bas-relief (2.5 u inner shadow).
+       Letters: Source Code Pro Black (SIL OFL 1.1) as outlines, the "a" slanted 11° (the
+       font's italic angle), on the baseline of the N and centred between the brackets. -->
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#001f0d"/><stop offset="1" stop-color="#10270a"/></linearGradient>
+  </defs>
+  <rect width="248" height="248" rx="36" fill="#8fd400"/>
+  <rect width="248" height="236" rx="36" fill="url(#panel)"/>
+  <rect x="0.75" y="0.75" width="246.5" height="246.5" rx="35.25" fill="none" stroke="#2c4a00" stroke-width="1.5"/>
+  <g transform="translate(22.59 149.32) scale(0.11268 -0.11268)">
+    <clipPath id="mark"><path d="M772.9 -12C834.9 -12 899.3 16 955.3 52H959.3L961.2 0H1101.2L1155.3 278C1187.2 442 1108.8 512 966.8 512C882.8 512 800.1 488 715.9 446L754.2 334C819.6 362 864.3 376 906.3 376C962.3 376 993.2 360 992.2 324C761.9 312 662.6 254 640.8 142C624.9 60 668.9 -12 772.9 -12ZM854.6 120C818.6 120 803.1 133 807.6 156C814.2 190 849.6 218 972.4 222L960 158C929.1 138 894.6 120 854.6 120Z M190,-152 L494,-152 L494,-62 L320,-62 L320,618 L494,618 L494,708 L190,708Z M1306,-152 L1610,-152 L1610,708 L1306,708 L1306,618 L1480,618 L1480,-62 L1306,-62Z"/></clipPath>
+    <path fill="#fff" d="M772.9 -12C834.9 -12 899.3 16 955.3 52H959.3L961.2 0H1101.2L1155.3 278C1187.2 442 1108.8 512 966.8 512C882.8 512 800.1 488 715.9 446L754.2 334C819.6 362 864.3 376 906.3 376C962.3 376 993.2 360 992.2 324C761.9 312 662.6 254 640.8 142C624.9 60 668.9 -12 772.9 -12ZM854.6 120C818.6 120 803.1 133 807.6 156C814.2 190 849.6 218 972.4 222L960 158C929.1 138 894.6 120 854.6 120Z"/>
+    <path fill="#22c55e" d="M190,-152 L494,-152 L494,-62 L320,-62 L320,618 L494,618 L494,708 L190,708Z M1306,-152 L1610,-152 L1610,708 L1306,708 L1306,618 L1480,618 L1480,-62 L1306,-62Z"/>
+    <g clip-path="url(#mark)"><path fill="#00140a" fill-opacity="0.9" fill-rule="evenodd" transform="translate(0 -22.2)" d="M-1000,-1000 H3000 V2000 H-1000Z M772.9 -12C834.9 -12 899.3 16 955.3 52H959.3L961.2 0H1101.2L1155.3 278C1187.2 442 1108.8 512 966.8 512C882.8 512 800.1 488 715.9 446L754.2 334C819.6 362 864.3 376 906.3 376C962.3 376 993.2 360 992.2 324C761.9 312 662.6 254 640.8 142C624.9 60 668.9 -12 772.9 -12ZM854.6 120C818.6 120 803.1 133 807.6 156C814.2 190 849.6 218 972.4 222L960 158C929.1 138 894.6 120 854.6 120Z M190,-152 L494,-152 L494,-62 L320,-62 L320,618 L494,618 L494,708 L190,708Z M1306,-152 L1610,-152 L1610,708 L1306,708 L1306,618 L1480,618 L1480,-62 L1306,-62Z"/></g>
+  </g>
+</svg>

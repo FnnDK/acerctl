@@ -40,7 +40,7 @@ func clientDecorations() bool {
 		return false
 	case "":
 	default:
-		fmt.Fprintf(os.Stderr, "nitro-control-center: ignoring ACERCTL_DECORATIONS=%q (client or server)\n", v)
+		fmt.Fprintf(os.Stderr, "%s: ignoring ACERCTL_DECORATIONS=%q (client or server)\n", brand.Binary, v)
 	}
 	for _, d := range strings.Split(os.Getenv("XDG_CURRENT_DESKTOP"), ":") {
 		switch strings.ToUpper(strings.TrimSpace(d)) {
