@@ -1,6 +1,6 @@
 module acerctl/daemon
 
-go 1.27
+go 1.26
 
 require (
 	fyne.io/systray v1.12.2

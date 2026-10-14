@@ -1,6 +1,6 @@
 module acerctl/gui
 
-go 1.27
+go 1.26
 
 require (
 	acerctl/daemon v0.0.0
