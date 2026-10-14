@@ -1,0 +1,9 @@
+# D-Bus activation of acerd: the first call from the app, the tray or the CLI
+# starts acerd.service through systemd. Installed to
+# /usr/share/dbus-1/system-services (packages) or
+# /usr/local/share/dbus-1/system-services (packaging/install-daemon.sh).
+[D-BUS Service]
+Name=io.github.fnndk.Acerd1
+Exec=/bin/false
+User=root
+SystemdService=acerd.service

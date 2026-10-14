@@ -107,6 +107,8 @@ install -Dpm 0755 _bin/acer-tray %{buildroot}%{_bindir}/acer-tray
 install -Dpm 0644 packaging/acerd.service %{buildroot}%{_unitdir}/acerd.service
 sed -i 's|/usr/local/bin/|%{_bindir}/|' %{buildroot}%{_unitdir}/acerd.service
 install -Dpm 0644 packaging/io.github.fnndk.Acerd1.conf %{buildroot}%{_datadir}/dbus-1/system.d/io.github.fnndk.Acerd1.conf
+install -Dpm 0644 packaging/io.github.fnndk.Acerd1.service %{buildroot}%{_datadir}/dbus-1/system-services/io.github.fnndk.Acerd1.service
+install -Dpm 0644 packaging/80-acerctl.preset %{buildroot}%{_presetdir}/80-acerctl.preset
 install -Dpm 0644 packaging/io.github.fnndk.acerd.policy %{buildroot}%{_datadir}/polkit-1/actions/io.github.fnndk.acerd.policy
 install -Dpm 0644 packaging/61-acerctl-keyboard.hwdb %{buildroot}%{_udevhwdbdir}/61-acerctl-keyboard.hwdb
 install -dm 0755 %{buildroot}%{_modulesloaddir}
@@ -146,6 +148,8 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/*.desktop
 %{_bindir}/acerctl
 %{_unitdir}/acerd.service
 %{_datadir}/dbus-1/system.d/io.github.fnndk.Acerd1.conf
+%{_datadir}/dbus-1/system-services/io.github.fnndk.Acerd1.service
+%{_presetdir}/80-acerctl.preset
 %{_datadir}/polkit-1/actions/io.github.fnndk.acerd.policy
 %{_udevhwdbdir}/61-acerctl-keyboard.hwdb
 

@@ -55,11 +55,13 @@ install_all() {
   install -D -m 0755 "$R/daemon/acerd" "$BIN"
   install -D -m 0755 "$R/daemon/acerctl" /usr/local/bin/acerctl
   install -D -m 0644 "$R/packaging/io.github.fnndk.Acerd1.conf" /etc/dbus-1/system.d/io.github.fnndk.Acerd1.conf
+  install -D -m 0644 "$R/packaging/io.github.fnndk.Acerd1.service" /usr/local/share/dbus-1/system-services/io.github.fnndk.Acerd1.service
   install -D -m 0644 "$R/packaging/io.github.fnndk.acerd.policy" /usr/local/share/polkit-1/actions/io.github.fnndk.acerd.policy
   install -D -m 0644 "$R/packaging/acerd.service" /etc/systemd/system/acerd.service
   install -D -m 0644 "$R/packaging/61-acerctl-keyboard.hwdb" /etc/udev/hwdb.d/61-acerctl-keyboard.hwdb
   if command -v restorecon >/dev/null 2>&1; then
     restorecon -v "$BIN" /usr/local/bin/acerctl /etc/dbus-1/system.d/io.github.fnndk.Acerd1.conf \
+      /usr/local/share/dbus-1/system-services/io.github.fnndk.Acerd1.service \
       /usr/local/share/polkit-1/actions/io.github.fnndk.acerd.policy /etc/systemd/system/acerd.service \
       /etc/udev/hwdb.d/61-acerctl-keyboard.hwdb || true
   fi

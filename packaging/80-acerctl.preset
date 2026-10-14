@@ -1,0 +1,3 @@
+# Packages: enable acerd at install, so it restores the profile, fans and
+# lighting at boot even before anyone logs in (D-Bus activation covers the rest).
+enable acerd.service

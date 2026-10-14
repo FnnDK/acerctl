@@ -33,7 +33,8 @@ type Client struct {
 }
 
 // Connect opens the system bus (or the session bus, for a daemon started
-// with --session) and checks that the daemon is there.
+// with --session) and makes sure the daemon is there, starting it through
+// D-Bus activation when it is installed but not running.
 func Connect(session bool) (*Client, error) {
 	var conn *dbus.Conn
 	var err error
@@ -46,9 +47,24 @@ func Connect(session bool) (*Client, error) {
 		return nil, fmt.Errorf("connect to D-Bus: %w", err)
 	}
 	var has bool
-	if err := conn.BusObject().Call("org.freedesktop.DBus.NameHasOwner", 0, BusName).Store(&has); err != nil || !has {
+	if err := conn.BusObject().Call("org.freedesktop.DBus.NameHasOwner", 0, BusName).Store(&has); err != nil {
 		conn.Close()
-		return nil, errors.New("acerd is not running (systemctl status acerd)")
+		return nil, fmt.Errorf("ask D-Bus for acerd: %w", err)
+	}
+	if !has {
+		// The bus starts acerd.service (packaging/io.github.fnndk.Acerd1.service)
+		// and answers once the daemon owns its name; ServiceUnknown means
+		// there is no activation file, i.e. acerd is not installed.
+		var reply uint32
+		err := conn.BusObject().Call("org.freedesktop.DBus.StartServiceByName", 0, BusName, uint32(0)).Store(&reply)
+		if err != nil {
+			conn.Close()
+			var de dbus.Error
+			if errors.As(err, &de) && de.Name == "org.freedesktop.DBus.Error.ServiceUnknown" {
+				return nil, errors.New("acerd is not running (systemctl status acerd)")
+			}
+			return nil, fmt.Errorf("acerd could not be started: %v (systemctl status acerd)", err)
+		}
 	}
 	return &Client{conn: conn, obj: conn.Object(BusName, ObjPath)}, nil
 }
