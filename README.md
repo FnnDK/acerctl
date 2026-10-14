@@ -53,6 +53,18 @@ acerctl works **by complementing the in-tree `acer_wmi` driver** instead of repl
 
 <sub>Daemon in simulated mode (`acerd --simulate ANV15-52`).</sub>
 
+### Predator Control Center
+
+![Dashboard](docs/screenshots/predator/home.png)
+
+| | |
+|---|---|
+| ![Monitor](docs/screenshots/predator/monitor.png) | ![Fans](docs/screenshots/predator/fans.png) |
+| ![Battery](docs/screenshots/predator/battery.png) | ![Scenarios](docs/screenshots/predator/scenarios.png) |
+| ![Lighting](docs/screenshots/predator/lighting.png) | ![Settings](docs/screenshots/predator/settings.png) |
+
+<sub>Daemon in simulated mode (`acerd --simulate PHN16-72`, a Predator mock with the ANV15-52's capabilities; no Predator has been tested yet).</sub>
+
 The app uses its own dark theme, with an integrated title bar that follows GNOME's button order and icons, and texts in Portuguese and English.
 
 ## Compared with other tools
