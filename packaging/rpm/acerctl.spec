@@ -94,7 +94,10 @@ export CGO_CFLAGS="%{optflags} -Wno-deprecated-declarations"
 export CGO_LDFLAGS="%{build_ldflags}"
 LDFLAGS="-linkmode=external -B gobuildid"
 mkdir -p _bin
-(cd daemon && go build -ldflags "$LDFLAGS -X main.Version=%{version}" -o ../_bin/acerd ./cmd/acerd)
+# go-nvml leaves the nvml* symbols undefined and relies on lazy binding: they
+# resolve only after it dlopens libnvidia-ml.so.1. With the distro's -z now,
+# ld.so resolves them at startup and acerd exits 127 ("undefined symbol").
+(cd daemon && CGO_LDFLAGS="$CGO_LDFLAGS -Wl,-z,lazy" go build -ldflags "$LDFLAGS -X main.Version=%{version}" -o ../_bin/acerd ./cmd/acerd)
 (cd daemon && go build -ldflags "$LDFLAGS" -o ../_bin/acerctl ./cmd/acerctl)
 (cd daemon && go build -ldflags "$LDFLAGS" -o ../_bin/acer-tray ./cmd/acer-tray)
 # what "wails build" does, without the wails CLI: the frontend is already in gui/frontend/dist
@@ -128,6 +131,8 @@ for f in Nitro:nitro:n Predator:predator:p Acer:acer:a; do
 done
 
 %check
+# acerd must load without the NVIDIA driver (see -z lazy in %build)
+./_bin/acerd -h 2>/dev/null
 desktop-file-validate %{buildroot}%{_datadir}/applications/*.desktop
 
 %post
