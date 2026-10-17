@@ -8,7 +8,7 @@
 %global debug_package %{nil}
 
 Name:           acerctl-kmod
-Version:        0.1.1
+Version:        0.1.2
 Release:        1%{?dist}
 Summary:        Kernel modules of acerctl (acer-wmi-extras, acer-wmi-battery)
 
@@ -53,5 +53,8 @@ done
 %{?akmod_install}
 
 %changelog
+* Sat Oct 17 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.2-1
+- The modules build on kernels from 5.15 on
+
 * Wed Oct 14 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.1-1
 - First akmod package: acer-wmi-extras and acer-wmi-battery

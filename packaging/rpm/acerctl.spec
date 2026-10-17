@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           acerctl
-Version:        0.1.1
+Version:        0.1.2
 Release:        1%{?dist}
 Summary:        Daemon and CLI for the firmware features of Acer laptops
 
@@ -183,5 +183,9 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/*.desktop
 %config(noreplace) %{_sysconfdir}/xdg/autostart/io.github.fnndk.AcerControlCenter.Tray.desktop
 
 %changelog
+* Sat Oct 17 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.2-1
+- acerd starts on demand (D-Bus activation) and is enabled at install (preset)
+- Setup screen: acer_wmi option and Secure Boot key enrollment from the app
+
 * Wed Oct 14 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.1-1
 - First RPM: daemon, CLI, tray, the three app flavors and kmod-common

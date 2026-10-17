@@ -6,7 +6,7 @@
 
 <p align="center"><b>Download:</b> <a href="#acer">Acer</a> · <a href="#nitro">Nitro</a> · <a href="#predator">Predator</a></p>
 
-**Contents:** [Download](#download) ([Acer](#acer), [Nitro](#nitro), [Predator](#predator)) · [Uninstalling](#uninstalling) · [What it does](#what-it-does) · [Screenshots](#screenshots) · [Compared with other tools](#compared-with-other-tools) · [GNOME integration](#gnome-integration) · [Components](#components) · [Documentation](#documentation) · [Building from source](#building-from-source) · [License](#license)
+**Contents:** [Download](#download) ([Acer](#acer), [Nitro](#nitro), [Predator](#predator)) · [Upgrading](#upgrading) · [Uninstalling](#uninstalling) · [What it does](#what-it-does) · [Screenshots](#screenshots) · [Compared with other tools](#compared-with-other-tools) · [GNOME integration](#gnome-integration) · [Components](#components) · [Documentation](#documentation) · [Building from source](#building-from-source) · [License](#license)
 
 Acer ships a different Windows-only app per product line: **AcerSense** (Aspire, Swift and the other non-gaming lines), **NitroSense** (Nitro) and **PredatorSense** (Predator). The laptops themselves share the same Acer WMI firmware interfaces (the ones the kernel's `acer_wmi` driver already uses across product lines), so acerctl covers all three with a single stack: each feature shows up only if the machine's firmware reports it, with no per-brand switch and no hard-coded model list.
 
@@ -24,84 +24,133 @@ acerctl works **by complementing the in-tree `acer_wmi` driver** instead of repl
 
 ## Download
 
-Latest: **[0.1.1](https://github.com/FnnDK/acerctl/releases/tag/v0.1.1)** (pre-release), ready-built packages for **Fedora 44** (Workstation and the Atomic desktops: Silverblue, Kinoite, Bluefin...). Run the commands on the host, not inside a toolbox/distrobox. Pick your laptop's product line: each one gets the app with its own name and colors, on top of the same daemon and kernel modules. The kernel modules come as an akmod, rebuilt for every new kernel and signed with the local akmods key when Secure Boot needs it.
+Latest: **[0.1.2](https://github.com/FnnDK/acerctl/releases/tag/v0.1.2)** (pre-release), ready-built packages for **Fedora 44** (Workstation and the Atomic desktops: Silverblue, Kinoite, Bluefin...) and **Debian 13, Ubuntu 24.04 and 26.04** (the .deb packages are new and so far tested in containers only). Run the commands on the host, not inside a toolbox/distrobox. Pick your laptop's product line: each one gets the app with its own name and colors, on top of the same daemon and kernel modules. The kernel modules are rebuilt for every new kernel (akmod on Fedora, DKMS on Debian/Ubuntu) and signed with the local key when Secure Boot needs it. The daemon starts by itself when the app or the tray first needs it.
 
-Then see [After installing](#after-installing). Upgrading from an install made with the scripts (including the older `nitrod`/`nitroctl` ones)? Remove it first, as [Uninstalling](#uninstalling) shows: a unit left in `/etc/systemd/system` overrides the packaged one. Another distribution? See [Building from source](#building-from-source).
+Then see [After installing](#after-installing). Coming from 0.1.1 or from an install made with the scripts? See [Upgrading](#upgrading). Another distribution? See [Building from source](#building-from-source).
 
 ### Acer
 
 Aspire, Swift, TravelMate, Extensa and the other non-gaming lines: **Acer Control Center**. Tested on the Aspire AG15-71P (charge limit, Sense key, app and tray).
 
+**Fedora 44:**
+
 ```bash
-v=0.1.1; app=acer-control-center
-mkdir -p acerctl-rpms && cd acerctl-rpms
+v=0.1.2; app=acer-control-center
+mkdir -p acerctl-$v && cd acerctl-$v
 for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x86_64 \
          akmod-acerctl-$v-1.fc44.x86_64 acerctl-kmod-common-$v-1.fc44.noarch; do
   curl -LO https://github.com/FnnDK/acerctl/releases/download/v$v/$p.rpm
 done
-if [ -e /run/ostree-booted ]; then           # Silverblue, Kinoite, Bluefin...: needs a reboot
-  sudo rpm-ostree install ./*.rpm && echo "reboot, then run: sudo systemctl enable --now acerd"
+if [ -e /run/ostree-booted ]; then           # Silverblue, Kinoite, Bluefin...
+  sudo rpm-ostree install ./*.rpm && echo "installed: reboot to start using it"
 else
-  sudo dnf install ./*.rpm && sudo systemctl enable --now acerd
+  sudo dnf install ./*.rpm
 fi
+```
+
+**Debian 13, Ubuntu 24.04 and 26.04:**
+
+```bash
+v=0.1.2; app=acer-control-center
+mkdir -p acerctl-$v && cd acerctl-$v
+for p in acerctl_${v}_amd64 acerctl-tray_${v}_amd64 ${app}_${v}_amd64 acerctl-dkms_${v}_all; do
+  wget -nv -O $p.deb https://github.com/FnnDK/acerctl/releases/download/v$v/$p.deb
+done
+sudo apt install ./*.deb
 ```
 
 ### Nitro
 
 **Nitro Control Center**. Tested on the Nitro ANV15-52 (modes, fans, sensors, keyboard, USB charging, battery, scenarios).
 
+**Fedora 44:**
+
 ```bash
-v=0.1.1; app=nitro-control-center
-mkdir -p acerctl-rpms && cd acerctl-rpms
+v=0.1.2; app=nitro-control-center
+mkdir -p acerctl-$v && cd acerctl-$v
 for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x86_64 \
          akmod-acerctl-$v-1.fc44.x86_64 acerctl-kmod-common-$v-1.fc44.noarch; do
   curl -LO https://github.com/FnnDK/acerctl/releases/download/v$v/$p.rpm
 done
-if [ -e /run/ostree-booted ]; then           # Silverblue, Kinoite, Bluefin...: needs a reboot
-  sudo rpm-ostree install ./*.rpm && echo "reboot, then run: sudo systemctl enable --now acerd"
+if [ -e /run/ostree-booted ]; then           # Silverblue, Kinoite, Bluefin...
+  sudo rpm-ostree install ./*.rpm && echo "installed: reboot to start using it"
 else
-  sudo dnf install ./*.rpm && sudo systemctl enable --now acerd
+  sudo dnf install ./*.rpm
 fi
+```
+
+**Debian 13, Ubuntu 24.04 and 26.04:**
+
+```bash
+v=0.1.2; app=nitro-control-center
+mkdir -p acerctl-$v && cd acerctl-$v
+for p in acerctl_${v}_amd64 acerctl-tray_${v}_amd64 ${app}_${v}_amd64 acerctl-dkms_${v}_all; do
+  wget -nv -O $p.deb https://github.com/FnnDK/acerctl/releases/download/v$v/$p.deb
+done
+sudo apt install ./*.deb
 ```
 
 ### Predator
 
 **Predator Control Center**. Not tested on a Predator yet: the features come from the firmware, and a [hardware report](docs/hardware-reports.md) from your machine helps a lot.
 
+**Fedora 44:**
+
 ```bash
-v=0.1.1; app=predator-control-center
-mkdir -p acerctl-rpms && cd acerctl-rpms
+v=0.1.2; app=predator-control-center
+mkdir -p acerctl-$v && cd acerctl-$v
 for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x86_64 \
          akmod-acerctl-$v-1.fc44.x86_64 acerctl-kmod-common-$v-1.fc44.noarch; do
   curl -LO https://github.com/FnnDK/acerctl/releases/download/v$v/$p.rpm
 done
-if [ -e /run/ostree-booted ]; then           # Silverblue, Kinoite, Bluefin...: needs a reboot
-  sudo rpm-ostree install ./*.rpm && echo "reboot, then run: sudo systemctl enable --now acerd"
+if [ -e /run/ostree-booted ]; then           # Silverblue, Kinoite, Bluefin...
+  sudo rpm-ostree install ./*.rpm && echo "installed: reboot to start using it"
 else
-  sudo dnf install ./*.rpm && sudo systemctl enable --now acerd
+  sudo dnf install ./*.rpm
 fi
+```
+
+**Debian 13, Ubuntu 24.04 and 26.04:**
+
+```bash
+v=0.1.2; app=predator-control-center
+mkdir -p acerctl-$v && cd acerctl-$v
+for p in acerctl_${v}_amd64 acerctl-tray_${v}_amd64 ${app}_${v}_amd64 acerctl-dkms_${v}_all; do
+  wget -nv -O $p.deb https://github.com/FnnDK/acerctl/releases/download/v$v/$p.deb
+done
+sudo apt install ./*.deb
 ```
 
 ### After installing
 
-Nitro and Predator models need `acer_wmi` with `predator_v4` for operating modes and fans, e.g. on the Nitro ANV15-52 (`/etc/modprobe.d/acer-wmi.conf`, then reboot):
+Open the app: on its first start it lists what is still missing and applies it with one password and one restart. That is the `acer_wmi` option Nitro and Predator models need for operating modes and fans, and, with Secure Boot, enrolling the key that signs the kernel modules (akmods on Fedora, DKMS on Debian/Ubuntu). `acerctl status` shows what the daemon found and `acerctl help` lists the commands.
+
+By hand, the `acer_wmi` option for the Nitro ANV15-52 is (`/etc/modprobe.d/acer-wmi.conf`, then reboot):
 
 ```
 options acer_wmi predator_v4=1 force_caps=0x1C26
 ```
 
-Before enabling `platform-profile`, check the `tuned`/`power-profiles-daemon` profile: Linux's `performance` mode maps to Acer's Turbo, which not every model has. Then `acerctl status` shows what the daemon found and `acerctl help` lists the commands.
+Before enabling `platform-profile`, check the `tuned`/`power-profiles-daemon` profile: Linux's `performance` mode maps to Acer's Turbo, which not every model has.
 
-The kernel decides part of it: `acer_wmi` exposes the modes from Linux 6.9 and fan control from 6.19 (Debian 13 has the modes only; Ubuntu 24.04 HWE, 26.04 and Fedora have both). The companion modules build from 5.15 on.
+The kernel decides part of it: `acer_wmi` exposes the modes from Linux 6.9 and fan control from 6.19 (Debian 13 has the modes only; Ubuntu 24.04 with the HWE kernel, 26.04 and Fedora have both; Ubuntu 24.04's original 6.8 kernel has neither). The companion modules build from 5.15 on.
 
-From the next release on, the app does this for you: when it opens, it lists what is left (the `acer_wmi` option, enrolling the akmods key for Secure Boot) and applies it with one password and one restart.
+### Upgrading
+
+- **From 0.1.1 on Fedora Workstation:** run the block of your product line again; `dnf` upgrades in place.
+- **From 0.1.1 on Silverblue, Kinoite or Bluefin:** remove the old packages first, then run the block and reboot once:
+  ```bash
+  sudo rpm-ostree uninstall acerctl acerctl-tray nitro-control-center akmod-acerctl acerctl-kmod-common   # your app's name
+  ```
+- **From an install made with the scripts** (including the older `nitrod`/`nitroctl` ones): remove it first, as [Uninstalling](#uninstalling) shows. A unit left in `/etc/systemd/system` overrides the packaged one.
 
 ### Uninstalling
 
-**Packages:** remove the ones you installed (Silverblue/Kinoite: `rpm-ostree uninstall` with the same names, then reboot):
+**Packages:** remove the ones you installed (Silverblue, Kinoite, Bluefin: `rpm-ostree uninstall` with the same names, then reboot):
 
 ```bash
 sudo dnf remove acerctl acerctl-tray nitro-control-center akmod-acerctl acerctl-kmod-common   # or predator-/acer-control-center
+sudo apt purge acerctl acerctl-tray nitro-control-center acerctl-dkms                          # Debian/Ubuntu
 ```
 
 **Script installs** (from source or the binary archive), including the ones made under the project's earlier names (`nitrod`/`nitroctl`/`nitro-tray`, `nitrosensed`). Run it from the repository or the archive directory, or download it on its own:
@@ -238,7 +287,7 @@ Mainline layer used: `acer_wmi` with `predator_v4=1` (profiles in `platform-prof
 
 For other distributions, or to build from the repository. The scripts install to `/usr/local`, `/etc` and `/var/lib` (writable on Silverblue too); the reference machine is an Acer Nitro ANV15-52 with Fedora Silverblue 44.
 
-**Prebuilt binaries for other distributions** (glibc ≥ 2.34, x86_64): [`acerctl-0.1.1-linux-x86_64.tar.gz`](https://github.com/FnnDK/acerctl/releases/download/v0.1.1/acerctl-0.1.1-linux-x86_64.tar.gz) holds the daemon, CLI, tray and app already built, these scripts and the kernel modules as source; its `INSTALL.md` has the steps (no Go, Node or Wails needed). The app is picked from the laptop's product name.
+**Prebuilt binaries for other distributions** (glibc ≥ 2.34, x86_64): [`acerctl-0.1.2-linux-x86_64.tar.gz`](https://github.com/FnnDK/acerctl/releases/download/v0.1.2/acerctl-0.1.2-linux-x86_64.tar.gz) holds the daemon, CLI, tray and app already built, these scripts and the kernel modules as source; its `INSTALL.md` has the steps (no Go, Node or Wails needed). The app is picked from the laptop's product name.
 
 **From the repository:**
 
