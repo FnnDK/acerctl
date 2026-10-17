@@ -24,7 +24,7 @@ acerctl works **by complementing the in-tree `acer_wmi` driver** instead of repl
 
 ## Download
 
-Latest: **[0.1.1](https://github.com/FnnDK/acerctl/releases/tag/v0.1.1)** (pre-release), ready-built packages for **Fedora 44** (Workstation, Silverblue, Kinoite). Pick your laptop's product line: each one gets the app with its own name and colors, on top of the same daemon and kernel modules. The kernel modules come as an akmod, rebuilt for every new kernel and signed with the local akmods key when Secure Boot needs it.
+Latest: **[0.1.1](https://github.com/FnnDK/acerctl/releases/tag/v0.1.1)** (pre-release), ready-built packages for **Fedora 44** (Workstation and the Atomic desktops: Silverblue, Kinoite, Bluefin...). Run the commands on the host, not inside a toolbox/distrobox. Pick your laptop's product line: each one gets the app with its own name and colors, on top of the same daemon and kernel modules. The kernel modules come as an akmod, rebuilt for every new kernel and signed with the local akmods key when Secure Boot needs it.
 
 Then see [After installing](#after-installing). Upgrading from an install made with the scripts (including the older `nitrod`/`nitroctl` ones)? Remove it first, as [Uninstalling](#uninstalling) shows: a unit left in `/etc/systemd/system` overrides the packaged one. Another distribution? See [Building from source](#building-from-source).
 
@@ -34,13 +34,16 @@ Aspire, Swift, TravelMate, Extensa and the other non-gaming lines: **Acer Contro
 
 ```bash
 v=0.1.1; app=acer-control-center
-mkdir acerctl-rpms && cd acerctl-rpms
+mkdir -p acerctl-rpms && cd acerctl-rpms
 for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x86_64 \
          akmod-acerctl-$v-1.fc44.x86_64 acerctl-kmod-common-$v-1.fc44.noarch; do
   curl -LO https://github.com/FnnDK/acerctl/releases/download/v$v/$p.rpm
 done
-sudo dnf install ./*.rpm                   # Silverblue/Kinoite: rpm-ostree install ./*.rpm, then reboot
-sudo systemctl enable --now acerd
+if [ -e /run/ostree-booted ]; then           # Silverblue, Kinoite, Bluefin...: needs a reboot
+  sudo rpm-ostree install ./*.rpm && echo "reboot, then run: sudo systemctl enable --now acerd"
+else
+  sudo dnf install ./*.rpm && sudo systemctl enable --now acerd
+fi
 ```
 
 ### Nitro
@@ -49,13 +52,16 @@ sudo systemctl enable --now acerd
 
 ```bash
 v=0.1.1; app=nitro-control-center
-mkdir acerctl-rpms && cd acerctl-rpms
+mkdir -p acerctl-rpms && cd acerctl-rpms
 for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x86_64 \
          akmod-acerctl-$v-1.fc44.x86_64 acerctl-kmod-common-$v-1.fc44.noarch; do
   curl -LO https://github.com/FnnDK/acerctl/releases/download/v$v/$p.rpm
 done
-sudo dnf install ./*.rpm                   # Silverblue/Kinoite: rpm-ostree install ./*.rpm, then reboot
-sudo systemctl enable --now acerd
+if [ -e /run/ostree-booted ]; then           # Silverblue, Kinoite, Bluefin...: needs a reboot
+  sudo rpm-ostree install ./*.rpm && echo "reboot, then run: sudo systemctl enable --now acerd"
+else
+  sudo dnf install ./*.rpm && sudo systemctl enable --now acerd
+fi
 ```
 
 ### Predator
@@ -64,13 +70,16 @@ sudo systemctl enable --now acerd
 
 ```bash
 v=0.1.1; app=predator-control-center
-mkdir acerctl-rpms && cd acerctl-rpms
+mkdir -p acerctl-rpms && cd acerctl-rpms
 for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x86_64 \
          akmod-acerctl-$v-1.fc44.x86_64 acerctl-kmod-common-$v-1.fc44.noarch; do
   curl -LO https://github.com/FnnDK/acerctl/releases/download/v$v/$p.rpm
 done
-sudo dnf install ./*.rpm                   # Silverblue/Kinoite: rpm-ostree install ./*.rpm, then reboot
-sudo systemctl enable --now acerd
+if [ -e /run/ostree-booted ]; then           # Silverblue, Kinoite, Bluefin...: needs a reboot
+  sudo rpm-ostree install ./*.rpm && echo "reboot, then run: sudo systemctl enable --now acerd"
+else
+  sudo dnf install ./*.rpm && sudo systemctl enable --now acerd
+fi
 ```
 
 ### After installing
