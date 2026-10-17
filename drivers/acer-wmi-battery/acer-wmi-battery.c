@@ -36,7 +36,10 @@
 MODULE_DESCRIPTION("Acer battery health control driver");
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Frederik Harwath <frederik@harwath.name>");
-#define WMI_GUID "79772EC5-04B1-4bfd-843C-61E7F77B6CC9"
+/* Upper case: the WMI bus announces the device as wmi:<GUID in upper case>
+ * and modprobe matches aliases case-sensitively, so a lower-case alias never
+ * autoloads the module. */
+#define WMI_GUID "79772EC5-04B1-4BFD-843C-61E7F77B6CC9"
 MODULE_ALIAS("wmi:" WMI_GUID);
 
 #ifdef pr_fmt
