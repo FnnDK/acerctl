@@ -24,9 +24,9 @@ acerctl works **by complementing the in-tree `acer_wmi` driver** instead of repl
 
 ## Download
 
-Latest: **[0.1.2](https://github.com/FnnDK/acerctl/releases/tag/v0.1.2)** (pre-release), ready-built packages for **Fedora 44** (Workstation and the Atomic desktops: Silverblue, Kinoite, Bluefin...) and **Debian 13, Ubuntu 24.04 and 26.04** (the .deb packages are new and so far tested in containers only). Run the commands on the host, not inside a toolbox/distrobox. Pick your laptop's product line: each one gets the app with its own name and colors, on top of the same daemon and kernel modules. The kernel modules are rebuilt for every new kernel (akmod on Fedora, DKMS on Debian/Ubuntu) and signed with the local key when Secure Boot needs it. The daemon starts by itself when the app or the tray first needs it.
+Latest: **[0.1.3](https://github.com/FnnDK/acerctl/releases/tag/v0.1.3)** (pre-release), ready-built packages for **Fedora 44** (Workstation and the Atomic desktops: Silverblue, Kinoite, Bluefin...) and **Debian 13, Ubuntu 24.04 and 26.04** (the .deb packages are new and so far tested in containers only). Run the commands on the host, not inside a toolbox/distrobox. Pick your laptop's product line: each one gets the app with its own name and colors, on top of the same daemon and kernel modules. The kernel modules are rebuilt for every new kernel (akmod on Fedora, DKMS on Debian/Ubuntu) and signed with the local key when Secure Boot needs it. The daemon starts by itself when the app or the tray first needs it.
 
-Then see [After installing](#after-installing). Coming from 0.1.1 or from an install made with the scripts? See [Upgrading](#upgrading). Another distribution? See [Building from source](#building-from-source).
+Then see [After installing](#after-installing). Coming from an earlier version or from an install made with the scripts? See [Upgrading](#upgrading). Another distribution? See [Building from source](#building-from-source).
 
 ### Acer
 
@@ -35,7 +35,7 @@ Aspire, Swift, TravelMate, Extensa and the other non-gaming lines: **Acer Contro
 **Fedora 44:**
 
 ```bash
-v=0.1.2; app=acer-control-center
+v=0.1.3; app=acer-control-center
 mkdir -p acerctl-$v && cd acerctl-$v
 for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x86_64 \
          akmod-acerctl-$v-1.fc44.x86_64 acerctl-kmod-common-$v-1.fc44.noarch; do
@@ -51,7 +51,7 @@ fi
 **Debian 13, Ubuntu 24.04 and 26.04:**
 
 ```bash
-v=0.1.2; app=acer-control-center
+v=0.1.3; app=acer-control-center
 mkdir -p acerctl-$v && cd acerctl-$v
 for p in acerctl_${v}_amd64 acerctl-tray_${v}_amd64 ${app}_${v}_amd64 acerctl-dkms_${v}_all; do
   wget -nv -O $p.deb https://github.com/FnnDK/acerctl/releases/download/v$v/$p.deb
@@ -66,7 +66,7 @@ sudo apt install ./*.deb
 **Fedora 44:**
 
 ```bash
-v=0.1.2; app=nitro-control-center
+v=0.1.3; app=nitro-control-center
 mkdir -p acerctl-$v && cd acerctl-$v
 for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x86_64 \
          akmod-acerctl-$v-1.fc44.x86_64 acerctl-kmod-common-$v-1.fc44.noarch; do
@@ -82,7 +82,7 @@ fi
 **Debian 13, Ubuntu 24.04 and 26.04:**
 
 ```bash
-v=0.1.2; app=nitro-control-center
+v=0.1.3; app=nitro-control-center
 mkdir -p acerctl-$v && cd acerctl-$v
 for p in acerctl_${v}_amd64 acerctl-tray_${v}_amd64 ${app}_${v}_amd64 acerctl-dkms_${v}_all; do
   wget -nv -O $p.deb https://github.com/FnnDK/acerctl/releases/download/v$v/$p.deb
@@ -97,7 +97,7 @@ sudo apt install ./*.deb
 **Fedora 44:**
 
 ```bash
-v=0.1.2; app=predator-control-center
+v=0.1.3; app=predator-control-center
 mkdir -p acerctl-$v && cd acerctl-$v
 for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x86_64 \
          akmod-acerctl-$v-1.fc44.x86_64 acerctl-kmod-common-$v-1.fc44.noarch; do
@@ -113,7 +113,7 @@ fi
 **Debian 13, Ubuntu 24.04 and 26.04:**
 
 ```bash
-v=0.1.2; app=predator-control-center
+v=0.1.3; app=predator-control-center
 mkdir -p acerctl-$v && cd acerctl-$v
 for p in acerctl_${v}_amd64 acerctl-tray_${v}_amd64 ${app}_${v}_amd64 acerctl-dkms_${v}_all; do
   wget -nv -O $p.deb https://github.com/FnnDK/acerctl/releases/download/v$v/$p.deb
@@ -137,8 +137,8 @@ The kernel decides part of it: `acer_wmi` exposes the modes from Linux 6.9 and f
 
 ### Upgrading
 
-- **From 0.1.1 on Fedora Workstation:** run the block of your product line again; `dnf` upgrades in place.
-- **From 0.1.1 on Silverblue, Kinoite or Bluefin:** remove the old packages first, then run the block and reboot once:
+- **Fedora Workstation, Debian, Ubuntu:** run the block of your product line again; `dnf`/`apt` upgrade in place.
+- **Silverblue, Kinoite, Bluefin:** remove the installed packages first, then run the block and reboot once:
   ```bash
   sudo rpm-ostree uninstall acerctl acerctl-tray nitro-control-center akmod-acerctl acerctl-kmod-common   # your app's name
   ```
@@ -287,7 +287,7 @@ Mainline layer used: `acer_wmi` with `predator_v4=1` (profiles in `platform-prof
 
 For other distributions, or to build from the repository. The scripts install to `/usr/local`, `/etc` and `/var/lib` (writable on Silverblue too); the reference machine is an Acer Nitro ANV15-52 with Fedora Silverblue 44.
 
-**Prebuilt binaries for other distributions** (glibc ≥ 2.34, x86_64): [`acerctl-0.1.2-linux-x86_64.tar.gz`](https://github.com/FnnDK/acerctl/releases/download/v0.1.2/acerctl-0.1.2-linux-x86_64.tar.gz) holds the daemon, CLI, tray and app already built, these scripts and the kernel modules as source; its `INSTALL.md` has the steps (no Go, Node or Wails needed). The app is picked from the laptop's product name.
+**Prebuilt binaries for other distributions** (glibc ≥ 2.34, x86_64): [`acerctl-0.1.3-linux-x86_64.tar.gz`](https://github.com/FnnDK/acerctl/releases/download/v0.1.3/acerctl-0.1.3-linux-x86_64.tar.gz) holds the daemon, CLI, tray and app already built, these scripts and the kernel modules as source; its `INSTALL.md` has the steps (no Go, Node or Wails needed). The app is picked from the laptop's product name.
 
 **From the repository:**
 
