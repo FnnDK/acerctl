@@ -20,6 +20,15 @@ TRAY="$R/daemon/acer-tray"
 WAILS=$(command -v wails || echo "$HOME/go/bin/wails")
 AUTOSTART=/etc/xdg/autostart/io.github.fnndk.AcerTray.desktop
 
+# host_root: these scripts change the system, so they need root on the host;
+# sudo inside a toolbox/distrobox container only reaches the container.
+host_root() {
+  if [ -e /run/.containerenv ] || [ -e /.dockerenv ]; then
+    echo "this shell is inside a container: run it on the host (distrobox-host-exec sudo sh $0 ...)"; exit 1
+  fi
+  [ "$(id -u)" -eq 0 ] || { echo "run as root (sudo sh $0 ...)"; exit 1; }
+}
+
 build() {
   echo "building the GUI"
   # Debian/Fedora ship WebKitGTK 4.1 only (libsoup3): Wails needs the webkit2_41 tag.
@@ -69,7 +78,7 @@ migrate_nitro_tray() {
 }
 
 install_all() {
-  [ "$(id -u)" -eq 0 ] || { echo "run as root (distrobox-host-exec sudo ...)"; exit 1; }
+  host_root
   for f in "$OUT" "$TRAY"; do
     [ -x "$f" ] || { echo "no $f: run 'sh packaging/install-gui.sh build' in the container first"; exit 1; }
   done
@@ -101,7 +110,7 @@ install_all() {
 }
 
 uninstall() {
-  [ "$(id -u)" -eq 0 ] || { echo "run as root (distrobox-host-exec sudo ...)"; exit 1; }
+  host_root
   pkill -x acer-tray 2>/dev/null || true
   remove_flavor nitro
   remove_flavor predator

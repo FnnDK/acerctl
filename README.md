@@ -103,7 +103,7 @@ sudo sh uninstall.sh            # keeps your settings (/var/lib/acerd, ~/.config
 sudo sh uninstall.sh --purge    # also removes them, the app data and /etc/modprobe.d/acerctl.conf
 ```
 
-It stops and removes the daemon, CLI, app, tray, kernel modules and their units. Packages, if any, are left in place with the command to remove them, and so is an `acer_wmi` option you wrote yourself in `/etc/modprobe.d`.
+Run it on the host: inside a toolbox/distrobox shell, `sudo` only reaches the container, so the script refuses to run there (use `distrobox-host-exec sudo sh uninstall.sh`). It stops and removes the daemon, CLI, app, tray, kernel modules and their units. Packages, if any, are left in place with the command to remove them, and so is an `acer_wmi` option you wrote yourself in `/etc/modprobe.d`.
 
 ## What it does
 

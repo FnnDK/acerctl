@@ -11,6 +11,17 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 DEST=/var/lib/acer-wmi-modules
 MODULES=${*:-"acer-wmi-battery acer-wmi-extras"}
 
+# host_root: these scripts change the system, so they need root on the host;
+# sudo inside a toolbox/distrobox container only reaches the container.
+host_root() {
+  if [ -e /run/.containerenv ] || [ -e /.dockerenv ]; then
+    echo "this shell is inside a container: run it on the host (distrobox-host-exec sudo sh $0 ...)"; exit 1
+  fi
+  [ "$(id -u)" -eq 0 ] || { echo "run as root (sudo sh $0 ...)"; exit 1; }
+}
+
+host_root
+
 sig_required() {
   [ "$(cat /sys/module/module/parameters/sig_enforce 2>/dev/null)" = Y ] && return 0
   grep -q '\[\(integrity\|confidentiality\)\]' /sys/kernel/security/lockdown 2>/dev/null

@@ -20,7 +20,16 @@ for a in "$@"; do
   esac
 done
 [ "$MODE" = old ] && [ -n "$PURGE" ] && { echo "--old keeps the state: use it without --purge"; exit 2; }
-[ "$(id -u)" -eq 0 ] || { echo "run as root (distrobox-host-exec sudo ...)"; exit 1; }
+# host_root: these scripts change the system, so they need root on the host;
+# sudo inside a toolbox/distrobox container only reaches the container.
+host_root() {
+  if [ -e /run/.containerenv ] || [ -e /.dockerenv ]; then
+    echo "this shell is inside a container: run it on the host (distrobox-host-exec sudo sh $0 ...)"; exit 1
+  fi
+  [ "$(id -u)" -eq 0 ] || { echo "run as root (sudo sh $0 ...)"; exit 1; }
+}
+
+host_root
 
 APPS="nitro-control-center predator-control-center acer-control-center"
 IDS="io.github.fnndk.NitroControlCenter io.github.fnndk.PredatorControlCenter io.github.fnndk.AcerControlCenter"

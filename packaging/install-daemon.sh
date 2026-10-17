@@ -12,6 +12,15 @@ R=$(cd "$(dirname "$0")/.." && pwd)
 BIN=/usr/local/bin/acerd
 VERSION=$(cd "$R" && git describe --tags --always --dirty 2>/dev/null || echo 0.1.0-dev)
 
+# host_root: these scripts change the system, so they need root on the host;
+# sudo inside a toolbox/distrobox container only reaches the container.
+host_root() {
+  if [ -e /run/.containerenv ] || [ -e /.dockerenv ]; then
+    echo "this shell is inside a container: run it on the host (distrobox-host-exec sudo sh $0 ...)"; exit 1
+  fi
+  [ "$(id -u)" -eq 0 ] || { echo "run as root (sudo sh $0 ...)"; exit 1; }
+}
+
 build() {
   echo "building acerd $VERSION"
   (cd "$R/daemon" && CGO_CFLAGS="-Wno-deprecated-declarations" go build -trimpath -ldflags "-s -w -X main.Version=$VERSION" -o "$R/daemon/acerd" ./cmd/acerd)
@@ -30,7 +39,7 @@ migrate_state() {
 }
 
 install_all() {
-  [ "$(id -u)" -eq 0 ] || { echo "run as root (distrobox-host-exec sudo ...)"; exit 1; }
+  host_root
   # check before removing anything: an old install must not go without the new one
   for f in "$R/daemon/acerd" "$R/daemon/acerctl"; do
     [ -x "$f" ] || { echo "no $f: run 'sh packaging/install-daemon.sh build' first"; exit 1; }
