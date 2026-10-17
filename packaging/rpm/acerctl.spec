@@ -191,6 +191,7 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/*.desktop
 * Sat Oct 17 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.2-1
 - acerd starts on demand (D-Bus activation) and is enabled at install (preset)
 - Setup screen: acer_wmi option and Secure Boot key enrollment from the app
+- acerd starts again: built with lazy binding (it exited 127 under -z now)
 
 * Wed Oct 14 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.1-1
 - First RPM: daemon, CLI, tray, the three app flavors and kmod-common
