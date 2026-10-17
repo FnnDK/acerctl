@@ -27,7 +27,7 @@ sudo sh packaging/install-daemon.sh install
 sudo sh packaging/install-gui.sh              # FLAVOR=nitro|predator|acer overrides the choice
 ```
 
-Then `acerctl status` shows what the daemon found. After a kernel update, run `sudo sh packaging/build-sign.sh` again. To remove the app: `sudo sh packaging/install-gui.sh uninstall`.
+Then `acerctl status` shows what the daemon found. After a kernel update, run `sudo sh packaging/build-sign.sh` again. To remove everything: `sudo sh packaging/uninstall.sh` (it keeps your settings; `--purge` removes them too). It also removes installs from before the rename to acerctl (`nitrod`, `nitroctl`).
 
 On Nitro and Predator models, `platform_profile` and the fans also need `acer_wmi` with `predator_v4` (see README, "After installing").
 

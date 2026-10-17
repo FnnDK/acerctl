@@ -18,40 +18,25 @@ build() {
   (cd "$R/daemon" && go build -trimpath -ldflags "-s -w" -o "$R/daemon/acerctl" ./cmd/acerctl)
 }
 
-# The project used to be called nitrosense (nitrosensed, nitrosense-cli,
-# org.nitrosense.*): remove that install and keep its state and scenarios.
-migrate_nitrosense() {
-  if [ -e /etc/systemd/system/nitrosensed.service ]; then
-    echo "removing the old nitrosensed install"
-    systemctl disable --now nitrosensed.service || true
-    rm -f /etc/systemd/system/nitrosensed.service /usr/local/bin/nitrosensed /usr/local/bin/nitrosense-cli \
-      /etc/dbus-1/system.d/org.nitrosense.Daemon1.conf /usr/local/share/polkit-1/actions/org.nitrosense.daemon.policy
-  fi
-  if [ -d /var/lib/nitrosense ] && [ ! -e /var/lib/acerd ]; then
-    mv /var/lib/nitrosense /var/lib/acerd
-    echo "moved /var/lib/nitrosense to /var/lib/acerd"
-  fi
-}
-
-# Before the rename to acerctl the daemon was nitrod (io.github.fnndk.Nitrod1,
-# /var/lib/nitrod, nitroctl): remove that install and keep its state.
-migrate_nitrod() {
-  if [ -e /etc/systemd/system/nitrod.service ]; then
-    echo "removing the old nitrod install"
-    systemctl disable --now nitrod.service || true
-    rm -f /etc/systemd/system/nitrod.service /usr/local/bin/nitrod /usr/local/bin/nitroctl \
-      /etc/dbus-1/system.d/io.github.fnndk.Nitrod1.conf /usr/local/share/polkit-1/actions/io.github.fnndk.nitrod.policy
-  fi
-  if [ -d /var/lib/nitrod ] && [ ! -e /var/lib/acerd ]; then
-    mv /var/lib/nitrod /var/lib/acerd
-    echo "moved /var/lib/nitrod to /var/lib/acerd"
-  fi
+# The installs from before the renames (nitrosensed, then nitrod/nitroctl) are
+# removed by uninstall.sh --old; their state moves to /var/lib/acerd.
+migrate_state() {
+  for old in /var/lib/nitrod /var/lib/nitrosense; do
+    if [ -d "$old" ] && [ ! -e /var/lib/acerd ]; then
+      mv "$old" /var/lib/acerd
+      echo "moved $old to /var/lib/acerd"
+    fi
+  done
 }
 
 install_all() {
   [ "$(id -u)" -eq 0 ] || { echo "run as root (distrobox-host-exec sudo ...)"; exit 1; }
-  migrate_nitrosense
-  migrate_nitrod
+  # check before removing anything: an old install must not go without the new one
+  for f in "$R/daemon/acerd" "$R/daemon/acerctl"; do
+    [ -x "$f" ] || { echo "no $f: run 'sh packaging/install-daemon.sh build' first"; exit 1; }
+  done
+  sh "$R/packaging/uninstall.sh" --old
+  migrate_state
   install -D -m 0755 "$R/daemon/acerd" "$BIN"
   install -D -m 0755 "$R/daemon/acerctl" /usr/local/bin/acerctl
   install -D -m 0644 "$R/packaging/io.github.fnndk.Acerd1.conf" /etc/dbus-1/system.d/io.github.fnndk.Acerd1.conf

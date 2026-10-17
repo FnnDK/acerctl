@@ -12,6 +12,7 @@
 #   sh packaging/install-gui.sh build                         # in the container
 #   distrobox-host-exec sudo sh packaging/install-gui.sh      # on the host
 #   distrobox-host-exec sudo sh packaging/install-gui.sh uninstall
+# (packaging/uninstall.sh removes the whole install, daemon and modules too)
 set -eu
 R=$(cd "$(dirname "$0")/.." && pwd)
 OUT="$R/gui/build/bin/nitro-control-center"

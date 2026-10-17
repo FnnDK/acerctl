@@ -6,7 +6,7 @@
 
 <p align="center"><b>Download:</b> <a href="#acer">Acer</a> · <a href="#nitro">Nitro</a> · <a href="#predator">Predator</a></p>
 
-**Contents:** [Download](#download) ([Acer](#acer), [Nitro](#nitro), [Predator](#predator)) · [What it does](#what-it-does) · [Screenshots](#screenshots) · [Compared with other tools](#compared-with-other-tools) · [GNOME integration](#gnome-integration) · [Components](#components) · [Documentation](#documentation) · [Building from source](#building-from-source) · [License](#license)
+**Contents:** [Download](#download) ([Acer](#acer), [Nitro](#nitro), [Predator](#predator)) · [Uninstalling](#uninstalling) · [What it does](#what-it-does) · [Screenshots](#screenshots) · [Compared with other tools](#compared-with-other-tools) · [GNOME integration](#gnome-integration) · [Components](#components) · [Documentation](#documentation) · [Building from source](#building-from-source) · [License](#license)
 
 Acer ships a different Windows-only app per product line: **AcerSense** (Aspire, Swift and the other non-gaming lines), **NitroSense** (Nitro) and **PredatorSense** (Predator). The laptops themselves share the same Acer WMI firmware interfaces (the ones the kernel's `acer_wmi` driver already uses across product lines), so acerctl covers all three with a single stack: each feature shows up only if the machine's firmware reports it, with no per-brand switch and no hard-coded model list.
 
@@ -26,7 +26,7 @@ acerctl works **by complementing the in-tree `acer_wmi` driver** instead of repl
 
 Latest: **[0.1.1](https://github.com/FnnDK/acerctl/releases/tag/v0.1.1)** (pre-release), ready-built packages for **Fedora 44** (Workstation, Silverblue, Kinoite). Pick your laptop's product line: each one gets the app with its own name and colors, on top of the same daemon and kernel modules. The kernel modules come as an akmod, rebuilt for every new kernel and signed with the local akmods key when Secure Boot needs it.
 
-Then see [After installing](#after-installing). Upgrading from an install made with the scripts? Remove it first, as the [0.1.1 release notes](https://github.com/FnnDK/acerctl/releases/tag/v0.1.1#coming-from-the-script-install) show. Another distribution? See [Building from source](#building-from-source).
+Then see [After installing](#after-installing). Upgrading from an install made with the scripts (including the older `nitrod`/`nitroctl` ones)? Remove it first, as [Uninstalling](#uninstalling) shows: a unit left in `/etc/systemd/system` overrides the packaged one. Another distribution? See [Building from source](#building-from-source).
 
 ### Acer
 
@@ -86,6 +86,24 @@ Before enabling `platform-profile`, check the `tuned`/`power-profiles-daemon` pr
 The kernel decides part of it: `acer_wmi` exposes the modes from Linux 6.9 and fan control from 6.19 (Debian 13 has the modes only; Ubuntu 24.04 HWE, 26.04 and Fedora have both). The companion modules build from 5.15 on.
 
 From the next release on, the app does this for you: when it opens, it lists what is left (the `acer_wmi` option, enrolling the akmods key for Secure Boot) and applies it with one password and one restart.
+
+### Uninstalling
+
+**Packages:** remove the ones you installed (Silverblue/Kinoite: `rpm-ostree uninstall` with the same names, then reboot):
+
+```bash
+sudo dnf remove acerctl acerctl-tray nitro-control-center akmod-acerctl acerctl-kmod-common   # or predator-/acer-control-center
+```
+
+**Script installs** (from source or the binary archive), including the ones made under the project's earlier names (`nitrod`/`nitroctl`/`nitro-tray`, `nitrosensed`). Run it from the repository or the archive directory, or download it on its own:
+
+```bash
+curl -LO https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh
+sudo sh uninstall.sh            # keeps your settings (/var/lib/acerd, ~/.config/acerctl)
+sudo sh uninstall.sh --purge    # also removes them, the app data and /etc/modprobe.d/acerctl.conf
+```
+
+It stops and removes the daemon, CLI, app, tray, kernel modules and their units. Packages, if any, are left in place with the command to remove them, and so is an `acer_wmi` option you wrote yourself in `/etc/modprobe.d`.
 
 ## What it does
 
@@ -228,6 +246,8 @@ sudo sh packaging/install-daemon.sh install
 # 3. the app (Acer, Nitro or Predator Control Center, after the product line)
 sh packaging/install-gui.sh build             # needs Go, Node, Wails and libwebkit2gtk-4.1-dev
 sudo sh packaging/install-gui.sh              # FLAVOR=nitro|predator|acer overrides; 'uninstall' removes it
+
+# to remove all of it: sudo sh packaging/uninstall.sh (see Uninstalling)
 ```
 
 The RPM specs are in `packaging/rpm/`; `acerctl-<version>.tar.gz` in each release is the source with vendored Go modules and the built frontend, for building without network.
