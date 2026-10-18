@@ -115,8 +115,7 @@ func acerWMIItem() (SetupItem, bool) {
 }
 
 func hasPlatformProfile() bool {
-	m, _ := filepath.Glob(ppClassGlob)
-	return len(m) > 0 || exists(ppLegacy)
+	return len(glob(ppClassGlob)) > 0 || exists(ppLegacy)
 }
 
 // modprobeHasPredatorV4 reports an "options acer_wmi ... predator_v4=1" line
@@ -124,9 +123,8 @@ func hasPlatformProfile() bool {
 func modprobeHasPredatorV4() bool { return predatorV4In("/etc/modprobe.d") }
 
 func predatorV4In(dir string) bool {
-	files, _ := filepath.Glob(filepath.Join(dir, "*.conf"))
-	for _, f := range files {
-		b, err := os.ReadFile(f)
+	for _, f := range glob(filepath.Join(dir, "*.conf")) {
+		b, err := readFile(f)
 		if err != nil {
 			continue
 		}
@@ -146,7 +144,7 @@ func writeAcerWMIOptions(opts string) error {
 		slog.Info("dry-run: skip write", "path", setupModprobe, "value", strings.TrimSpace(content))
 		return nil
 	}
-	return os.WriteFile(setupModprobe, []byte(content), 0o644)
+	return os.WriteFile(rooted(setupModprobe), []byte(content), 0o644)
 }
 
 // ---- modules and the signing key -------------------------------------------
@@ -176,7 +174,7 @@ func modulesItem() (SetupItem, bool) {
 
 func hasAcerWMI() bool {
 	for _, g := range acerWMIGUIDs {
-		if m, _ := filepath.Glob("/sys/bus/wmi/devices/" + g + "*"); len(m) > 0 {
+		if len(glob("/sys/bus/wmi/devices/"+g+"*")) > 0 {
 			return true
 		}
 	}
@@ -184,8 +182,10 @@ func hasAcerWMI() bool {
 }
 
 func moduleOnDisk(name string) bool {
-	if err := exec.Command("modinfo", "-n", name).Run(); err == nil {
-		return true
+	if Root == "" { // modinfo looks at the running system, not a fixture tree
+		if err := exec.Command("modinfo", "-n", name).Run(); err == nil {
+			return true
+		}
 	}
 	return exists(filepath.Join(scriptModules, strings.ReplaceAll(name, "_", "-")+".ko"))
 }
@@ -203,7 +203,12 @@ func sigRequired() bool {
 // them under updates/dkms, akmods and the script install elsewhere.
 func signingCert() string {
 	certs := akmodsCerts
-	if out, err := exec.Command("modinfo", "-n", "acer_wmi_extras").Output(); err == nil && isDKMSPath(string(out)) {
+	if Root != "" {
+		// no modinfo for a fixture tree: the key it has decides
+		if exists(dkmsCerts[0]) || exists(dkmsCerts[1]) {
+			certs = dkmsCerts
+		}
+	} else if out, err := exec.Command("modinfo", "-n", "acer_wmi_extras").Output(); err == nil && isDKMSPath(string(out)) {
 		certs = dkmsCerts
 	}
 	for _, c := range certs {
@@ -223,6 +228,9 @@ func keyState() string {
 	cert := signingCert()
 	if cert == "" {
 		return "nokey"
+	}
+	if Root != "" { // mokutil reads the firmware, which a fixture tree does not have
+		return "nomokutil"
 	}
 	if _, err := exec.LookPath("mokutil"); err != nil {
 		return "nomokutil"
@@ -262,6 +270,9 @@ func enrollSigningKey() (string, error) {
 	code, err := oneTimeCode()
 	if err != nil {
 		return "", err
+	}
+	if Root != "" {
+		return "", fmt.Errorf("no firmware to enroll %s in under %s", cert, Root)
 	}
 	if DryRun {
 		slog.Info("dry-run: skip mokutil --import", "cert", cert)

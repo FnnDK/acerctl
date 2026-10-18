@@ -27,7 +27,7 @@ const (
 // PredatorSense button; elsewhere 0xF5 is a generic Acer key (the Aspire
 // AG15-71P gets KEY_PRESENTATION), so the internal keyboard alone says nothing.
 func senseKeyMapped(dev string) bool {
-	if f, err := os.Open(dev); err == nil {
+	if f, err := os.Open(rooted(dev)); err == nil {
 		defer f.Close()
 		m := [2]uint32{senseKeyScancode, 0} // scancode, keycode
 		_, _, errno := unix.Syscall(unix.SYS_IOCTL, f.Fd(), eviocgkeycode, uintptr(unsafe.Pointer(&m[0])))
@@ -41,7 +41,7 @@ func senseKeyMapped(dev string) bool {
 	if err != nil {
 		return false
 	}
-	b, err := os.ReadFile("/run/udev/data/c" + devnum)
+	b, err := readFile("/run/udev/data/c" + devnum)
 	if err != nil {
 		return false
 	}
@@ -55,8 +55,7 @@ func senseKeyMapped(dev string) bool {
 
 // senseKeyDevice returns the /dev/input/eventN of the internal keyboard.
 func senseKeyDevice() string {
-	names, _ := filepath.Glob("/sys/class/input/event*/device/name")
-	for _, n := range names {
+	for _, n := range glob("/sys/class/input/event*/device/name") {
 		if v, err := readStr(n); err == nil && v == senseKeyboardName {
 			return "/dev/input/" + filepath.Base(filepath.Dir(filepath.Dir(n)))
 		}
@@ -68,6 +67,9 @@ func senseKeyDevice() string {
 // keyboard. It never grabs the device (the desktop keeps receiving the key)
 // and reopens it if it goes away.
 func WatchSenseKey(ctx context.Context, fn func()) {
+	if Root != "" { // a fixture tree has no input device to read
+		return
+	}
 	buf := make([]byte, inputEventSize*8)
 	for ctx.Err() == nil {
 		dev := senseKeyDevice()

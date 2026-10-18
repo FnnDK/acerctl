@@ -19,6 +19,26 @@ import (
 // DryRun makes every sysfs write a log line instead of a write.
 var DryRun bool
 
+// Root is put in front of every kernel path this package reads or writes:
+// "" on a real machine, a fixture tree in the model tests and with
+// acerd --root (testdata/models). Paths inside the package stay the real
+// ones; only the functions below that touch files apply Root.
+var Root string
+
+func rooted(path string) string { return Root + path }
+
+// glob is filepath.Glob under Root; it returns real paths.
+func glob(pattern string) []string {
+	m, _ := filepath.Glob(rooted(pattern))
+	for i := range m {
+		m[i] = strings.TrimPrefix(m[i], Root)
+	}
+	return m
+}
+
+// readFile reads a file that is not a WMI attribute, so without wmiMu.
+func readFile(path string) ([]byte, error) { return os.ReadFile(rooted(path)) }
+
 // wmiMu serializes every sysfs access of this package. The firmware answers
 // WMI calls through one shared SMM buffer and the kernel only serializes
 // calls of the same ACPI method, so two different methods in flight at once
@@ -31,7 +51,7 @@ var ErrAbsent = errors.New("backend absent")
 
 func readStr(path string) (string, error) {
 	wmiMu.Lock()
-	b, err := os.ReadFile(path)
+	b, err := os.ReadFile(rooted(path))
 	wmiMu.Unlock()
 	if err != nil {
 		return "", err
@@ -61,7 +81,7 @@ func writeStr(path, value string) error {
 		return nil
 	}
 	wmiMu.Lock()
-	err := os.WriteFile(path, []byte(value), 0)
+	err := os.WriteFile(rooted(path), []byte(value), 0)
 	wmiMu.Unlock()
 	if err != nil {
 		return fmt.Errorf("write %s=%q: %w", path, value, err)
@@ -70,15 +90,14 @@ func writeStr(path, value string) error {
 }
 
 func exists(path string) bool {
-	_, err := os.Stat(path)
+	_, err := os.Stat(rooted(path))
 	return err == nil
 }
 
 // hwmonByName returns the directory of the hwmon device whose name file
 // matches, or "" if there is none.
 func hwmonByName(name string) string {
-	dirs, _ := filepath.Glob("/sys/class/hwmon/hwmon*")
-	for _, d := range dirs {
+	for _, d := range glob("/sys/class/hwmon/hwmon*") {
 		if n, err := readStr(filepath.Join(d, "name")); err == nil && n == name {
 			return d
 		}
@@ -89,8 +108,7 @@ func hwmonByName(name string) string {
 // powerSupplyByType returns the first /sys/class/power_supply entry of the
 // given type (Mains, Battery), skipping HID and USB-C PD entries.
 func powerSupplyByType(typ string) string {
-	dirs, _ := filepath.Glob("/sys/class/power_supply/*")
-	for _, d := range dirs {
+	for _, d := range glob("/sys/class/power_supply/*") {
 		if strings.HasPrefix(filepath.Base(d), "hid") || strings.HasPrefix(filepath.Base(d), "ucsi") {
 			continue
 		}

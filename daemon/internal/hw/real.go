@@ -43,10 +43,12 @@ func Probe() *Hardware {
 		h.BatteryCtl = b
 	}
 	h.Battery = probeBatteryInfo()
-	if g := probeNVML(); g != nil {
-		h.GPU = gateRuntimePM(g)
-	} else if g := probeGPU(); g != nil {
-		h.GPU = gateRuntimePM(g) // nvidia-smi fallback
+	if Root == "" { // NVML and nvidia-smi ask the driver, which a fixture tree does not have
+		if g := probeNVML(); g != nil {
+			h.GPU = gateRuntimePM(g)
+		} else if g := probeGPU(); g != nil {
+			h.GPU = gateRuntimePM(g) // nvidia-smi fallback
+		}
 	}
 	h.SenseKey = probeSenseKey()
 	h.Setup = realSetup{}
@@ -98,7 +100,7 @@ type sysfsProfiles struct {
 
 func probeProfiles() *sysfsProfiles {
 	var path string
-	if m, _ := filepath.Glob(ppClassGlob); len(m) > 0 {
+	if m := glob(ppClassGlob); len(m) > 0 {
 		path = m[0]
 	} else if exists(ppLegacy) {
 		path = ppLegacy
@@ -133,7 +135,7 @@ func (p *sysfsProfiles) Watch(ctx context.Context) <-chan struct{} {
 		if !exists(f) {
 			continue
 		}
-		fd, err := unix.Open(f, unix.O_RDONLY|unix.O_CLOEXEC, 0)
+		fd, err := unix.Open(rooted(f), unix.O_RDONLY|unix.O_CLOEXEC, 0)
 		if err != nil {
 			continue
 		}

@@ -30,7 +30,10 @@ type upowerLimit struct {
 // probeUPowerLimit finds the battery carrying the acer-wmi-battery
 // power_supply extension (kernel >= 6.15, driver with the battery hook).
 func probeUPowerLimit() *upowerLimit {
-	m, _ := filepath.Glob("/sys/class/power_supply/*/extensions/acer-wmi-battery")
+	if Root != "" { // UPower drives the real batteries, not a fixture tree
+		return nil
+	}
+	m := glob("/sys/class/power_supply/*/extensions/acer-wmi-battery")
 	if len(m) == 0 {
 		return nil
 	}

@@ -28,6 +28,7 @@ func main() {
 		dryRun   = flag.Bool("dry-run", false, "log sysfs writes instead of performing them")
 		simSetup = flag.Bool("simulate-setup", false, "with --simulate: pretend the system setup (acer_wmi option, Secure Boot key) is still to do")
 		simulate = flag.String("simulate", "", "simulate a model instead of probing the hardware: ANV15-52, or the Predators PHN16-72 (4-zone keyboard, logo) and PH16-71 (USB keyboard, light bar)")
+		root     = flag.String("root", "", "testing: read and write the kernel interfaces under this directory, a fixture tree such as daemon/internal/hw/testdata/models/*/root, instead of /")
 		statePth = flag.String("state", state.DefaultPath, "state file")
 		senseKey = flag.String("sense-key", "cycle", "default action of the Sense key until one is chosen over D-Bus: cycle (thermal profile) or app (the session agent opens the app; 'none' is an alias)")
 		debug    = flag.Bool("debug", false, "debug logging")
@@ -44,6 +45,15 @@ func main() {
 	}
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level})))
 	hw.DryRun = *dryRun
+	if *root != "" {
+		abs, err := filepath.Abs(*root)
+		if err != nil {
+			slog.Error("root", "err", err)
+			os.Exit(2)
+		}
+		hw.Root = abs
+		slog.Info("kernel interfaces under a fixture tree", "root", abs)
+	}
 
 	cfg := service.Config{Session: *session, NoPolkit: *noPolkit || *session, Version: Version, SenseKey: *senseKey}
 	var h *hw.Hardware
