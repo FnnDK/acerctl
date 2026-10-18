@@ -41,7 +41,7 @@ Acer ships a different Windows-only app per product line. The laptops themselves
 
 | | App | Instead of | Laptops | Status |
 |:-:|---|---|---|---|
-| <img src="assets/logo/a-icon-cut.svg" width="36" alt=""> | [**Acer Control Center**](#acer) | AcerSense | Aspire, Swift, TravelMate, Extensa | <img src="assets/readme/partial.svg" width="16" height="16" alt="in progress"> in progress: Aspire AG15-71P |
+| <img src="assets/logo/a-icon-cut.svg" width="36" alt=""> | [**Acer Control Center**](#acer) | AcerSense | Aspire, Swift, TravelMate, Extensa | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> working: Aspire AG15-71P |
 | <img src="assets/logo/n-icon-cut.svg" width="36" alt=""> | [**Nitro Control Center**](#nitro) | NitroSense | Nitro | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> working: Nitro ANV15-52, the reference machine |
 | <img src="assets/logo/p-icon-cut.svg" width="36" alt=""> | [**Predator Control Center**](#predator) | PredatorSense | Predator | <img src="assets/readme/na.svg" width="16" height="16" alt="n/a"> untested: built from public reports |
 
