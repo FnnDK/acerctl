@@ -1,0 +1,2 @@
+acer_wmi_battery
+acer_wmi_extras

@@ -29,11 +29,16 @@ internal/appsync/     proc connector (exec/exit), matching by comm/argv, active 
 cd daemon && go test ./... && go build ./cmd/acerd
 ./acerd --session --simulate ANV15-52 --state /tmp/ns-state.json   # no hardware
 ./acerd --session --dry-run --state /tmp/ns-state.json             # real hardware, read-only
+./acerd --session --root internal/hw/testdata/models/AG15-71P/root --state /tmp/ns-state.json   # a known model's fixture
 busctl --user introspect io.github.fnndk.Acerd1 /io/github/fnndk/Acerd1
 busctl --user call io.github.fnndk.Acerd1 /io/github/fnndk/Acerd1 io.github.fnndk.Acerd1.Mode Set s quiet
 ```
 
-`--session` uses the session bus and disables polkit; `--dry-run` logs the writes instead of performing them. Without PPD on the session bus, syncing is disabled (it shows up in the log).
+`--session` uses the session bus and disables polkit; `--dry-run` logs the writes instead of performing them; `--root DIR` reads and writes the kernel interfaces under a fixture tree instead of `/` (writes go into that tree, so use a copy; no GPU, UPower or Sense key device there). Without PPD on the session bus, syncing is disabled (it shows up in the log).
+
+## Known models
+
+`internal/hw/testdata/models` holds a fixture per known model (Nitro ANV15-52, Aspire AG15-71P, Predator PH16-71; its README says where each comes from). `go test ./internal/hw -run TestModels` runs the hardware layer on each; `sh tools/models-test.sh DIST` runs the installed packages on each in Fedora 44 and Ubuntu 24.04 containers (6 combinations, part of `tools/ci.sh` and the release workflow). After an intended change, `sh tools/models-test.sh --update` rewrites the expected results; review the diff before committing.
 
 ## CLI
 

@@ -1,0 +1,132 @@
+{
+  "actions": [
+    "profile balanced-performance",
+    "fans all max",
+    "fan cpu 40%",
+    "keyboard timeout 0",
+    "usb charging 20%",
+    "charge limit false",
+    "calibration on"
+  ],
+  "capabilities": {
+    "battery": {
+      "calibration": true,
+      "charge_limit": true,
+      "sensors": true
+    },
+    "cpu_power_limit": false,
+    "fans": {
+      "curve": false,
+      "ids": [
+        "cpu",
+        "gpu"
+      ],
+      "modes": [
+        "auto",
+        "max",
+        "manual"
+      ],
+      "range": {
+        "cpu": {
+          "Min": 0,
+          "Max": 100
+        },
+        "gpu": {
+          "Min": 0,
+          "Max": 100
+        }
+      }
+    },
+    "gpu": {
+      "nvml": false,
+      "oc": false
+    },
+    "kbd_backlight": {
+      "rgb": false,
+      "timeouts": [
+        0,
+        30
+      ],
+      "zones": 0
+    },
+    "profiles": [
+      "low-power",
+      "quiet",
+      "balanced",
+      "balanced-performance"
+    ],
+    "profiles_from_firmware": true,
+    "sense_key": true,
+    "usb_charging": [
+      0,
+      10,
+      20,
+      30
+    ]
+  },
+  "model": {
+    "acer_wmi_caps": 7206,
+    "bios": "V1.31",
+    "kernel": "7.2.10-200.fc44.x86_64",
+    "modules": {
+      "acer_wmi": "loaded",
+      "acer_wmi_battery": "loaded",
+      "acer_wmi_extras": "loaded"
+    },
+    "product": "Nitro ANV15-52",
+    "vendor": "Acer"
+  },
+  "read": {
+    "battery_control": {
+      "calibrating": false,
+      "charge_limit": true
+    },
+    "fans": {
+      "cpu": {
+        "RPM": 2073,
+        "Mode": "auto",
+        "Speed": 40
+      },
+      "gpu": {
+        "RPM": 1726,
+        "Mode": "auto",
+        "Speed": 40
+      }
+    },
+    "health": {
+      "current_ma": 0,
+      "cycles": 15,
+      "design_uwh": 57488200,
+      "full_uwh": 57488200,
+      "status": "Charging",
+      "temp": 26.2,
+      "voltage_mv": 16461
+    },
+    "keyboard": {
+      "on": true,
+      "timeout": 30
+    },
+    "power": {
+      "Source": "ac",
+      "Percent": 80
+    },
+    "profile": "balanced",
+    "temps": {
+      "cpu": 42,
+      "external": 39,
+      "gpu": 39
+    },
+    "usb_charging": 30
+  },
+  "setup": null,
+  "writes": {
+    "/sys/bus/wmi/drivers/acer-wmi-battery/calibration_mode": "1",
+    "/sys/bus/wmi/drivers/acer-wmi-battery/health_mode": "0",
+    "/sys/class/hwmon/hwmon8/pwm1": "102",
+    "/sys/class/hwmon/hwmon8/pwm1_enable": "1",
+    "/sys/class/hwmon/hwmon8/pwm2_enable": "0",
+    "/sys/class/platform-profile/platform-profile-0/profile": "balanced-performance",
+    "/sys/devices/platform/acer-wmi-extras/kbd_backlight_timeout": "0",
+    "/sys/devices/platform/acer-wmi-extras/usb_charging": "20"
+  }
+}

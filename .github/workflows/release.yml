@@ -1,7 +1,8 @@
 # On a version tag: archives, Debian/Ubuntu packages (tested in containers)
 # and Fedora RPMs, attached to a draft pre-release; the notes are written and
 # the release published by hand. Locally: tools/release.sh, then
-# tools/debs-install-test.sh dist and tools/build-rpms.sh dist VERSION.
+# tools/debs-install-test.sh dist, tools/build-rpms.sh dist VERSION and
+# tools/models-test.sh dist.
 name: Release
 
 on:
@@ -43,6 +44,8 @@ jobs:
         run: sh tools/debs-install-test.sh dist
       - name: RPMs
         run: sh tools/build-rpms.sh dist "${GITHUB_REF_NAME#v}"
+      - name: Known models on Fedora 44 and Ubuntu 24.04
+        run: sh tools/models-test.sh dist
       - name: Draft release
         env:
           GH_TOKEN: ${{ github.token }}

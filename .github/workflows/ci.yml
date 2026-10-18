@@ -64,3 +64,6 @@ jobs:
           go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
       - run: sh tools/ci.sh release
       - run: sh tools/ci.sh debs debian:13 ubuntu:24.04
+      - run: sh tools/ci.sh rpms
+      - name: Known models on Fedora 44 and Ubuntu 24.04
+        run: sh tools/ci.sh models

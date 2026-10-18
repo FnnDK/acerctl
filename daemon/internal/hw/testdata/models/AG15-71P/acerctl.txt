@@ -1,0 +1,185 @@
+# status
+{
+  "Battery": {
+    "Calibrating": false,
+    "ChargeLimit": true,
+    "Health": {
+      "current": 0,
+      "cycles": 0,
+      "design": 53043750,
+      "full": 54191250,
+      "health_pct": 102,
+      "status": "Not charging",
+      "temp": 26.9,
+      "voltage": 12205
+    },
+    "UsbCharging": 0
+  },
+  "Fans": {
+    "State": {}
+  },
+  "Lighting": {
+    "Devices": {},
+    "Keyboard": {
+      "on": false,
+      "timeout_s": 30
+    }
+  },
+  "Mode": {
+    "Allowed": [],
+    "BatteryPercent": 80,
+    "Current": "",
+    "Extras": [],
+    "PowerSource": "ac"
+  },
+  "Scenarios": {
+    "Active": "",
+    "AppSync": false,
+    "List": []
+  },
+  "System": {
+    "Capabilities": {
+      "battery": {
+        "calibration": true,
+        "charge_limit": true,
+        "sensors": true
+      },
+      "cpu_power_limit": false,
+      "gpu": {
+        "nvml": false,
+        "oc": false
+      },
+      "kbd_backlight": {
+        "rgb": false,
+        "timeouts": [
+          0,
+          30
+        ],
+        "zones": 0
+      },
+      "sense_key": true
+    },
+    "Model": {
+      "bios": "V1.13",
+      "kernel": "7.2.5-200.fc44.x86_64",
+      "modules": {
+        "acer_wmi": "loaded",
+        "acer_wmi_battery": "loaded",
+        "acer_wmi_extras": "loaded"
+      },
+      "product": "Aspire AG15-71P",
+      "vendor": "Acer"
+    },
+    "SenseKey": "app",
+    "Setup": [],
+    "Version": "VERSION"
+  }
+}
+# commands
+$ acerctl mode quiet
+acerctl: not supported: thermal profiles is not available on this hardware
+[exit 1]
+$ acerctl mode performance
+acerctl: not supported: thermal profiles is not available on this hardware (performance is Acer's Turbo; Acer's Performance mode is balanced-performance)
+[exit 1]
+$ acerctl fan all max
+acerctl: not supported: fan control is not available on this hardware
+[exit 1]
+$ acerctl fan cpu 40
+acerctl: not supported: fan control is not available on this hardware
+[exit 1]
+$ acerctl fan all auto
+acerctl: not supported: fan control is not available on this hardware
+[exit 1]
+$ acerctl kbd timeout 0
+[exit 0]
+$ acerctl usb-charging 20
+acerctl: not supported: USB charging is not available on this hardware
+[exit 1]
+$ acerctl battery limit off
+[exit 0]
+$ acerctl battery limit on
+[exit 0]
+$ acerctl battery calibrate start
+[exit 0]
+# status after
+{
+  "Battery": {
+    "Calibrating": true,
+    "ChargeLimit": true,
+    "Health": {
+      "current": 0,
+      "cycles": 0,
+      "design": 53043750,
+      "full": 54191250,
+      "health_pct": 102,
+      "status": "Not charging",
+      "temp": 26.9,
+      "voltage": 12205
+    },
+    "UsbCharging": 0
+  },
+  "Fans": {
+    "State": {}
+  },
+  "Lighting": {
+    "Devices": {},
+    "Keyboard": {
+      "on": false,
+      "timeout_s": 0
+    }
+  },
+  "Mode": {
+    "Allowed": [],
+    "BatteryPercent": 80,
+    "Current": "",
+    "Extras": [],
+    "PowerSource": "ac"
+  },
+  "Scenarios": {
+    "Active": "",
+    "AppSync": false,
+    "List": []
+  },
+  "System": {
+    "Capabilities": {
+      "battery": {
+        "calibration": true,
+        "charge_limit": true,
+        "sensors": true
+      },
+      "cpu_power_limit": false,
+      "gpu": {
+        "nvml": false,
+        "oc": false
+      },
+      "kbd_backlight": {
+        "rgb": false,
+        "timeouts": [
+          0,
+          30
+        ],
+        "zones": 0
+      },
+      "sense_key": true
+    },
+    "Model": {
+      "bios": "V1.13",
+      "kernel": "7.2.5-200.fc44.x86_64",
+      "modules": {
+        "acer_wmi": "loaded",
+        "acer_wmi_battery": "loaded",
+        "acer_wmi_extras": "loaded"
+      },
+      "product": "Aspire AG15-71P",
+      "vendor": "Acer"
+    },
+    "SenseKey": "app",
+    "Setup": [],
+    "Version": "VERSION"
+  }
+}
+# files written
+/sys/bus/wmi/drivers/acer-wmi-battery/calibration_mode = 1
+/sys/bus/wmi/drivers/acer-wmi-battery/health_mode = 1
+/sys/devices/platform/acer-wmi-extras/kbd_backlight_timeout = 0

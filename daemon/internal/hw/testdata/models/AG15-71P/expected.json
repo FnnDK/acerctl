@@ -1,0 +1,71 @@
+{
+  "actions": [
+    "keyboard timeout 0",
+    "charge limit false",
+    "calibration on"
+  ],
+  "capabilities": {
+    "battery": {
+      "calibration": true,
+      "charge_limit": true,
+      "sensors": true
+    },
+    "cpu_power_limit": false,
+    "gpu": {
+      "nvml": false,
+      "oc": false
+    },
+    "kbd_backlight": {
+      "rgb": false,
+      "timeouts": [
+        0,
+        30
+      ],
+      "zones": 0
+    },
+    "sense_key": true
+  },
+  "model": {
+    "bios": "V1.13",
+    "kernel": "7.2.5-200.fc44.x86_64",
+    "modules": {
+      "acer_wmi": "loaded",
+      "acer_wmi_battery": "loaded",
+      "acer_wmi_extras": "loaded"
+    },
+    "product": "Aspire AG15-71P",
+    "vendor": "Acer"
+  },
+  "read": {
+    "battery_control": {
+      "calibrating": false,
+      "charge_limit": true
+    },
+    "health": {
+      "current_ma": 0,
+      "cycles": 0,
+      "design_uwh": 53043750,
+      "full_uwh": 54191250,
+      "status": "Not charging",
+      "temp": 26.9,
+      "voltage_mv": 12205
+    },
+    "keyboard": {
+      "on": false,
+      "timeout": 30
+    },
+    "power": {
+      "Source": "ac",
+      "Percent": 80
+    },
+    "temps": {
+      "cpu": 50
+    }
+  },
+  "setup": null,
+  "writes": {
+    "/sys/bus/wmi/drivers/acer-wmi-battery/calibration_mode": "1",
+    "/sys/bus/wmi/drivers/acer-wmi-battery/health_mode": "0",
+    "/sys/devices/platform/acer-wmi-extras/kbd_backlight_timeout": "0"
+  }
+}
