@@ -58,6 +58,10 @@ Scenarios
   appsync [on|off]                apply scenarios when their apps run
 
 Other
+  setup                           what is left to use everything the firmware offers
+                                  (acer_wmi option, Secure Boot key, kernel modules)
+  setup apply [id...]             make the pending changes (one password), then restart;
+                                  signing_key again gives a new enrollment code
   reload                          re-probe kernel modules and capabilities
   version
 `
@@ -101,7 +105,7 @@ func main() {
 		"mode": cmdMode, "fan": cmdFan, "fans": cmdFan, "kbd": cmdKbd, "light": cmdLight,
 		"battery": cmdBattery, "usb-charging": cmdUSB,
 		"scenario": cmdScenario, "scenarios": cmdScenario, "appsync": cmdAppSync,
-		"reload": cmdReload, "version": cmdVersion,
+		"setup": cmdSetup, "reload": cmdReload, "version": cmdVersion,
 	}
 	run, ok := cmds[args[0]]
 	if !ok {
@@ -148,6 +152,9 @@ func cmdStatus(args []string) error {
 	model := plainMap(sys["Model"])
 
 	row("Model", fmt.Sprintf("%s %s (BIOS %s), daemon %s", str(model["vendor"]), str(model["product"]), str(model["bios"]), str(sys["Version"].Value())))
+	if line := setupLine(setupItems(sys["Setup"])); line != "" {
+		row("Setup", line)
+	}
 	src := "AC"
 	if str(mode["PowerSource"].Value()) == "battery" {
 		src = "battery"
@@ -283,6 +290,152 @@ func cmdVersion(args []string) error {
 
 func cmdReload(args []string) error {
 	return cl.Call(client.IfSystem, "Reload", nil)
+}
+
+// ---- setup -----------------------------------------------------------------
+
+// The System.Setup items, worded as the app's setup dialog words them.
+var setupNames = map[string]string{
+	"acer_wmi": "Modes and fans", "signing_key": "Secure Boot key", "modules": "Kernel modules",
+}
+
+func setupText(id, state, detail string) string {
+	switch id + "." + state {
+	case "acer_wmi.needed":
+		return fmt.Sprintf("The firmware has them, but the acer_wmi driver lacks the option that exposes them (%s). It will be saved and takes effect at the next boot.", detail)
+	case "acer_wmi.reboot":
+		return "Option saved: it takes effect at the next boot."
+	case "signing_key.needed":
+		return "The kernel modules are signed with the key akmods (or DKMS) already has, but the firmware does not accept it yet. It will be enrolled for you to confirm when you restart."
+	case "signing_key.reboot":
+		return "Enrollment requested: confirm it on the blue screen when you restart. Lost the code? acerctl setup apply signing_key gives a new one."
+	}
+	switch id + "." + state + "." + detail {
+	case "acer_wmi.manual.oldkernel":
+		return "This kernel's acer_wmi driver cannot expose them yet: the modes need kernel 6.9 or newer, and fan control 6.19."
+	case "signing_key.manual.nokey":
+		return "Secure Boot is on and the key that signs the modules (akmods or DKMS) does not exist yet. Restart, or reinstall the modules package, so it is created, then run acerctl setup again."
+	case "signing_key.manual.nomokutil":
+		return "The mokutil program is needed to enroll the key: install the mokutil package."
+	case "modules.manual.missing":
+		return "Not installed: install the modules package (akmod-acerctl on Fedora, acerctl-dkms on Debian and Ubuntu)."
+	case "modules.manual.notloaded":
+		return "Installed, but not loaded. Restart: after a kernel update, akmods or DKMS rebuilds them."
+	}
+	return strings.TrimSpace(state + " " + detail)
+}
+
+// setupItems turns the System.Setup property into id/state/detail maps.
+func setupItems(v dbus.Variant) []map[string]string {
+	items := []map[string]string{}
+	list, _ := plain(v).([]interface{})
+	for _, x := range list {
+		m := plainMap(x)
+		items = append(items, map[string]string{"id": str(m["id"]), "state": str(m["state"]), "detail": str(m["detail"])})
+	}
+	return items
+}
+
+// setupLine is the status row: what is left to do, or the restart that finishes it.
+func setupLine(items []map[string]string) string {
+	todo, reboot := 0, false
+	for _, it := range items {
+		switch it["state"] {
+		case "needed", "manual":
+			todo++
+		case "reboot":
+			reboot = true
+		}
+	}
+	switch {
+	case todo == 1:
+		return "1 step left: acerctl setup"
+	case todo > 1:
+		return fmt.Sprintf("%d steps left: acerctl setup", todo)
+	case reboot:
+		return "restart to finish the setup"
+	}
+	return ""
+}
+
+func cmdSetup(args []string) error {
+	if len(args) > 0 && args[0] == "apply" {
+		return setupApply(args[1:])
+	}
+	if len(args) > 0 {
+		return usagef("setup takes apply [id...]")
+	}
+	v, err := cl.Property(client.IfSystem, "Setup")
+	if err != nil {
+		return err
+	}
+	items := setupItems(v)
+	if jsonOut {
+		return printJSON(items)
+	}
+	if len(items) == 0 {
+		fmt.Println("nothing to do: everything the firmware offers is set up")
+		return nil
+	}
+	needed := false
+	for i, it := range items {
+		if i > 0 {
+			fmt.Println()
+		}
+		name := setupNames[it["id"]]
+		if name == "" {
+			name = it["id"]
+		}
+		fmt.Printf("%s (%s): %s\n  %s\n", name, it["id"], it["state"], setupText(it["id"], it["state"], it["detail"]))
+		needed = needed || it["state"] == "needed"
+	}
+	if needed {
+		fmt.Println("\nacerctl setup apply makes the changes marked needed, with one administrator password; they take effect after a restart.")
+	}
+	return nil
+}
+
+// setupApply calls ApplySetup with the given ids, or every item in the
+// "needed" state, and shows the code the firmware's enrollment screen asks for.
+func setupApply(ids []string) error {
+	if len(ids) == 0 {
+		v, err := cl.Property(client.IfSystem, "Setup")
+		if err != nil {
+			return err
+		}
+		reboot := false
+		for _, it := range setupItems(v) {
+			switch it["state"] {
+			case "needed":
+				ids = append(ids, it["id"])
+			case "reboot":
+				reboot = true
+			}
+		}
+		if len(ids) == 0 {
+			if reboot {
+				fmt.Println("nothing to apply: restart to finish what was applied (systemctl reboot)")
+			} else {
+				fmt.Println("nothing to apply (acerctl setup lists what is left)")
+			}
+			return nil
+		}
+	}
+	var code string
+	if err := cl.Call(client.IfSystem, "ApplySetup", []interface{}{&code}, ids); err != nil {
+		return err
+	}
+	if jsonOut {
+		return printJSON(map[string]interface{}{"applied": ids, "code": code})
+	}
+	fmt.Printf("applied: %s. Restart to finish (systemctl reboot).\n", strings.Join(ids, ", "))
+	if code != "" {
+		fmt.Printf("\nCode for the blue screen: %s\n", code)
+		fmt.Println("  1. Restart the laptop.")
+		fmt.Println("  2. On the blue screen, choose Enroll MOK, then Continue and Yes.")
+		fmt.Println("  3. Type the code and choose Reboot.")
+	}
+	return nil
 }
 
 // ---- mode ------------------------------------------------------------------

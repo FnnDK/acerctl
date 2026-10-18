@@ -156,7 +156,7 @@ esac
 if [ -n "$GUI" ]; then
   NEXT="open $NAME; on its first start it lists anything still missing"
 else
-  NEXT="acerctl status shows what the daemon found; After installing in the README has what the app's setup would do"
+  NEXT="acerctl setup lists what is left to set up (acerctl setup apply makes it)"
 fi
 if [ -n "$DRY" ]; then
   echo "dry run: nothing changed"

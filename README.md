@@ -155,7 +155,7 @@ sudo sh install.sh --predator
 
 ### After installing
 
-Open the app: on its first start it lists what is still missing and applies it with one password and one restart. That is the `acer_wmi` option Nitro and Predator models need for operating modes and fans, and, with Secure Boot, enrolling the key that signs the kernel modules (akmods on Fedora, DKMS on Debian/Ubuntu). `acerctl status` shows what the daemon found and `acerctl help` lists the commands.
+Open the app: on its first start it lists what is still missing and applies it with one password and one restart. That is the `acer_wmi` option Nitro and Predator models need for operating modes and fans, and, with Secure Boot, enrolling the key that signs the kernel modules (akmods on Fedora, DKMS on Debian/Ubuntu). Without the app (`install.sh --no-gui`), `acerctl setup` lists the same steps and `acerctl setup apply` makes them. `acerctl status` shows what the daemon found and `acerctl help` lists the commands.
 
 By hand, the `acer_wmi` option for the Nitro ANV15-52 is (`/etc/modprobe.d/acer-wmi.conf`, then reboot):
 

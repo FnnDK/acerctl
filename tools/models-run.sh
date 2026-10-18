@@ -43,6 +43,7 @@ run() {
 echo "# status"
 status
 echo "# commands"
+run setup
 run mode quiet
 run mode performance
 run fan all max

@@ -127,6 +127,9 @@
   }
 }
 # commands
+$ acerctl setup
+nothing to do: everything the firmware offers is set up
+[exit 0]
 $ acerctl mode quiet
 [exit 0]
 $ acerctl mode performance

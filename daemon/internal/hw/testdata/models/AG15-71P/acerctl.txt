@@ -65,6 +65,9 @@
   }
 }
 # commands
+$ acerctl setup
+nothing to do: everything the firmware offers is set up
+[exit 0]
 $ acerctl mode quiet
 acerctl: not supported: thermal profiles is not available on this hardware
 [exit 1]

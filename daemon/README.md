@@ -7,7 +7,7 @@ Go daemon that exposes `io.github.fnndk.Acerd1` on the system bus and applies th
 ```
 cmd/acerd/      main: flags, probe or simulation, stop signal
 cmd/acerctl/   CLI: status, caps, monitor, mode, fan, kbd, battery, usb-charging,
-                      scenario, appsync, reload (--json on every read)
+                      scenario, appsync, setup, reload (--json on every read)
 client/               public D-Bus client (CLI now, GUI/tray later): constants,
                       typed errors (NotAllowed etc.), Monitor Subscribe
 internal/hw/          sysfs read/write backends (real.go) and simulated (sim.go);
@@ -49,6 +49,8 @@ acerctl mode quiet            # eco|low-power, quiet, balanced, balanced-perform
 acerctl fan gpu 60            # manual; auto|max too; id all
 acerctl scenario save Game --from-current --mode-ac balanced-performance --fan cpu=max --app eldenring.exe
 acerctl appsync on
+acerctl setup                 # what is left: acer_wmi option, Secure Boot key, modules
+acerctl setup apply           # make it (one password), then restart
 acerctl --json status         # for scripts
 ```
 
