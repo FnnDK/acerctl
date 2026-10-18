@@ -45,11 +45,16 @@ rm_path() {
   done
 }
 
-# drop_unit stops, disables and removes a unit the scripts put in /etc/systemd/system.
+# drop_unit NAME [keep] stops, disables and removes a unit the scripts put in
+# /etc/systemd/system; with keep it is not stopped (its ExecStop stays unrun).
 drop_unit() {
   u=$1.service
   if [ -e "/etc/systemd/system/$u" ]; then
-    systemctl disable --now "$u" 2>/dev/null || true
+    if [ "${2:-}" = keep ]; then
+      systemctl disable "$u" 2>/dev/null || true
+    else
+      systemctl disable --now "$u" 2>/dev/null || true
+    fi
     rm_path "/etc/systemd/system/$u"
   fi
   # enable links left behind when the unit file went first (an interrupted install)
@@ -94,7 +99,13 @@ rm_path /usr/local/bin/nitrosensed /usr/local/bin/nitrosense-cli \
 if [ "$MODE" = all ]; then
   stop_local acer-tray $APPS
   drop_unit acerd
-  drop_unit acer-wmi-modules
+  # Stopping acer-wmi-modules unloads the modules, and with modules that modprobe
+  # finds (akmod, DKMS) the loaded ones are the packaged ones: leave them.
+  if modinfo -n acer_wmi_battery >/dev/null 2>&1 || modinfo -n acer_wmi_extras >/dev/null 2>&1; then
+    drop_unit acer-wmi-modules keep
+  else
+    drop_unit acer-wmi-modules
+  fi
   rm_path /usr/local/bin/acerd /usr/local/bin/acerctl /usr/local/bin/acer-tray \
     /etc/dbus-1/system.d/io.github.fnndk.Acerd1.conf \
     /usr/local/share/dbus-1/system-services/io.github.fnndk.Acerd1.service \
