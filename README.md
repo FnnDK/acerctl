@@ -6,7 +6,7 @@
 
 <p align="center"><b>Download:</b> <a href="#acer">Acer</a> · <a href="#nitro">Nitro</a> · <a href="#predator">Predator</a></p>
 
-**Contents:** [Download](#download) ([Acer](#acer), [Nitro](#nitro), [Predator](#predator)) · [Upgrading](#upgrading) · [Uninstalling](#uninstalling) · [What it does](#what-it-does) · [Screenshots](#screenshots) · [Compared with other tools](#compared-with-other-tools) · [GNOME integration](#gnome-integration) · [Components](#components) · [Documentation](#documentation) · [Building from source](#building-from-source) · [License](#license)
+**Contents:** [Download](#download) ([Acer](#acer), [Nitro](#nitro), [Predator](#predator)) · [Upgrading](#upgrading) · [Uninstalling](#uninstalling) · [What it does](#what-it-does) · [Screenshots](#screenshots) · [Tested models](#tested-models) · [Compared with other tools](#compared-with-other-tools) · [GNOME integration](#gnome-integration) · [Components](#components) · [Documentation](#documentation) · [Building from source](#building-from-source) · [License](#license)
 
 Acer ships a different Windows-only app per product line: **AcerSense** (Aspire, Swift and the other non-gaming lines), **NitroSense** (Nitro) and **PredatorSense** (Predator). The laptops themselves share the same Acer WMI firmware interfaces (the ones the kernel's `acer_wmi` driver already uses across product lines), so acerctl covers all three with a single stack: each feature shows up only if the machine's firmware reports it, with no per-brand switch and no hard-coded model list.
 
@@ -212,17 +212,34 @@ Run it on the host: inside a toolbox/distrobox shell, `sudo` only reaches the co
 
 The app uses its own dark theme, with an integrated title bar that follows GNOME's button order and icons, and texts in Portuguese and English.
 
+## Tested models
+
+On the laptops acerctl has been run on: ✓ works, ✗ the laptop has it but acerctl does not handle it yet, – the firmware does not offer it.
+
+| Model | Modes | AC/battery rules | Fans | Sensors | 80 % limit | Calibration | Kbd timeout | RGB | USB charging off | Boot sound | LCD overdrive | Overclock | Scenarios | Sense key | GUI |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| **Nitro ANV15-52** (BIOS V1.31, Fedora Silverblue 44) | ✓ | ✓ | ✓ | ✓ | ✓¹ | ✓² | ✓ | – | ✓ | – | – | – | ✓ | ✓ | ✓ |
+| **Aspire AG15-71P** (BIOS V1.13, Bluefin 44) | – | – | – | ✓³ | ✓¹ | ✓² | – | – | – | – | – | – | –⁴ | ✓ | ✓ |
+
+¹ Also in GNOME's Power settings ("Preserve Battery Health"). ² The firmware offers it and acerctl exposes it; a full calibration cycle has not been run yet. ³ CPU temperature and the battery sensors; this model has no fan readings and no discrete GPU. ⁴ Nothing for a scenario to set without modes, fans or keyboard backlight.
+
+Both, plus a Predator PH16-71 built from public reports, are also checked automatically on every change: the packages installed in Fedora 44 and Ubuntu 24.04 run against a copy of what each laptop exposes (`daemon/README.md`, "Known models"). A [hardware report](docs/hardware-reports.md) from another model is how it gets added.
+
 ## Compared with other tools
 
-| Project | Features |
-|---|---|
-| `acer_wmi` (in-tree kernel driver) | Thermal profiles in `platform-profile` (fixed list of 5, without reading the firmware mask), fan RPM and temperatures in hwmon, max/manual fans via `pwm` (only with the model quirk or `force_caps`), Fn hotkeys and keyboard backlight events, wireless/rfkill. No battery, USB charging or backlight timeout; no user-space rules (AC/battery). |
-| [acer-wmi-battery](https://github.com/frederik-h/acer-wmi-battery) (kernel module) | 80 % charge limit (health mode), battery calibration, battery temperature. Vendored here with a fix and the `charge_control_end_threshold` hook that GNOME/UPower use. |
-| [Linuwu-Sense](https://github.com/0x7375646F/Linuwu-Sense) (kernel module, replaces `acer_wmi`) | Thermal profiles, CPU/GPU fan speed, 4-zone RGB keyboard with effects, 80 % charge limit, battery calibration, backlight timeout, boot sound, LCD overdrive, USB charging while off. |
-| [Div-Acer-Manager-Max](https://github.com/PXDiv/Div-Acer-Manager-Max) (GUI + daemon on top of Linuwu-Sense) | Thermal profiles adjusted to AC/battery, auto/manual fans, LCD overdrive, backlight timeout, boot animation and sound toggle, live system info. |
-| [predator-sense](https://github.com/wobqqq/predator-sense) (CLI + DKMS on top of Linuwu-Sense) | Thermal profiles, Turbo button as an on/off toggle, auto/max/manual fans per fan, temperature and RPM readout, 80 % charge limit and calibration, RGB keyboard (zones, effects, brightness), USB charging while off, backlight timeout, Fn+F4 fix. |
-| Acer NitroSense / PredatorSense (Windows only) | Operating modes with AC/battery rules, auto/max/custom fans, system monitor and widget, battery health (80 % limit, calibration), RGB/keyboard lighting where present, USB charging while off, boot sound, LCD overdrive, CPU/GPU overclocking on some models, scenarios and App Sync, Nitro/Predator key. |
-| **acerctl** (this project: companion modules + `acerd` + Acer/Nitro/Predator Control Center + CLI, alongside `acer_wmi`) | Operating modes limited to what the firmware reports, with the original app's AC/battery rules and `power-profiles-daemon`/`tuned` sync; auto/max/manual fans per fan; monitor (temperatures, usage, clocks, power, RPM, RAM, network) without waking the dGPU; 80 % charge limit (shared with GNOME), calibration, health; backlight timeout; USB charging while off; scenarios and App Sync (Wine/Proton aware); configurable Sense key; tray; CLI; state restored at boot and after suspend. Not yet: RGB, boot sound, LCD overdrive, overclocking. |
+| Project | Modes | AC/battery rules | Fans | Sensors | 80 % limit | Calibration | Kbd timeout | RGB | USB charging off | Boot sound | LCD overdrive | Overclock | Scenarios | Sense key | GUI | Keeps `acer_wmi` |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `acer_wmi` (in-tree kernel driver) | ✓¹ | ✗ | ✓¹ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
+| [acer-wmi-battery](https://github.com/frederik-h/acer-wmi-battery) (kernel module) | ✗ | ✗ | ✗ | ✗ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
+| [Linuwu-Sense](https://github.com/0x7375646F/Linuwu-Sense) (kernel module) | ✓ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [Div-Acer-Manager-Max](https://github.com/PXDiv/Div-Acer-Manager-Max) (GUI + daemon on Linuwu-Sense) | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ | ✓ | ✓ | ✗ | ✗ | ✗ | ✓ | ✗ |
+| [predator-sense](https://github.com/wobqqq/predator-sense) (CLI + DKMS on Linuwu-Sense) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Acer NitroSense / PredatorSense (Windows only) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓² | ✓² | ✓ | ✓ | ✓ | ✓² | ✓ | ✓ | ✓ | – |
+| **acerctl** (this project) | ✓³ | ✓ | ✓ | ✓ | ✓⁴ | ✓ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ |
+
+¹ A fixed list of 5 profiles, without reading the firmware mask; fan control only with the model quirk or `force_caps`. ² Where the model has it. ³ Only the profiles the firmware reports, synced with `power-profiles-daemon`/`tuned`. ⁴ Shared with GNOME/UPower.
+
+Sensors: CPU/GPU temperatures and fan speed. acerctl also has a CLI, a tray, a monitor that does not wake the dGPU and the state restored at boot and after suspend; RGB, boot sound, LCD overdrive and overclocking are not there yet.
 
 <sub>Third-party features as listed in each project's README (October 2026).</sub>
 
