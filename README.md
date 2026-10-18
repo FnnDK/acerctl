@@ -100,7 +100,10 @@ for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x
   curl -LO https://github.com/FnnDK/acerctl/releases/download/v$v/$p.rpm
 done
 if [ -e /run/ostree-booted ]; then           # Silverblue, Kinoite, Bluefin...
-  sudo rpm-ostree install ./*.rpm && echo "installed: reboot to start using it"
+  # an installed version, or another line's app, is replaced in the same transaction
+  sudo rpm-ostree install --idempotent $(for n in acerctl acerctl-tray akmod-acerctl acerctl-kmod-common \
+      acer-control-center nitro-control-center predator-control-center; do rpm -q --quiet $n && echo --uninstall=$n; done) \
+    ./*.rpm && echo "installed: reboot to start using it"
 else
   sudo dnf install ./*.rpm
 fi
@@ -145,7 +148,10 @@ for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x
   curl -LO https://github.com/FnnDK/acerctl/releases/download/v$v/$p.rpm
 done
 if [ -e /run/ostree-booted ]; then           # Silverblue, Kinoite, Bluefin...
-  sudo rpm-ostree install ./*.rpm && echo "installed: reboot to start using it"
+  # an installed version, or another line's app, is replaced in the same transaction
+  sudo rpm-ostree install --idempotent $(for n in acerctl acerctl-tray akmod-acerctl acerctl-kmod-common \
+      acer-control-center nitro-control-center predator-control-center; do rpm -q --quiet $n && echo --uninstall=$n; done) \
+    ./*.rpm && echo "installed: reboot to start using it"
 else
   sudo dnf install ./*.rpm
 fi
@@ -190,7 +196,10 @@ for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x
   curl -LO https://github.com/FnnDK/acerctl/releases/download/v$v/$p.rpm
 done
 if [ -e /run/ostree-booted ]; then           # Silverblue, Kinoite, Bluefin...
-  sudo rpm-ostree install ./*.rpm && echo "installed: reboot to start using it"
+  # an installed version, or another line's app, is replaced in the same transaction
+  sudo rpm-ostree install --idempotent $(for n in acerctl acerctl-tray akmod-acerctl acerctl-kmod-common \
+      acer-control-center nitro-control-center predator-control-center; do rpm -q --quiet $n && echo --uninstall=$n; done) \
+    ./*.rpm && echo "installed: reboot to start using it"
 else
   sudo dnf install ./*.rpm
 fi
@@ -240,10 +249,7 @@ The kernel decides part of it: `acer_wmi` exposes the operating modes from Linux
 ### Upgrading
 
 - **Fedora Workstation, Debian, Ubuntu:** run the block of your product line again; `dnf`/`apt` upgrade in place.
-- **Silverblue, Kinoite, Bluefin:** remove the installed packages first, then run the block and reboot once:
-  ```bash
-  sudo rpm-ostree uninstall acerctl acerctl-tray nitro-control-center akmod-acerctl acerctl-kmod-common   # your app's name
-  ```
+- **Silverblue, Kinoite, Bluefin:** run the block of your product line again and reboot once. `rpm-ostree` cannot upgrade local packages in place (it stops with "cannot install both"), so the block replaces the installed ones, the app of another product line too, in the same transaction.
 - **From an install made with the scripts** (including the older `nitrod`/`nitroctl` ones): the blocks above find it and remove it first with [`uninstall.sh`](#uninstalling). Left in place it shadows the packages: its unit in `/etc/systemd/system` overrides the packaged one, and `/usr/local` comes first for the CLI and the app's menu entry. Packages already installed on top of one? Run `uninstall.sh` as [Uninstalling](#uninstalling) shows, then `sudo systemctl enable --now acerd`.
 
 ### Uninstalling
