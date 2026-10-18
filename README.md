@@ -79,7 +79,7 @@ Latest: **[0.1.4](https://github.com/FnnDK/acerctl/releases/tag/v0.1.4)** (pre-r
 > [!NOTE]
 > The .deb packages are new and so far tested in containers only. Another distribution? See [Building from source](#building-from-source).
 
-Then see [After installing](#after-installing). To upgrade, run the same block again (on Silverblue, Kinoite and Bluefin, then reboot once): it replaces an earlier version and an install made with the scripts.
+[`install.sh`](packaging/install.sh) downloads the release's packages, checks them against its `SHA256SUMS` and installs them with `dnf`, `rpm-ostree` or `apt`; `--no-gui` leaves out the app and the tray (the daemon, the CLI and the kernel modules only), and `sh install.sh -n` shows what it would do without changing anything. Then see [After installing](#after-installing). To upgrade, run the same commands again (on Silverblue, Kinoite and Bluefin, then reboot once): it replaces an earlier version and an install made with the scripts.
 
 ### <img src="assets/logo/a-icon-cut.svg" width="28" height="28" alt="">&nbsp;Acer
 
@@ -89,24 +89,8 @@ Aspire, Swift, TravelMate, Extensa and the other non-gaming lines: **Acer Contro
 <summary><img src="https://img.shields.io/badge/Fedora-44-51A2DA?logo=fedora&logoColor=white" alt="Fedora 44" align="top">&nbsp; Workstation, Silverblue, Kinoite, Bluefin</summary>
 
 ```bash
-v=0.1.4; app=acer-control-center
-mkdir -p acerctl-$v && cd acerctl-$v
-# an earlier install made with the scripts would shadow the packages: remove it first
-if ls -d /usr/local/bin/{acerd,acer-tray,nitrod,nitro-tray,nitrosensed} /var/lib/acer-wmi-modules 2>/dev/null | grep -q .; then
-  curl -fLO https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh && sudo sh uninstall.sh --scripts
-fi
-for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x86_64 \
-         akmod-acerctl-$v-1.fc44.x86_64 acerctl-kmod-common-$v-1.fc44.noarch; do
-  curl -LO https://github.com/FnnDK/acerctl/releases/download/v$v/$p.rpm
-done
-if [ -e /run/ostree-booted ]; then           # Silverblue, Kinoite, Bluefin...
-  # an installed version, or another line's app, is replaced in the same transaction
-  sudo rpm-ostree install --idempotent $(for n in acerctl acerctl-tray akmod-acerctl acerctl-kmod-common \
-      acer-control-center nitro-control-center predator-control-center; do rpm -q --quiet $n && echo --uninstall=$n; done) \
-    ./*.rpm && echo "installed: reboot to start using it"
-else
-  sudo dnf install ./*.rpm
-fi
+curl -fLO https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/install.sh
+sudo sh install.sh --acer
 ```
 
 </details>
@@ -115,16 +99,8 @@ fi
 <summary><img src="https://img.shields.io/badge/Debian-13-A81D33?logo=debian&logoColor=white" alt="Debian 13" align="top">&nbsp;<img src="https://img.shields.io/badge/Ubuntu-24.04%20%7C%2026.04-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu 24.04 and 26.04" align="top"></summary>
 
 ```bash
-v=0.1.4; app=acer-control-center
-mkdir -p acerctl-$v && cd acerctl-$v
-# an earlier install made with the scripts would shadow the packages: remove it first
-if ls -d /usr/local/bin/{acerd,acer-tray,nitrod,nitro-tray,nitrosensed} /var/lib/acer-wmi-modules 2>/dev/null | grep -q .; then
-  wget -nv -O uninstall.sh https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh && sudo sh uninstall.sh --scripts
-fi
-for p in acerctl_${v}_amd64 acerctl-tray_${v}_amd64 ${app}_${v}_amd64 acerctl-dkms_${v}_all; do
-  wget -nv -O $p.deb https://github.com/FnnDK/acerctl/releases/download/v$v/$p.deb
-done
-sudo apt install ./*.deb
+wget -nv -O install.sh https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/install.sh
+sudo sh install.sh --acer
 ```
 
 </details>
@@ -137,24 +113,8 @@ sudo apt install ./*.deb
 <summary><img src="https://img.shields.io/badge/Fedora-44-51A2DA?logo=fedora&logoColor=white" alt="Fedora 44" align="top">&nbsp; Workstation, Silverblue, Kinoite, Bluefin</summary>
 
 ```bash
-v=0.1.4; app=nitro-control-center
-mkdir -p acerctl-$v && cd acerctl-$v
-# an earlier install made with the scripts would shadow the packages: remove it first
-if ls -d /usr/local/bin/{acerd,acer-tray,nitrod,nitro-tray,nitrosensed} /var/lib/acer-wmi-modules 2>/dev/null | grep -q .; then
-  curl -fLO https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh && sudo sh uninstall.sh --scripts
-fi
-for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x86_64 \
-         akmod-acerctl-$v-1.fc44.x86_64 acerctl-kmod-common-$v-1.fc44.noarch; do
-  curl -LO https://github.com/FnnDK/acerctl/releases/download/v$v/$p.rpm
-done
-if [ -e /run/ostree-booted ]; then           # Silverblue, Kinoite, Bluefin...
-  # an installed version, or another line's app, is replaced in the same transaction
-  sudo rpm-ostree install --idempotent $(for n in acerctl acerctl-tray akmod-acerctl acerctl-kmod-common \
-      acer-control-center nitro-control-center predator-control-center; do rpm -q --quiet $n && echo --uninstall=$n; done) \
-    ./*.rpm && echo "installed: reboot to start using it"
-else
-  sudo dnf install ./*.rpm
-fi
+curl -fLO https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/install.sh
+sudo sh install.sh --nitro
 ```
 
 </details>
@@ -163,16 +123,8 @@ fi
 <summary><img src="https://img.shields.io/badge/Debian-13-A81D33?logo=debian&logoColor=white" alt="Debian 13" align="top">&nbsp;<img src="https://img.shields.io/badge/Ubuntu-24.04%20%7C%2026.04-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu 24.04 and 26.04" align="top"></summary>
 
 ```bash
-v=0.1.4; app=nitro-control-center
-mkdir -p acerctl-$v && cd acerctl-$v
-# an earlier install made with the scripts would shadow the packages: remove it first
-if ls -d /usr/local/bin/{acerd,acer-tray,nitrod,nitro-tray,nitrosensed} /var/lib/acer-wmi-modules 2>/dev/null | grep -q .; then
-  wget -nv -O uninstall.sh https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh && sudo sh uninstall.sh --scripts
-fi
-for p in acerctl_${v}_amd64 acerctl-tray_${v}_amd64 ${app}_${v}_amd64 acerctl-dkms_${v}_all; do
-  wget -nv -O $p.deb https://github.com/FnnDK/acerctl/releases/download/v$v/$p.deb
-done
-sudo apt install ./*.deb
+wget -nv -O install.sh https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/install.sh
+sudo sh install.sh --nitro
 ```
 
 </details>
@@ -185,24 +137,8 @@ sudo apt install ./*.deb
 <summary><img src="https://img.shields.io/badge/Fedora-44-51A2DA?logo=fedora&logoColor=white" alt="Fedora 44" align="top">&nbsp; Workstation, Silverblue, Kinoite, Bluefin</summary>
 
 ```bash
-v=0.1.4; app=predator-control-center
-mkdir -p acerctl-$v && cd acerctl-$v
-# an earlier install made with the scripts would shadow the packages: remove it first
-if ls -d /usr/local/bin/{acerd,acer-tray,nitrod,nitro-tray,nitrosensed} /var/lib/acer-wmi-modules 2>/dev/null | grep -q .; then
-  curl -fLO https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh && sudo sh uninstall.sh --scripts
-fi
-for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x86_64 \
-         akmod-acerctl-$v-1.fc44.x86_64 acerctl-kmod-common-$v-1.fc44.noarch; do
-  curl -LO https://github.com/FnnDK/acerctl/releases/download/v$v/$p.rpm
-done
-if [ -e /run/ostree-booted ]; then           # Silverblue, Kinoite, Bluefin...
-  # an installed version, or another line's app, is replaced in the same transaction
-  sudo rpm-ostree install --idempotent $(for n in acerctl acerctl-tray akmod-acerctl acerctl-kmod-common \
-      acer-control-center nitro-control-center predator-control-center; do rpm -q --quiet $n && echo --uninstall=$n; done) \
-    ./*.rpm && echo "installed: reboot to start using it"
-else
-  sudo dnf install ./*.rpm
-fi
+curl -fLO https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/install.sh
+sudo sh install.sh --predator
 ```
 
 </details>
@@ -211,16 +147,8 @@ fi
 <summary><img src="https://img.shields.io/badge/Debian-13-A81D33?logo=debian&logoColor=white" alt="Debian 13" align="top">&nbsp;<img src="https://img.shields.io/badge/Ubuntu-24.04%20%7C%2026.04-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu 24.04 and 26.04" align="top"></summary>
 
 ```bash
-v=0.1.4; app=predator-control-center
-mkdir -p acerctl-$v && cd acerctl-$v
-# an earlier install made with the scripts would shadow the packages: remove it first
-if ls -d /usr/local/bin/{acerd,acer-tray,nitrod,nitro-tray,nitrosensed} /var/lib/acer-wmi-modules 2>/dev/null | grep -q .; then
-  wget -nv -O uninstall.sh https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh && sudo sh uninstall.sh --scripts
-fi
-for p in acerctl_${v}_amd64 acerctl-tray_${v}_amd64 ${app}_${v}_amd64 acerctl-dkms_${v}_all; do
-  wget -nv -O $p.deb https://github.com/FnnDK/acerctl/releases/download/v$v/$p.deb
-done
-sudo apt install ./*.deb
+wget -nv -O install.sh https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/install.sh
+sudo sh install.sh --predator
 ```
 
 </details>

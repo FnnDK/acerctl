@@ -20,12 +20,13 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - name: The specs carry the tag's version
+      - name: The specs and install.sh carry the tag's version
         run: |
           v=${GITHUB_REF_NAME#v}
           for s in packaging/rpm/*.spec; do
             grep -q "^Version: *$v$" "$s" || { echo "$s: Version is not $v"; exit 1; }
           done
+          grep -qx "VERSION=$v" packaging/install.sh || { echo "packaging/install.sh: VERSION is not $v"; exit 1; }
       - uses: actions/setup-go@v7
         with:
           go-version-file: gui/go.mod
