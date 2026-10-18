@@ -8,7 +8,7 @@ One daemon, app and CLI for operating modes, fans, battery, keyboard and sensors
 
 <p align="center">
 <a href="https://github.com/FnnDK/acerctl/actions/workflows/ci.yml"><img src="https://github.com/FnnDK/acerctl/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
-<a href="https://github.com/FnnDK/acerctl/releases/tag/v0.1.3"><img src="https://img.shields.io/badge/release-0.1.3-0969da" alt="Release 0.1.3"></a>
+<a href="https://github.com/FnnDK/acerctl/releases/tag/v0.1.4"><img src="https://img.shields.io/badge/release-0.1.4-0969da" alt="Release 0.1.4"></a>
 <a href="#license"><img src="https://img.shields.io/badge/license-GPL--3.0-0969da" alt="GPL-3.0"></a>
 <img src="https://img.shields.io/badge/Fedora-44-51A2DA?logo=fedora&logoColor=white" alt="Fedora 44">
 <img src="https://img.shields.io/badge/Debian-13-A81D33?logo=debian&logoColor=white" alt="Debian 13">
@@ -71,7 +71,7 @@ Acer ships a different Windows-only app per product line. The laptops themselves
 
 ## Download
 
-Latest: **[0.1.3](https://github.com/FnnDK/acerctl/releases/tag/v0.1.3)** (pre-release), ready-built packages for **Fedora 44** (Workstation and the Atomic desktops: Silverblue, Kinoite, Bluefin) and **Debian 13, Ubuntu 24.04 and 26.04**. Pick your laptop's product line below: each one gets the app with its own name and colors, on top of the same daemon and kernel modules. The kernel modules are rebuilt for every new kernel (akmod on Fedora, DKMS on Debian/Ubuntu) and signed with the local key when Secure Boot needs it; the daemon starts by itself when the app or the tray first needs it.
+Latest: **[0.1.4](https://github.com/FnnDK/acerctl/releases/tag/v0.1.4)** (pre-release), ready-built packages for **Fedora 44** (Workstation and the Atomic desktops: Silverblue, Kinoite, Bluefin) and **Debian 13, Ubuntu 24.04 and 26.04**. Pick your laptop's product line below: each one gets the app with its own name and colors, on top of the same daemon and kernel modules. The kernel modules are rebuilt for every new kernel (akmod on Fedora, DKMS on Debian/Ubuntu) and signed with the local key when Secure Boot needs it; the daemon starts by itself when the app or the tray first needs it.
 
 > [!IMPORTANT]
 > Run the commands on the host, not inside a toolbox or distrobox: there `sudo` only reaches the container.
@@ -89,7 +89,7 @@ Aspire, Swift, TravelMate, Extensa and the other non-gaming lines: **Acer Contro
 <summary><img src="https://img.shields.io/badge/Fedora-44-51A2DA?logo=fedora&logoColor=white" alt="Fedora 44" align="top">&nbsp; Workstation, Silverblue, Kinoite, Bluefin</summary>
 
 ```bash
-v=0.1.3; app=acer-control-center
+v=0.1.4; app=acer-control-center
 mkdir -p acerctl-$v && cd acerctl-$v
 # an earlier install made with the scripts would shadow the packages: remove it first
 if ls -d /usr/local/bin/{acerd,acer-tray,nitrod,nitro-tray,nitrosensed} /var/lib/acer-wmi-modules 2>/dev/null | grep -q .; then
@@ -112,7 +112,7 @@ fi
 <summary><img src="https://img.shields.io/badge/Debian-13-A81D33?logo=debian&logoColor=white" alt="Debian 13" align="top">&nbsp;<img src="https://img.shields.io/badge/Ubuntu-24.04%20%7C%2026.04-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu 24.04 and 26.04" align="top"></summary>
 
 ```bash
-v=0.1.3; app=acer-control-center
+v=0.1.4; app=acer-control-center
 mkdir -p acerctl-$v && cd acerctl-$v
 # an earlier install made with the scripts would shadow the packages: remove it first
 if ls -d /usr/local/bin/{acerd,acer-tray,nitrod,nitro-tray,nitrosensed} /var/lib/acer-wmi-modules 2>/dev/null | grep -q .; then
@@ -134,7 +134,7 @@ sudo apt install ./*.deb
 <summary><img src="https://img.shields.io/badge/Fedora-44-51A2DA?logo=fedora&logoColor=white" alt="Fedora 44" align="top">&nbsp; Workstation, Silverblue, Kinoite, Bluefin</summary>
 
 ```bash
-v=0.1.3; app=nitro-control-center
+v=0.1.4; app=nitro-control-center
 mkdir -p acerctl-$v && cd acerctl-$v
 # an earlier install made with the scripts would shadow the packages: remove it first
 if ls -d /usr/local/bin/{acerd,acer-tray,nitrod,nitro-tray,nitrosensed} /var/lib/acer-wmi-modules 2>/dev/null | grep -q .; then
@@ -157,7 +157,7 @@ fi
 <summary><img src="https://img.shields.io/badge/Debian-13-A81D33?logo=debian&logoColor=white" alt="Debian 13" align="top">&nbsp;<img src="https://img.shields.io/badge/Ubuntu-24.04%20%7C%2026.04-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu 24.04 and 26.04" align="top"></summary>
 
 ```bash
-v=0.1.3; app=nitro-control-center
+v=0.1.4; app=nitro-control-center
 mkdir -p acerctl-$v && cd acerctl-$v
 # an earlier install made with the scripts would shadow the packages: remove it first
 if ls -d /usr/local/bin/{acerd,acer-tray,nitrod,nitro-tray,nitrosensed} /var/lib/acer-wmi-modules 2>/dev/null | grep -q .; then
@@ -179,7 +179,7 @@ sudo apt install ./*.deb
 <summary><img src="https://img.shields.io/badge/Fedora-44-51A2DA?logo=fedora&logoColor=white" alt="Fedora 44" align="top">&nbsp; Workstation, Silverblue, Kinoite, Bluefin</summary>
 
 ```bash
-v=0.1.3; app=predator-control-center
+v=0.1.4; app=predator-control-center
 mkdir -p acerctl-$v && cd acerctl-$v
 # an earlier install made with the scripts would shadow the packages: remove it first
 if ls -d /usr/local/bin/{acerd,acer-tray,nitrod,nitro-tray,nitrosensed} /var/lib/acer-wmi-modules 2>/dev/null | grep -q .; then
@@ -202,7 +202,7 @@ fi
 <summary><img src="https://img.shields.io/badge/Debian-13-A81D33?logo=debian&logoColor=white" alt="Debian 13" align="top">&nbsp;<img src="https://img.shields.io/badge/Ubuntu-24.04%20%7C%2026.04-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu 24.04 and 26.04" align="top"></summary>
 
 ```bash
-v=0.1.3; app=predator-control-center
+v=0.1.4; app=predator-control-center
 mkdir -p acerctl-$v && cd acerctl-$v
 # an earlier install made with the scripts would shadow the packages: remove it first
 if ls -d /usr/local/bin/{acerd,acer-tray,nitrod,nitro-tray,nitrosensed} /var/lib/acer-wmi-modules 2>/dev/null | grep -q .; then
@@ -425,7 +425,7 @@ Mainline layer used: `acer_wmi` with `predator_v4=1` (profiles in `platform-prof
 
 For other distributions, or to build from the repository. The scripts install to `/usr/local`, `/etc` and `/var/lib` (writable on Silverblue too); the reference machine is an Acer Nitro ANV15-52 with Fedora Silverblue 44.
 
-**Prebuilt binaries for other distributions** (glibc ≥ 2.34, x86_64): [`acerctl-0.1.3-linux-x86_64.tar.gz`](https://github.com/FnnDK/acerctl/releases/download/v0.1.3/acerctl-0.1.3-linux-x86_64.tar.gz) holds the daemon, CLI, tray and app already built, these scripts and the kernel modules as source; its `INSTALL.md` has the steps (no Go, Node or Wails needed). The app is picked from the laptop's product name.
+**Prebuilt binaries for other distributions** (glibc ≥ 2.34, x86_64): [`acerctl-0.1.4-linux-x86_64.tar.gz`](https://github.com/FnnDK/acerctl/releases/download/v0.1.4/acerctl-0.1.4-linux-x86_64.tar.gz) holds the daemon, CLI, tray and app already built, these scripts and the kernel modules as source; its `INSTALL.md` has the steps (no Go, Node or Wails needed). The app is picked from the laptop's product name.
 
 **From the repository:**
 
