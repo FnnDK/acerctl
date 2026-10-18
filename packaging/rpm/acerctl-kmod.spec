@@ -8,7 +8,7 @@
 %global debug_package %{nil}
 
 Name:           acerctl-kmod
-Version:        0.1.4
+Version:        0.1.5
 Release:        1%{?dist}
 Summary:        Kernel modules of acerctl (acer-wmi-extras, acer-wmi-battery)
 
@@ -53,6 +53,9 @@ done
 %{?akmod_install}
 
 %changelog
+* Sun Oct 18 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.5-1
+- Released with acerctl 0.1.5; no changes in the modules
+
 * Sun Oct 18 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.4-1
 - acer-wmi-extras: no keyboard backlight timeout on laptops without a keyboard
   backlight (DMI type 170 lists it as absent), such as the Aspire AG15-71P

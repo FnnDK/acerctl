@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           acerctl
-Version:        0.1.4
+Version:        0.1.5
 Release:        1%{?dist}
 Summary:        Daemon and CLI for the firmware features of Acer laptops
 
@@ -188,6 +188,10 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/*.desktop
 %config(noreplace) %{_sysconfdir}/xdg/autostart/io.github.fnndk.AcerControlCenter.Tray.desktop
 
 %changelog
+* Sun Oct 18 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.5-1
+- acerctl setup: the app's setup steps in the CLI (acer_wmi option, Secure Boot
+  key, kernel modules); acerctl status shows when something is left
+
 * Sun Oct 18 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.4-1
 - Released with acerctl-kmod 0.1.4; acerd --root DIR reads the kernel files
   under DIR (the known-model tests)
