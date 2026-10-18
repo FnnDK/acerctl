@@ -28,7 +28,7 @@ Latest: **[0.1.3](https://github.com/FnnDK/acerctl/releases/tag/v0.1.3)** (pre-r
 
 Then see [After installing](#after-installing). Coming from an earlier version or from an install made with the scripts? See [Upgrading](#upgrading). Another distribution? See [Building from source](#building-from-source).
 
-### Acer
+### <img src="assets/logo/a-icon-cut.svg" width="28" height="28" alt="">&nbsp;Acer
 
 Aspire, Swift, TravelMate, Extensa and the other non-gaming lines: **Acer Control Center**. Tested on the Aspire AG15-71P (charge limit, Sense key, app and tray).
 
@@ -59,7 +59,7 @@ done
 sudo apt install ./*.deb
 ```
 
-### Nitro
+### <img src="assets/logo/n-icon-cut.svg" width="28" height="28" alt="">&nbsp;Nitro
 
 **Nitro Control Center**. Tested on the Nitro ANV15-52 (modes, fans, sensors, keyboard, USB charging, battery, scenarios).
 
@@ -90,7 +90,7 @@ done
 sudo apt install ./*.deb
 ```
 
-### Predator
+### <img src="assets/logo/p-icon-cut.svg" width="28" height="28" alt="">&nbsp;Predator
 
 **Predator Control Center**. Not tested on a Predator yet: the features come from the firmware, and a [hardware report](docs/hardware-reports.md) from your machine helps a lot.
 
@@ -175,7 +175,7 @@ Run it on the host: inside a toolbox/distrobox shell, `sudo` only reaches the co
 
 ## Screenshots
 
-### Acer Control Center
+### <img src="assets/logo/a-icon-cut.svg" width="28" height="28" alt="">&nbsp;Acer Control Center
 
 ![Dashboard](docs/screenshots/acer/home.png)
 
@@ -186,7 +186,7 @@ Run it on the host: inside a toolbox/distrobox shell, `sudo` only reaches the co
 
 <sub>Aspire AG15-71P, real machine with the daemon in read-only mode (`acerd --dry-run`). Its firmware has no operating modes, fans or keyboard backlight, so those screens and cards do not show up.</sub>
 
-### Nitro Control Center
+### <img src="assets/logo/n-icon-cut.svg" width="28" height="28" alt="">&nbsp;Nitro Control Center
 
 ![Dashboard](docs/screenshots/nitro/home.png)
 
@@ -198,7 +198,7 @@ Run it on the host: inside a toolbox/distrobox shell, `sudo` only reaches the co
 
 <sub>Daemon in simulated mode (`acerd --simulate ANV15-52`).</sub>
 
-### Predator Control Center
+### <img src="assets/logo/p-icon-cut.svg" width="28" height="28" alt="">&nbsp;Predator Control Center
 
 ![Dashboard](docs/screenshots/predator/home.png)
 
@@ -214,12 +214,12 @@ The app uses its own dark theme, with an integrated title bar that follows GNOME
 
 ## Tested models
 
-On the laptops acerctl has been run on: ✓ works, ✗ the laptop has it but acerctl does not handle it yet, – the firmware does not offer it.
+On the laptops acerctl has been run on: <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> works, <img src="assets/readme/no.svg" width="16" height="16" alt="no"> the laptop has it but acerctl does not handle it yet, <img src="assets/readme/na.svg" width="16" height="16" alt="n/a"> the firmware does not offer it.
 
 | Model | Modes | AC/battery rules | Fans | Sensors | 80 % limit | Calibration | Kbd timeout | RGB | USB charging off | Boot sound | LCD overdrive | Overclock | Scenarios | Sense key | GUI |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| **Nitro ANV15-52** (BIOS V1.31, Fedora Silverblue 44) | ✓ | ✓ | ✓ | ✓ | ✓¹ | ✓² | ✓ | – | ✓ | – | – | – | ✓ | ✓ | ✓ |
-| **Aspire AG15-71P** (BIOS V1.13, Bluefin 44) | – | – | – | ✓³ | ✓¹ | ✓² | – | – | – | – | – | – | –⁴ | ✓ | ✓ |
+| **Nitro ANV15-52** (BIOS V1.31, Fedora Silverblue 44) | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes">¹ | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes">² | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/na.svg" width="16" height="16" alt="n/a"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/na.svg" width="16" height="16" alt="n/a"> | <img src="assets/readme/na.svg" width="16" height="16" alt="n/a"> | <img src="assets/readme/na.svg" width="16" height="16" alt="n/a"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> |
+| **Aspire AG15-71P** (BIOS V1.13, Bluefin 44) | <img src="assets/readme/na.svg" width="16" height="16" alt="n/a"> | <img src="assets/readme/na.svg" width="16" height="16" alt="n/a"> | <img src="assets/readme/na.svg" width="16" height="16" alt="n/a"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes">³ | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes">¹ | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes">² | <img src="assets/readme/na.svg" width="16" height="16" alt="n/a"> | <img src="assets/readme/na.svg" width="16" height="16" alt="n/a"> | <img src="assets/readme/na.svg" width="16" height="16" alt="n/a"> | <img src="assets/readme/na.svg" width="16" height="16" alt="n/a"> | <img src="assets/readme/na.svg" width="16" height="16" alt="n/a"> | <img src="assets/readme/na.svg" width="16" height="16" alt="n/a"> | <img src="assets/readme/na.svg" width="16" height="16" alt="n/a">⁴ | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> |
 
 ¹ Also in GNOME's Power settings ("Preserve Battery Health"). ² The firmware offers it and acerctl exposes it; a full calibration cycle has not been run yet. ³ CPU temperature and the battery sensors; this model has no fan readings and no discrete GPU. ⁴ Nothing for a scenario to set without modes, fans or keyboard backlight.
 
@@ -229,13 +229,13 @@ Both, plus a Predator PH16-71 built from public reports, are also checked automa
 
 | Project | Modes | AC/battery rules | Fans | Sensors | 80 % limit | Calibration | Kbd timeout | RGB | USB charging off | Boot sound | LCD overdrive | Overclock | Scenarios | Sense key | GUI | Keeps `acer_wmi` |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `acer_wmi` (in-tree kernel driver) | ✓¹ | ✗ | ✓¹ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
-| [acer-wmi-battery](https://github.com/frederik-h/acer-wmi-battery) (kernel module) | ✗ | ✗ | ✗ | ✗ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
-| [Linuwu-Sense](https://github.com/0x7375646F/Linuwu-Sense) (kernel module) | ✓ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [Div-Acer-Manager-Max](https://github.com/PXDiv/Div-Acer-Manager-Max) (GUI + daemon on Linuwu-Sense) | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ | ✓ | ✓ | ✗ | ✗ | ✗ | ✓ | ✗ |
-| [predator-sense](https://github.com/wobqqq/predator-sense) (CLI + DKMS on Linuwu-Sense) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Acer NitroSense / PredatorSense (Windows only) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓² | ✓² | ✓ | ✓ | ✓ | ✓² | ✓ | ✓ | ✓ | – |
-| **acerctl** (this project) | ✓³ | ✓ | ✓ | ✓ | ✓⁴ | ✓ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ |
+| `acer_wmi` (in-tree kernel driver) | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes">¹ | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes">¹ | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> |
+| [acer-wmi-battery](https://github.com/frederik-h/acer-wmi-battery) (kernel module) | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> |
+| [Linuwu-Sense](https://github.com/0x7375646F/Linuwu-Sense) (kernel module) | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> |
+| [Div-Acer-Manager-Max](https://github.com/PXDiv/Div-Acer-Manager-Max) (GUI + daemon on Linuwu-Sense) | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> |
+| [predator-sense](https://github.com/wobqqq/predator-sense) (CLI + DKMS on Linuwu-Sense) | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> |
+| Acer NitroSense / PredatorSense (Windows only) | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes">² | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes">² | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes">² | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/na.svg" width="16" height="16" alt="n/a"> |
+| **acerctl** (this project) | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes">³ | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes">⁴ | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> |
 
 ¹ A fixed list of 5 profiles, without reading the firmware mask; fan control only with the model quirk or `force_caps`. ² Where the model has it. ³ Only the profiles the firmware reports, synced with `power-profiles-daemon`/`tuned`. ⁴ Shared with GNOME/UPower.
 
