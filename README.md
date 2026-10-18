@@ -79,7 +79,7 @@ Latest: **[0.1.4](https://github.com/FnnDK/acerctl/releases/tag/v0.1.4)** (pre-r
 > [!NOTE]
 > The .deb packages are new and so far tested in containers only. Another distribution? See [Building from source](#building-from-source).
 
-Then see [After installing](#after-installing). Coming from an earlier version or from an install made with the scripts? See [Upgrading](#upgrading).
+Then see [After installing](#after-installing). To upgrade, run the same block again (on Silverblue, Kinoite and Bluefin, then reboot once): it replaces an earlier version and an install made with the scripts.
 
 ### <img src="assets/logo/a-icon-cut.svg" width="28" height="28" alt="">&nbsp;Acer
 
@@ -93,7 +93,7 @@ v=0.1.4; app=acer-control-center
 mkdir -p acerctl-$v && cd acerctl-$v
 # an earlier install made with the scripts would shadow the packages: remove it first
 if ls -d /usr/local/bin/{acerd,acer-tray,nitrod,nitro-tray,nitrosensed} /var/lib/acer-wmi-modules 2>/dev/null | grep -q .; then
-  curl -fLO https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh && sudo sh uninstall.sh
+  curl -fLO https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh && sudo sh uninstall.sh --scripts
 fi
 for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x86_64 \
          akmod-acerctl-$v-1.fc44.x86_64 acerctl-kmod-common-$v-1.fc44.noarch; do
@@ -119,7 +119,7 @@ v=0.1.4; app=acer-control-center
 mkdir -p acerctl-$v && cd acerctl-$v
 # an earlier install made with the scripts would shadow the packages: remove it first
 if ls -d /usr/local/bin/{acerd,acer-tray,nitrod,nitro-tray,nitrosensed} /var/lib/acer-wmi-modules 2>/dev/null | grep -q .; then
-  wget -nv -O uninstall.sh https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh && sudo sh uninstall.sh
+  wget -nv -O uninstall.sh https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh && sudo sh uninstall.sh --scripts
 fi
 for p in acerctl_${v}_amd64 acerctl-tray_${v}_amd64 ${app}_${v}_amd64 acerctl-dkms_${v}_all; do
   wget -nv -O $p.deb https://github.com/FnnDK/acerctl/releases/download/v$v/$p.deb
@@ -141,7 +141,7 @@ v=0.1.4; app=nitro-control-center
 mkdir -p acerctl-$v && cd acerctl-$v
 # an earlier install made with the scripts would shadow the packages: remove it first
 if ls -d /usr/local/bin/{acerd,acer-tray,nitrod,nitro-tray,nitrosensed} /var/lib/acer-wmi-modules 2>/dev/null | grep -q .; then
-  curl -fLO https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh && sudo sh uninstall.sh
+  curl -fLO https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh && sudo sh uninstall.sh --scripts
 fi
 for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x86_64 \
          akmod-acerctl-$v-1.fc44.x86_64 acerctl-kmod-common-$v-1.fc44.noarch; do
@@ -167,7 +167,7 @@ v=0.1.4; app=nitro-control-center
 mkdir -p acerctl-$v && cd acerctl-$v
 # an earlier install made with the scripts would shadow the packages: remove it first
 if ls -d /usr/local/bin/{acerd,acer-tray,nitrod,nitro-tray,nitrosensed} /var/lib/acer-wmi-modules 2>/dev/null | grep -q .; then
-  wget -nv -O uninstall.sh https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh && sudo sh uninstall.sh
+  wget -nv -O uninstall.sh https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh && sudo sh uninstall.sh --scripts
 fi
 for p in acerctl_${v}_amd64 acerctl-tray_${v}_amd64 ${app}_${v}_amd64 acerctl-dkms_${v}_all; do
   wget -nv -O $p.deb https://github.com/FnnDK/acerctl/releases/download/v$v/$p.deb
@@ -189,7 +189,7 @@ v=0.1.4; app=predator-control-center
 mkdir -p acerctl-$v && cd acerctl-$v
 # an earlier install made with the scripts would shadow the packages: remove it first
 if ls -d /usr/local/bin/{acerd,acer-tray,nitrod,nitro-tray,nitrosensed} /var/lib/acer-wmi-modules 2>/dev/null | grep -q .; then
-  curl -fLO https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh && sudo sh uninstall.sh
+  curl -fLO https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh && sudo sh uninstall.sh --scripts
 fi
 for p in acerctl-$v-1.fc44.x86_64 acerctl-tray-$v-1.fc44.x86_64 $app-$v-1.fc44.x86_64 \
          akmod-acerctl-$v-1.fc44.x86_64 acerctl-kmod-common-$v-1.fc44.noarch; do
@@ -215,7 +215,7 @@ v=0.1.4; app=predator-control-center
 mkdir -p acerctl-$v && cd acerctl-$v
 # an earlier install made with the scripts would shadow the packages: remove it first
 if ls -d /usr/local/bin/{acerd,acer-tray,nitrod,nitro-tray,nitrosensed} /var/lib/acer-wmi-modules 2>/dev/null | grep -q .; then
-  wget -nv -O uninstall.sh https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh && sudo sh uninstall.sh
+  wget -nv -O uninstall.sh https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh && sudo sh uninstall.sh --scripts
 fi
 for p in acerctl_${v}_amd64 acerctl-tray_${v}_amd64 ${app}_${v}_amd64 acerctl-dkms_${v}_all; do
   wget -nv -O $p.deb https://github.com/FnnDK/acerctl/releases/download/v$v/$p.deb
@@ -246,25 +246,9 @@ The kernel decides part of it: `acer_wmi` exposes the operating modes from Linux
 | Debian 13 (6.12) | <img src="assets/readme/yes.svg" width="16" height="16" alt="yes"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> |
 | Ubuntu 24.04 with its original kernel (6.8) | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> | <img src="assets/readme/no.svg" width="16" height="16" alt="no"> |
 
-### Upgrading
-
-- **Fedora Workstation, Debian, Ubuntu:** run the block of your product line again; `dnf`/`apt` upgrade in place.
-- **Silverblue, Kinoite, Bluefin:** run the block of your product line again and reboot once. `rpm-ostree` cannot upgrade local packages in place (it stops with "cannot install both"), so the block replaces the installed ones, the app of another product line too, in the same transaction.
-- **From an install made with the scripts** (including the older `nitrod`/`nitroctl` ones): the blocks above find it and remove it first with [`uninstall.sh`](#uninstalling). Left in place it shadows the packages: its unit in `/etc/systemd/system` overrides the packaged one, and `/usr/local` comes first for the CLI and the app's menu entry. Packages already installed on top of one? Run `uninstall.sh` as [Uninstalling](#uninstalling) shows, then `sudo systemctl enable --now acerd`.
-
 ### Uninstalling
 
-**Packages:** remove the ones you installed (Silverblue, Kinoite, Bluefin: `rpm-ostree uninstall` with the same names, then reboot):
-
-```bash
-sudo dnf remove acerctl acerctl-tray nitro-control-center akmod-acerctl acerctl-kmod-common   # or predator-/acer-control-center
-sudo apt purge acerctl acerctl-tray nitro-control-center acerctl-dkms                          # Debian/Ubuntu
-```
-
-<details>
-<summary><b>Script installs</b> (from source or the binary archive, including the project's earlier names)</summary>
-
-Installs made with the scripts, including the ones under the project's earlier names (`nitrod`/`nitroctl`/`nitro-tray`, `nitrosensed`). Run it from the repository or the archive directory, or download it on its own:
+To remove everything acerctl put on the machine, for example to try another tool: the packages (`dnf`, `rpm-ostree`, `apt`), an install made with the scripts and the ones under the project's earlier names (`nitrod`/`nitroctl`/`nitro-tray`, `nitrosensed`). Run it on the host, from the repository or downloaded on its own:
 
 ```bash
 curl -LO https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh
@@ -272,9 +256,7 @@ sudo sh uninstall.sh            # keeps your settings (/var/lib/acerd, ~/.config
 sudo sh uninstall.sh --purge    # also removes them, the app data and /etc/modprobe.d/acerctl.conf
 ```
 
-Run it on the host: inside a toolbox/distrobox shell, `sudo` only reaches the container, so the script refuses to run there (use `distrobox-host-exec sudo sh uninstall.sh`). It stops and removes the daemon, CLI, app, tray, kernel modules and their units. Packages, if any, are left in place with the command to remove them (their kernel modules stay loaded), and so is an `acer_wmi` option you wrote yourself in `/etc/modprobe.d`.
-
-</details>
+`dnf` and `apt` ask before removing the packages; on Silverblue, Kinoite and Bluefin they go with the next reboot. Inside a toolbox/distrobox shell `sudo` only reaches the container, so the script refuses to run there (use `distrobox-host-exec sudo sh uninstall.sh`). An `acer_wmi` option you wrote yourself in `/etc/modprobe.d` is left in place.
 
 ## Screenshots
 
