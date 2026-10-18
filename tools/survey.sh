@@ -300,6 +300,30 @@ if [ "$PROBES" = 1 ]; then
 fi
 
 # --- summary --------------------------------------------------------------
+# dmi_aa: DMI type 170 (0xAA, the hotkey function table acer_wmi reads) and
+# whether it lists the keyboard backlight, decoded as acer-wmi-extras does:
+# after the header, five u16 bitmaps of the functions present (communication,
+# application, media, display, others), then { code, 2, u16 bit } entries;
+# code 0x84 is the keyboard backlight.
+dmi_aa() {
+  have dmidecode || { echo "unknown (no dmidecode)"; return; }
+  # shellcheck disable=SC2046
+  set -- $(dmidecode -t 170 -u 2>/dev/null |
+    awk '/Header and Data:/ { on = 1; next } on && /^\t\t[0-9A-Fa-f][0-9A-Fa-f]( |$)/ { print; next } on { exit }')
+  [ $# -ge 14 ] || { echo "absent"; return; }
+  others=$(( 0x${13} | (0x${14} << 8) ))
+  shift 14
+  while [ $# -ge 4 ]; do
+    if [ $((0x$1)) -eq 132 ] && [ $((0x$2)) -eq 2 ]; then
+      bit=$(( 0x$3 | (0x$4 << 8) ))
+      if [ $((others & bit)) -ne 0 ]; then kb=present; else kb=absent; fi
+      printf 'present; keyboard backlight %s (others 0x%04x, 0x84 -> bit 0x%04x)\n' "$kb" "$others" "$bit"
+      return
+    fi
+    shift 4
+  done
+  printf 'present; keyboard backlight not listed (others 0x%04x)\n' "$others"
+}
 guid_name() {
   case "$1" in
     7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56) echo "AcerGamingFunction (modes, fans, sensors, lighting)" ;;
@@ -350,8 +374,7 @@ guid_name() {
   echo "kbd LED:      ${kbd:-none}"
   hid=$(grep -lsh '^HID_ID=.*:00001025:' /sys/bus/hid/devices/*/uevent | xargs -r -n1 dirname | xargs -r -n1 basename | tr '\n' ' ')
   echo "Acer HID:     ${hid:-none}"
-  if have dmidecode && dmidecode -t 170 2>/dev/null | grep -q 'Handle'; then t170=present; else t170=absent; fi
-  echo "DMI type 170: $t170"
+  echo "DMI type 170: $(dmi_aa)"
   ot=$(other_tools)
   echo "other tools:  ${ot:-none found}"
   echo

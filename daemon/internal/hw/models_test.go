@@ -8,6 +8,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -61,6 +62,77 @@ func TestModels(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestModelsKbdDMI checks each fixture made from a real machine against that
+// machine's DMI type 170 table (dmi-170.txt, as dmidecode -t 170 -u prints it)
+// with the rule acer-wmi-extras applies: a table that lists the keyboard
+// backlight (code 0x84) as absent means no kbd_backlight_* attributes, even
+// though the WMI keyboard call answers status 0 there. With the backlight
+// present the attributes depend on that WMI answer, which a fixture does not
+// keep, so only the table itself is checked.
+func TestModelsKbdDMI(t *testing.T) {
+	tables, _ := filepath.Glob("testdata/models/*/dmi-170.txt")
+	if len(tables) == 0 {
+		t.Fatal("no dmi-170.txt in testdata/models")
+	}
+	for _, f := range tables {
+		dir := filepath.Dir(f)
+		t.Run(filepath.Base(dir), func(t *testing.T) {
+			text, err := os.ReadFile(f)
+			if err != nil {
+				t.Fatal(err)
+			}
+			listed, present, err := kbdBacklightInDMI(string(text))
+			if err != nil {
+				t.Fatalf("%s: %v", f, err)
+			}
+			attrs, _ := filepath.Glob(filepath.Join(dir, "root/sys/devices/platform/acer-wmi-extras/kbd_backlight_*"))
+			if listed && !present && len(attrs) > 0 {
+				t.Errorf("the DMI table lists no keyboard backlight, so acer-wmi-extras hides %v", attrs)
+			}
+		})
+	}
+}
+
+// kbdBacklightInDMI decodes a DMI type 0xAA structure as acer-wmi-extras does:
+// after the header, five u16 bitmaps of the functions present (communication,
+// application, media, display, others), then { code, 2, u16 bit } entries.
+func kbdBacklightInDMI(dmidecode string) (listed, present bool, err error) {
+	var b []byte
+	in := false
+	for _, line := range strings.Split(dmidecode, "\n") {
+		if strings.TrimSpace(line) == "Header and Data:" {
+			in = true
+			continue
+		}
+		if !in {
+			continue
+		}
+		if !strings.HasPrefix(line, "\t\t") {
+			break
+		}
+		for _, tok := range strings.Fields(line) {
+			v, err := strconv.ParseUint(tok, 16, 8)
+			if err != nil {
+				return false, false, fmt.Errorf("byte %q: %v", tok, err)
+			}
+			b = append(b, byte(v))
+		}
+	}
+	if len(b) < 14 || b[0] != 0xAA || int(b[1]) != len(b) {
+		return false, false, fmt.Errorf("not a complete type 170 structure (%d bytes)", len(b))
+	}
+	le16 := func(i int) uint16 { return uint16(b[i]) | uint16(b[i+1])<<8 }
+	for i := 14; i+4 <= len(b); i += 4 {
+		if b[i+1] != 2 {
+			return false, false, fmt.Errorf("entry at byte %d has size %d, not 2", i, b[i+1])
+		}
+		if b[i] == 0x84 {
+			return true, le16(12)&le16(i+2) != 0, nil
+		}
+	}
+	return false, false, nil
 }
 
 // exercise reads every backend of h, then changes each once, in a fixed order.

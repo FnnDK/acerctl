@@ -11,7 +11,9 @@
  * It uses only the legacy GUID-based WMI API, binds to no WMI device and
  * coexists with acer_wmi and acer-wmi-battery. Every feature is probed at
  * load time and only exposed when the firmware answers with status 0, so
- * capability comes from the firmware, not from a model table.
+ * capability comes from the firmware, not from a model table. The keyboard
+ * timeout call also answers 0 on laptops without a keyboard backlight, so it
+ * additionally needs the backlight function in the firmware's DMI table.
  *
  * Protocol notes (reverse engineered on a Nitro ANV15-52, see docs/firmware-wmi.md):
  *   All answers are little-endian buffers whose byte 0 is a status
@@ -19,6 +21,7 @@
  */
 #include <linux/module.h>
 #include <linux/acpi.h>
+#include <linux/dmi.h>
 #include <linux/wmi.h>
 #include <linux/platform_device.h>
 #include <linux/hwmon.h>
@@ -61,6 +64,18 @@
 #define SBS_TEMPERATURE			0x08		/* 0.1 K */
 #define SBS_VOLTAGE			0x09		/* mV */
 #define SBS_CURRENT			0x0A		/* mA, signed */
+
+/*
+ * DMI OEM type 0xAA, the hotkey function table acer_wmi also reads: after the
+ * header, five u16 bitmaps (communication, application, media, display,
+ * others) of the functions present, then entries { u8 code, u8 2, u16 bit }
+ * giving each function's bit. Code 0x84 is the keyboard backlight, the same
+ * code as its hotkey event and as the APGe selector.
+ */
+#define DMI_ACER_HOTKEYS		0xAA
+#define DMI_AA_OTHERS			12
+#define DMI_AA_ENTRIES			14
+#define DMI_AA_KBD_BACKLIGHT		0x84
 
 /* Acer thermal profile bits in the supported-profiles mask */
 #define ACER_PROFILE_QUIET		BIT(0)
@@ -179,6 +194,40 @@ static int kbd_set_timeout(u8 seconds)
 	if (ret)
 		return ret;
 	return extras_status(out);
+}
+
+struct kbd_dmi {
+	bool listed;
+	bool present;
+};
+
+static void kbd_dmi_decode(const struct dmi_header *dh, void *priv)
+{
+	const u8 *p = (const u8 *)dh;
+	struct kbd_dmi *k = priv;
+	u16 others;
+	int i;
+
+	if (dh->type != DMI_ACER_HOTKEYS || dh->length < DMI_AA_ENTRIES)
+		return;
+	others = get_unaligned_le16(p + DMI_AA_OTHERS);
+	for (i = DMI_AA_ENTRIES; i + 4 <= dh->length; i += 4) {
+		if (p[i] == DMI_AA_KBD_BACKLIGHT && p[i + 1] == 2) {
+			k->listed = true;
+			k->present = others & get_unaligned_le16(p + i + 2);
+			return;
+		}
+	}
+}
+
+/* false only when the DMI table lists the backlight function as absent */
+static bool kbd_backlight_in_dmi(void)
+{
+	struct kbd_dmi k = {};
+
+	if (dmi_walk(kbd_dmi_decode, &k) || !k.listed)
+		return true;
+	return k.present;
 }
 
 static ssize_t kbd_backlight_timeout_show(struct device *dev,
@@ -483,7 +532,7 @@ static int extras_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	if (wmi_has_guid(APGE_GUID)) {
-		d->has_kbd_timeout = kbd_get(NULL, &tmp) == 0;
+		d->has_kbd_timeout = kbd_get(NULL, &tmp) == 0 && kbd_backlight_in_dmi();
 		d->has_usb_charging = usb_get(&tmp) == 0;
 	}
 	if (wmi_has_guid(GAMING_GUID) && profiles_get(&d->profiles_mask) == 0)

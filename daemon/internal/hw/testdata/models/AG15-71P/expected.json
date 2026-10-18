@@ -1,6 +1,5 @@
 {
   "actions": [
-    "keyboard timeout 0",
     "charge limit false",
     "calibration on"
   ],
@@ -14,14 +13,6 @@
     "gpu": {
       "nvml": false,
       "oc": false
-    },
-    "kbd_backlight": {
-      "rgb": false,
-      "timeouts": [
-        0,
-        30
-      ],
-      "zones": 0
     },
     "sense_key": true
   },
@@ -50,10 +41,6 @@
       "temp": 26.9,
       "voltage_mv": 12205
     },
-    "keyboard": {
-      "on": false,
-      "timeout": 30
-    },
     "power": {
       "Source": "ac",
       "Percent": 80
@@ -65,7 +52,6 @@
   "setup": null,
   "writes": {
     "/sys/bus/wmi/drivers/acer-wmi-battery/calibration_mode": "1",
-    "/sys/bus/wmi/drivers/acer-wmi-battery/health_mode": "0",
-    "/sys/devices/platform/acer-wmi-extras/kbd_backlight_timeout": "0"
+    "/sys/bus/wmi/drivers/acer-wmi-battery/health_mode": "0"
   }
 }

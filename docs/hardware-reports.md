@@ -31,7 +31,7 @@ sudo sh tools/survey.sh --lab-module drivers/acer-wmi-lab/acer-wmi-lab.ko
 
 | File | Contents |
 |---|---|
-| `summary.txt` | Model, BIOS/EC version, CPU/GPU, distribution, Secure Boot, what the kernel already exposes, other Acer tools found (Linuwu-Sense, Div-Acer-Manager-Max, acer-predator-turbo), list of WMI devices, probe result |
+| `summary.txt` | Model, BIOS/EC version, CPU/GPU, distribution, Secure Boot, what the kernel already exposes, DMI type 170 and whether it lists a keyboard backlight, other Acer tools found (Linuwu-Sense, Div-Acer-Manager-Max, acer-predator-turbo), list of WMI devices, probe result |
 | `dmi.txt` | Model and BIOS identification, including the Acer OEM DMI tables (types 170–172) |
 | `wmi.txt`, `bmof-*.bin` | WMI devices and the firmware's own WMI class definitions (binary MOF) |
 | `acpi/*.dat` | DSDT and SSDT tables (where the WMI methods are implemented) |
