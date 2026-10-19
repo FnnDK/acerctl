@@ -329,6 +329,28 @@ func setupText(id, state, detail string) string {
 	return strings.TrimSpace(state + " " + detail)
 }
 
+// setupFresh reads System.Setup; when it lists something to do, acerd first
+// re-reads it (RefreshSetup), as the system may have changed since it started
+// (DKMS builds the modules once the kernel headers are installed).
+func setupFresh() ([]map[string]string, error) {
+	v, err := cl.Property(client.IfSystem, "Setup")
+	if err != nil {
+		return nil, err
+	}
+	items := setupItems(v)
+	pending := false
+	for _, it := range items {
+		pending = pending || it["state"] == "needed" || it["state"] == "manual"
+	}
+	if !pending || cl.Call(client.IfSystem, "RefreshSetup", nil) != nil { // an older acerd lacks it
+		return items, nil
+	}
+	if v, err = cl.Property(client.IfSystem, "Setup"); err != nil {
+		return nil, err
+	}
+	return setupItems(v), nil
+}
+
 // setupItems turns the System.Setup property into id/state/detail maps.
 func setupItems(v dbus.Variant) []map[string]string {
 	items := []map[string]string{}
@@ -369,11 +391,10 @@ func cmdSetup(args []string) error {
 	if len(args) > 0 {
 		return usagef("setup takes apply [id...]")
 	}
-	v, err := cl.Property(client.IfSystem, "Setup")
+	items, err := setupFresh()
 	if err != nil {
 		return err
 	}
-	items := setupItems(v)
 	if jsonOut {
 		return printJSON(items)
 	}
@@ -403,12 +424,12 @@ func cmdSetup(args []string) error {
 // "needed" state, and shows the code the firmware's enrollment screen asks for.
 func setupApply(ids []string) error {
 	if len(ids) == 0 {
-		v, err := cl.Property(client.IfSystem, "Setup")
+		items, err := setupFresh()
 		if err != nil {
 			return err
 		}
 		reboot := false
-		for _, it := range setupItems(v) {
+		for _, it := range items {
 			switch it["state"] {
 			case "needed":
 				ids = append(ids, it["id"])

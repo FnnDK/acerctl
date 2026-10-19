@@ -4,7 +4,7 @@ import { lang, savedLang, setLang, t, type Lang } from './i18n'
 import { icon, mark } from './icons'
 import type { Page } from './widgets'
 import { titlebar } from './titlebar'
-import { openSetup, setupPendingKeys, updateSetup } from './setup'
+import { openSetup, setupPending } from './setup'
 import { appName, brand } from './flavor'
 import { home } from './pages/home'
 import { monitor } from './pages/monitor'
@@ -104,18 +104,11 @@ function chrome(s: State) {
   pp.classList.toggle('hidden', !m.PowerSource)
 }
 
-// pending setup items already shown since the app started: the dialog opens
-// by itself once for each (the Secure Boot key can come later, when DKMS
-// builds the modules after the kernel headers are installed)
-const setupSeen = new Set<string>()
+let setupShown = false
 onState(s => {
   chrome(s)
-  if (s.connected) {
-    const fresh = setupPendingKeys().filter(k => !setupSeen.has(k))
-    fresh.forEach(k => setupSeen.add(k))
-    if (fresh.length) openSetup()
-    updateSetup()
-  }
+  // once per start, while acerd reports something to do
+  if (s.connected && !setupShown && setupPending()) { setupShown = true; openSetup() }
   if (current) {
     const nav = NAV.find(n => n.id === current)
     if (nav?.show && !nav.show()) go('home')

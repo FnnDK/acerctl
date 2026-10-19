@@ -45,6 +45,16 @@ func (s *systemIface) ApplySetup(sender dbus.Sender, ids []string) (string, *dbu
 	return code, nil
 }
 
+// RefreshSetup re-reads System.Setup without re-probing the hardware (Reload
+// does that, NVML included, too much for every start of the app): the app
+// and acerctl setup call it when Setup lists something to do, since the
+// system may have changed behind acerd (DKMS builds the modules once the
+// kernel headers are installed). It only reads, like a property, so no polkit.
+func (s *systemIface) RefreshSetup() *dbus.Error {
+	s.d.refreshSetup()
+	return nil
+}
+
 // setupItems is the System.Setup property.
 func (d *Daemon) setupItems() []map[string]dbus.Variant {
 	out := []map[string]dbus.Variant{}

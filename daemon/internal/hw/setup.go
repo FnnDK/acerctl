@@ -100,8 +100,7 @@ func acerWMIOptions() string {
 // predator_v4 at all (the parameter is missing from sysfs): then only a newer
 // kernel helps, and writing the option would do nothing.
 func acerWMIItem() (SetupItem, bool) {
-	// supported_profiles is a WMI call: the free checks go first, as acerd
-	// re-reads the setup every 30 s
+	// supported_profiles is a WMI call: the free checks go first
 	if !exists("/sys/module/acer_wmi") || hasPlatformProfile() {
 		return SetupItem{}, false
 	}

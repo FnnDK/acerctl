@@ -38,6 +38,8 @@ type App struct {
 	monStop func()
 	quit    chan struct{}
 
+	setupRead bool // System.Setup re-read once per start (refreshSetup); run's goroutine only
+
 	sessionBus *dbus.Conn // settings portal (title bar)
 }
 
@@ -96,6 +98,30 @@ func (a *App) run() {
 	}
 }
 
+// refreshSetup asks acerd, once per start of the app, to re-read System.Setup
+// when it lists something to do: the system may have changed since acerd
+// started (DKMS builds the modules once the kernel headers are installed).
+// It runs before the first state reaches the frontend, so the setup dialog
+// opens on fresh items; what changes while the app stays open shows at its
+// next start. System.Reload would also do it, but re-probes everything.
+func (a *App) refreshSetup(cl *client.Client) {
+	if a.setupRead {
+		return
+	}
+	a.setupRead = true
+	v, err := cl.Property(client.IfSystem, "Setup")
+	if err != nil {
+		return
+	}
+	list, _ := client.Plain(v).([]interface{})
+	for _, x := range list {
+		if st := client.PlainMap(x)["state"]; st == "needed" || st == "manual" {
+			_ = cl.Call(client.IfSystem, "RefreshSetup", nil) // an older acerd lacks it: its Setup stays
+			return
+		}
+	}
+}
+
 // serve forwards daemon signals until the daemon leaves the bus.
 func (a *App) serve(cl *client.Client) {
 	conn := cl.Conn()
@@ -119,6 +145,7 @@ func (a *App) serve(cl *client.Client) {
 		a.startMonitorLocked()
 	}
 	a.mu.Unlock()
+	a.refreshSetup(cl)
 	a.emitState()
 	a.ensureAgent() // first run after install: no login yet to autostart it
 
