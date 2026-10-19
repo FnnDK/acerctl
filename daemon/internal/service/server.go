@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"os"
 	"reflect"
 	"sync"
 	"time"
@@ -94,6 +95,11 @@ type Daemon struct {
 	syncMu    sync.Mutex
 	syncStop  context.CancelFunc // App Sync watcher running when non-nil
 	syncWatch *appsync.Watcher
+
+	// inhibitMu guards the logind inhibitor held while the battery calibrates.
+	inhibitMu     sync.Mutex
+	calibInhibit  *os.File
+	inhibitFailed bool // logged once until the calibration ends
 }
 
 // New builds the daemon; Run connects it.
@@ -149,6 +155,7 @@ func (d *Daemon) Run(ctx context.Context) error {
 	d.restoreFans(true)
 	d.restoreLights()
 	d.startAppSync()
+	d.updateCalibrating() // a restart in the middle of a calibration
 
 	<-ctx.Done()
 	d.stopAllSubscribers()
@@ -295,7 +302,7 @@ func (d *Daemon) refreshSlow() {
 	d.setProp(ifLighting, "Keyboard", d.keyboardState())
 	d.refreshLights()
 	d.setProp(ifBattery, "ChargeLimit", d.chargeLimit())
-	d.setProp(ifBattery, "Calibrating", d.calibrating())
+	d.updateCalibrating()
 	d.setProp(ifBattery, "UsbCharging", d.usbCharging())
 	d.setProp(ifBattery, "Health", d.health())
 }

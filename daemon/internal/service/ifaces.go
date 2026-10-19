@@ -276,7 +276,7 @@ func (b *batteryIface) setCalibration(sender dbus.Sender, on bool) *dbus.Error {
 	if err := d.hw.BatteryCtl.SetCalibrating(on); err != nil {
 		return errHardware(err)
 	}
-	d.setProp(ifBattery, "Calibrating", d.calibrating())
+	d.updateCalibrating()
 	return nil
 }
 

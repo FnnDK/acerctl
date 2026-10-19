@@ -12,6 +12,7 @@
 #include <linux/limits.h>
 #include <linux/module.h>
 #include <linux/acpi.h>
+#include <linux/delay.h>
 #include <linux/version.h>
 #include <linux/wmi.h>
 #include <linux/mutex.h>
@@ -259,14 +260,33 @@ static void print_modes(const char *prefix, bool print_if_empty,
 		calib_mode ? "calibration mode" : "");
 }
 
+/*
+ * Right after a boot that interrupted a calibration, the firmware answered
+ * the status call with no modes at all (Aspire AG15-71P), and the charge
+ * limit was missing until the module was reloaded. An empty answer is only
+ * taken after retrying for up to 10 s.
+ */
+#define STATUS_RETRIES		20
+#define STATUS_RETRY_MS		500
+
 static acpi_status init_state(void)
 {
 	bool print_state_if_empty;
 	acpi_status status;
-	status = get_battery_health_control_status(&battery_status);
+	int i;
 
-	if (ACPI_FAILURE(status))
-		return status;
+	for (i = 0;; i++) {
+		status = get_battery_health_control_status(&battery_status);
+		if (ACPI_FAILURE(status))
+			return status;
+		if (battery_status.health_mode >= 0 ||
+		    battery_status.calibration_mode >= 0 || i == STATUS_RETRIES)
+			break;
+		if (i == 0)
+			pr_info("no modes reported yet, retrying for up to %d s\n",
+				STATUS_RETRIES * STATUS_RETRY_MS / 1000);
+		msleep(STATUS_RETRY_MS);
+	}
 
 	print_state_if_empty = true;
 	print_modes("available", print_state_if_empty,
@@ -281,10 +301,22 @@ static acpi_status init_state(void)
 	return status;
 }
 
+/*
+ * Rereads the modes, so the attributes follow the firmware: it ends a
+ * calibration by itself. An answer with no modes once there were some is
+ * taken as transient and ignored.
+ */
 static void update_state(void)
 {
 	struct battery_info old_state = battery_status;
-	get_battery_health_control_status(&battery_status);
+	struct battery_info now;
+
+	if (ACPI_FAILURE(get_battery_health_control_status(&now)))
+		return;
+	if (now.health_mode < 0 && now.calibration_mode < 0 &&
+	    (old_state.health_mode >= 0 || old_state.calibration_mode >= 0))
+		return;
+	battery_status = now;
 	if (battery_status.calibration_mode != old_state.calibration_mode)
 		pr_info("%s calibration mode\n",
 			battery_status.calibration_mode ? "enabled" :
@@ -436,7 +468,12 @@ static ssize_t temperature_show(struct device_driver *driver, char *buf)
 
 static ssize_t health_mode_show(struct device_driver *driver, char *buf)
 {
-	int len = sprintf(buf, "%d\n", battery_status.health_mode);
+	int len;
+
+	mutex_lock(&battery_lock);
+	update_state();
+	len = sprintf(buf, "%d\n", battery_status.health_mode);
+	mutex_unlock(&battery_lock);
 	if (len <= 0)
 		pr_err("Invalid sprintf len: %d\n", len);
 
@@ -466,7 +503,12 @@ static ssize_t health_mode_store(struct device_driver *driver, const char *buf,
 
 static ssize_t calibration_mode_show(struct device_driver *driver, char *buf)
 {
-	int len = sprintf(buf, "%d\n", battery_status.calibration_mode);
+	int len;
+
+	mutex_lock(&battery_lock);
+	update_state();
+	len = sprintf(buf, "%d\n", battery_status.calibration_mode);
+	mutex_unlock(&battery_lock);
 	if (len <= 0)
 		pr_err("Invalid sprintf len: %d\n", len);
 
