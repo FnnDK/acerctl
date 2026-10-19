@@ -1,7 +1,8 @@
 #!/bin/sh
 # Installs acerctl from the release packages with the system's package manager:
-# the daemon and CLI, the kernel modules (akmod on Fedora, DKMS on Debian/Ubuntu)
-# and, unless --no-gui, the tray and the app of the laptop's product line.
+# the daemon and CLI, the kernel modules (akmod on Fedora, DKMS on Debian/Ubuntu,
+# with the kernel headers DKMS needs) and, unless --no-gui, the tray and the
+# app of the laptop's product line.
 #   sudo sh install.sh              # product line from the laptop's DMI product name
 #   sudo sh install.sh --nitro      # or --acer, --predator
 #   sudo sh install.sh --no-gui     # daemon, CLI and modules only
@@ -133,6 +134,34 @@ fi
 DROP=
 if [ -z "$GUI" ]; then DROP=$(installed acerctl-tray $APPS); fi
 
+# Debian's dkms does not depend on the kernel headers and, without them, skips
+# the build with only a warning: add the running kernel's headers, and the
+# headers metapackage of each kernel metapackage (linux-image-amd64 ->
+# linux-headers-amd64), at its version so a backports kernel gets backports
+# headers, for DKMS to build for the kernels updates bring too.
+HEADERS=
+if [ "$PM" = apt ]; then
+  K=$(uname -r)
+  if [ ! -e "/lib/modules/$K/build" ]; then
+    if apt-cache show "linux-headers-$K" >/dev/null 2>&1; then
+      HEADERS=linux-headers-$K
+    else
+      echo "warning: apt has no linux-headers-$K: DKMS cannot build the modules for the running kernel, only for installed kernels with headers" >&2
+    fi
+  fi
+  for f in $(dpkg-query -W -f '${db:Status-Abbrev}${Package}\n' 'linux-image-*' 2>/dev/null | sed -n 's/^ii *linux-image-//p'); do
+    case $f in [0-9]*) continue ;; esac # a kernel, not a metapackage
+    h=linux-headers-$f
+    if [ -n "$(installed "$h")" ]; then continue; fi
+    v=$(dpkg-query -W -f '${Version}' "linux-image-$f")
+    if apt-cache madison "$h" 2>/dev/null | awk -F'|' '{gsub(/ /, "", $2); print $2}' | grep -qxF "$v"; then
+      HEADERS="$HEADERS $h=$v"
+    elif apt-cache show "$h" >/dev/null 2>&1; then
+      HEADERS="$HEADERS $h"
+    fi
+  done
+fi
+
 # shellcheck disable=SC2086
 case $PM in
   rpm-ostree)
@@ -150,7 +179,7 @@ case $PM in
     run dnf install --allowerasing $PKGS ;;
   apt)
     # NAME- removes NAME in the same transaction
-    run apt-get install $PKGS $(for p in $DROP; do echo "$p-"; done) ;;
+    run apt-get install $PKGS $HEADERS $(for p in $DROP; do echo "$p-"; done) ;;
 esac
 
 if [ -n "$GUI" ]; then

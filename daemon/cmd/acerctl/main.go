@@ -319,6 +319,10 @@ func setupText(id, state, detail string) string {
 		return "The mokutil program is needed to enroll the key: install the mokutil package."
 	case "modules.manual.missing":
 		return "Not installed: install the modules package (akmod-acerctl on Fedora, acerctl-dkms on Debian and Ubuntu)."
+	case "modules.manual.noheaders":
+		return "acerctl-dkms is installed, but DKMS could not build the modules: the running kernel's headers are missing. Install them (sudo apt install linux-headers-$(uname -r)), DKMS builds the modules right after; then restart."
+	case "modules.manual.notbuilt":
+		return "acerctl-dkms is installed, but DKMS could not build the modules for the running kernel. sudo dkms autoinstall tries again and shows the error; please report it on GitHub."
 	case "modules.manual.notloaded":
 		return "Installed, but not loaded. Restart: after a kernel update, akmods or DKMS rebuilds them."
 	}

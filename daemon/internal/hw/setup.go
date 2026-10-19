@@ -150,14 +150,14 @@ func writeAcerWMIOptions(opts string) error {
 // ---- modules and the signing key -------------------------------------------
 
 // modulesItem explains why acer-wmi-extras is not loaded on a machine with
-// Acer WMI: not installed, or refused by Secure Boot because the akmods key
-// is not enrolled (the one case ApplySetup can fix).
+// Acer WMI: not installed or not built, or refused by Secure Boot because the
+// signing key is not enrolled (the one case ApplySetup can fix).
 func modulesItem() (SetupItem, bool) {
 	if exists("/sys/module/acer_wmi_extras") || !hasAcerWMI() {
 		return SetupItem{}, false
 	}
 	if !moduleOnDisk("acer_wmi_extras") {
-		return SetupItem{ID: "modules", State: "manual", Detail: "missing"}, true
+		return SetupItem{ID: "modules", State: "manual", Detail: whyNotOnDisk()}, true
 	}
 	if sigRequired() {
 		switch ks := keyState(); ks {
@@ -188,6 +188,20 @@ func moduleOnDisk(name string) bool {
 		}
 	}
 	return exists(filepath.Join(scriptModules, strings.ReplaceAll(name, "_", "-")+".ko"))
+}
+
+// whyNotOnDisk tells a missing modules package from an installed acerctl-dkms
+// that has no build for the running kernel: Debian's dkms does not depend on
+// the kernel headers and, without them, skips the build with only a warning
+// (noheaders); with them, the build failed (notbuilt).
+func whyNotOnDisk() string {
+	if len(glob("/usr/src/acerctl-*/dkms.conf")) == 0 {
+		return "missing"
+	}
+	if rel, err := readStr("/proc/sys/kernel/osrelease"); err == nil && !exists(filepath.Join("/lib/modules", rel, "build")) {
+		return "noheaders"
+	}
+	return "notbuilt"
 }
 
 // sigRequired: the kernel only loads signed modules (Secure Boot lockdown).

@@ -51,6 +51,32 @@ func TestIsDKMSPath(t *testing.T) {
 	}
 }
 
+func TestWhyNotOnDisk(t *testing.T) {
+	Root = t.TempDir()
+	defer func() { Root = "" }()
+	mk := func(path, content string) {
+		p := filepath.Join(Root, path)
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	mk("/proc/sys/kernel/osrelease", "6.12.48+deb13-amd64\n")
+	if got := whyNotOnDisk(); got != "missing" {
+		t.Fatalf("no package: got %q", got)
+	}
+	mk("/usr/src/acerctl-0.1.6/dkms.conf", "")
+	if got := whyNotOnDisk(); got != "noheaders" {
+		t.Fatalf("package, no headers: got %q", got)
+	}
+	mk("/lib/modules/6.12.48+deb13-amd64/build/Makefile", "")
+	if got := whyNotOnDisk(); got != "notbuilt" {
+		t.Fatalf("package and headers: got %q", got)
+	}
+}
+
 func TestOneTimeCode(t *testing.T) {
 	for i := 0; i < 50; i++ {
 		c, err := oneTimeCode()
