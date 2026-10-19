@@ -8,7 +8,7 @@
 %global debug_package %{nil}
 
 Name:           acerctl-kmod
-Version:        0.1.5
+Version:        0.1.6
 Release:        1%{?dist}
 Summary:        Kernel modules of acerctl (acer-wmi-extras, acer-wmi-battery)
 
@@ -53,6 +53,10 @@ done
 %{?akmod_install}
 
 %changelog
+* Mon Oct 19 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.6-1
+- acer-wmi-battery: health_mode and calibration_mode follow the firmware, so the
+  end of a calibration shows; loading retries while the firmware reports no modes
+
 * Sun Oct 18 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.5-1
 - Released with acerctl 0.1.5; no changes in the modules
 

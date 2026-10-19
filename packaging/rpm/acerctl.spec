@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           acerctl
-Version:        0.1.5
+Version:        0.1.6
 Release:        1%{?dist}
 Summary:        Daemon and CLI for the firmware features of Acer laptops
 
@@ -188,6 +188,11 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/*.desktop
 %config(noreplace) %{_sysconfdir}/xdg/autostart/io.github.fnndk.AcerControlCenter.Tray.desktop
 
 %changelog
+* Mon Oct 19 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.6-1
+- acerd keeps the laptop awake (logind inhibitor) while the battery calibrates
+- App: the battery care card hides when the firmware offers neither the charge
+  limit nor calibration
+
 * Sun Oct 18 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.5-1
 - acerctl setup: the app's setup steps in the CLI (acer_wmi option, Secure Boot
   key, kernel modules); acerctl status shows when something is left
