@@ -31,7 +31,7 @@ export function battery(): Page {
         </div>
       </div>
     </div>
-    <div class="card mt">
+    <div class="card mt" data-care>
       <h2>${t('batt.care')}</h2>
       <div class="setting" data-limit-row><div class="label"><b>${t('batt.limit')}</b><span>${t('batt.limit_hint')}</span></div>${switchHtml('data-limit', false)}</div>
       <div class="setting" data-calib-row><div class="label"><b>${t('batt.calib')}</b><span>${t('batt.calib_hint')}</span><span class="small" style="display:block;color:var(--warn)" data-calib-ac></span></div>
@@ -83,6 +83,8 @@ export function battery(): Page {
       const bc = caps().battery ?? {}
       root.querySelector('[data-limit-row]')!.classList.toggle('hidden', !bc.charge_limit)
       root.querySelector('[data-calib-row]')!.classList.toggle('hidden', !bc.calibration)
+      // nothing for the card to hold when the firmware offers neither
+      root.querySelector('[data-care]')!.classList.toggle('hidden', !bc.charge_limit && !bc.calibration)
       limit.checked = !!bat.ChargeLimit
       calib.innerHTML = bat.Calibrating ? `${icon('stop')}${t('batt.calib_stop')}` : `${icon('play')}${t('batt.calib_start')}`
       calib.classList.toggle('danger', !!bat.Calibrating)
