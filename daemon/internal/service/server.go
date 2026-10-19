@@ -43,7 +43,7 @@ const (
 	powerFallback = 30 * time.Second // with uevents
 	fansEvery     = 5 * time.Second  // RPM only (EC read, ~0.2 ms)
 	fansFullEvery = 60 * time.Second // mode and speed too (WMI, ~23 ms per fan): catches other writers
-	slowEvery     = 30 * time.Second // keyboard, USB charging, charge limit, calibration, health
+	slowEvery     = 30 * time.Second // keyboard, USB charging, charge limit, calibration, health, setup
 	modeFallback  = 10 * time.Second // re-read platform_profile even without a poll() event
 	modeDebounce  = 150 * time.Millisecond
 	settleTimeout = 2 * time.Second // how long tuned gets to write platform_profile
@@ -298,6 +298,9 @@ func (d *Daemon) refreshLoop(ctx context.Context) {
 }
 
 // refreshSlow re-reads the EC-backed settings; also called after a resume.
+// The setup changes behind acerd's back too (DKMS builds the modules once the
+// headers are installed, a key enrollment is confirmed), and the app offers
+// the next step from it.
 func (d *Daemon) refreshSlow() {
 	d.setProp(ifLighting, "Keyboard", d.keyboardState())
 	d.refreshLights()
@@ -305,6 +308,7 @@ func (d *Daemon) refreshSlow() {
 	d.updateCalibrating()
 	d.setProp(ifBattery, "UsbCharging", d.usbCharging())
 	d.setProp(ifBattery, "Health", d.health())
+	d.refreshSetup()
 }
 
 // modeLoop checks platform_profile on sysfs notifications when the backend

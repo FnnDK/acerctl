@@ -1,17 +1,31 @@
 // System setup dialog: what acerd reports in System.Setup (the acer_wmi option,
 // the Secure Boot key, missing modules), applied with one password and one
-// restart. Opens by itself once per start while something is to do, and from
-// Settings.
+// restart. Opens by itself for each pending item not shown yet since the app
+// started, and from Settings; an open list follows System.Setup.
 
 import { App, el, errorText, esc, state, toast, type Dict } from './core'
 import { t } from './i18n'
 import { icon } from './icons'
 
 export const setupItems = (): Dict[] => state.system?.Setup ?? []
-// something the user has to do now (not only waiting for a restart)
-export const setupPending = () => setupItems().some(it => it.state === 'needed' || it.state === 'manual')
+// what the user has to do now (not only waiting for a restart), as
+// id.state.detail, to tell a new item from those already shown
+export const setupPendingKeys = () => setupItems()
+  .filter(it => it.state === 'needed' || it.state === 'manual')
+  .map(it => `${it.id}.${it.state}.${it.detail ?? ''}`)
+export const setupPending = () => setupPendingKeys().length > 0
 
 let dialog: HTMLElement | null = null
+// redraws the open dialog's list; null while it is closed, applying or
+// showing the result of ApplySetup
+let relist: (() => void) | null = null
+let listed = '' // the items the list shows, as JSON
+
+// updateSetup redraws an open list when System.Setup changed (acerd re-reads
+// it every 30 s: DKMS may have built the modules, a key been enrolled).
+export function updateSetup() {
+  if (relist && JSON.stringify(setupItems()) !== listed) relist()
+}
 
 function itemText(it: Dict): string {
   const keys = [`setup.${it.id}.${it.state}.${it.detail}`, `setup.${it.id}.${it.state}`]
@@ -38,7 +52,7 @@ export function openSetup() {
   const x = b.querySelector('[data-x]') as HTMLButtonElement
   const alt = b.querySelector('[data-alt]') as HTMLButtonElement
   const go = b.querySelector('[data-go]') as HTMLButtonElement
-  const close = () => { b.remove(); dialog = null }
+  const close = () => { b.remove(); dialog = null; relist = null }
   x.onclick = close
   b.onclick = e => { if (e.target === b) close() }
 
@@ -60,37 +74,47 @@ export function openSetup() {
 
   const apply = async (ids: string[]) => {
     go.disabled = alt.disabled = true
+    relist = null
     try {
       done(await App.ApplySetup(ids))
     } catch (e) {
       const { title, msg } = errorText(e)
       toast(title, msg, 'error')
+      relist = list
+      list()
     } finally {
       go.disabled = alt.disabled = false
     }
   }
 
-  const items = setupItems()
-  const needed = items.filter(it => it.state === 'needed').map(it => it.id)
-  const key = items.find(it => it.id === 'signing_key')
-  body.innerHTML = `<p class="muted">${items.length ? t('setup.sub') : t('setup.nothing')}</p>
-    <div class="setup-items">${itemsHtml(items)}</div>
-    ${needed.length ? `<div class="note mt">${icon('info')}<span>${needed.includes('signing_key') ? t('setup.note_key') : t('setup.note_reboot')}</span></div>` : ''}`
-  x.textContent = needed.length ? t('setup.later') : t('setup.close')
-  if (needed.length) {
-    go.textContent = t('setup.apply')
-    go.classList.remove('hidden')
-    go.onclick = () => apply(needed)
-  } else if (items.some(it => it.state === 'reboot')) {
-    go.textContent = t('setup.reboot_now')
-    go.classList.remove('hidden')
-    go.onclick = reboot
+  const list = () => {
+    const items = setupItems()
+    listed = JSON.stringify(items)
+    const needed = items.filter(it => it.state === 'needed').map(it => it.id)
+    const key = items.find(it => it.id === 'signing_key')
+    body.innerHTML = `<p class="muted">${items.length ? t('setup.sub') : t('setup.nothing')}</p>
+      <div class="setup-items">${itemsHtml(items)}</div>
+      ${needed.length ? `<div class="note mt">${icon('info')}<span>${needed.includes('signing_key') ? t('setup.note_key') : t('setup.note_reboot')}</span></div>` : ''}`
+    x.textContent = needed.length ? t('setup.later') : t('setup.close')
+    go.classList.add('hidden')
+    alt.classList.add('hidden')
+    if (needed.length) {
+      go.textContent = t('setup.apply')
+      go.classList.remove('hidden')
+      go.onclick = () => apply(needed)
+    } else if (items.some(it => it.state === 'reboot')) {
+      go.textContent = t('setup.reboot_now')
+      go.classList.remove('hidden')
+      go.onclick = reboot
+    }
+    // the code is shown once; a lost code needs a new enrollment request
+    if (key?.state === 'reboot' && !needed.length) {
+      alt.textContent = t('setup.newcode')
+      alt.classList.remove('hidden')
+      alt.onclick = () => apply(['signing_key'])
+    }
   }
-  // the code is shown once; a lost code needs a new enrollment request
-  if (key?.state === 'reboot' && !needed.length) {
-    alt.textContent = t('setup.newcode')
-    alt.classList.remove('hidden')
-    alt.onclick = () => apply(['signing_key'])
-  }
+  relist = list
+  list()
   document.body.append(b)
 }
