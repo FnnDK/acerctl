@@ -59,7 +59,8 @@ Buffer: byte 0 = function, bytes 1-2 = selector/payload, byte 5 = value. Get = m
 |---|---|---|---|
 | Keyboard backlight | `01 84 08 00` (0x088401) | `00 [00] [08 = on] 00 00 [timeout in s]` | `02 84 08 00 00 [s]`: `0x088402` disables the timeout, `0x1E0000088402` = 30 s |
 | USB charging while the laptop is off | `04 00 00 00` | `00 [0f on / 1f off] [limit %]` | `04 0f 1e` 30 %, `04 0f 14` 20 %, `04 0f 0a` 10 %, `04 1f 0a` off |
-| fn 3 / fn 7 / fn 10 | `03..` / `07 02..` / `0a..` | 0x11C0 / 0 / 1 | meaning unknown |
+| AC adapter status | `0a 00 00 00` | `00 [01 on AC / 00 on battery]` (measured 2026-10-20: 1 → 0 → 1 unplugging and replugging the charger, matching `power_supply` `online`) | — |
+| fn 3 / fn 7 | `03..` / `07 02..` | 0x11C0 / 0 | meaning unknown |
 
 Bit 0x08 of the keyboard response is the same one `WMID.GOTS(0x84)` returns when `KBBL == 1`. SMM error codes: 0xE1 (not supported), 0xE2 (invalid parameter), 0xE4.
 
