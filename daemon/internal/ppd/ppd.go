@@ -4,13 +4,19 @@
 package ppd
 
 import (
+	"fmt"
 	"log/slog"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/godbus/dbus/v5"
 )
 
+// BusName is the well-known name both PPD implementations own.
+const BusName = "net.hadess.PowerProfiles"
+
 const (
-	busName = "net.hadess.PowerProfiles"
 	objPath = "/net/hadess/PowerProfiles"
 	iface   = "net.hadess.PowerProfiles"
 )
@@ -19,17 +25,58 @@ const (
 type Client struct {
 	conn *dbus.Conn
 	obj  dbus.BusObject
+	// Provider names the program that owned the name at Connect, e.g. tuned-ppd.
+	Provider string
 }
 
 // Connect returns nil when no PPD owns the name on the bus.
 func Connect(conn *dbus.Conn) *Client {
 	var owner string
-	if err := conn.BusObject().Call("org.freedesktop.DBus.GetNameOwner", 0, busName).Store(&owner); err != nil {
-		slog.Info("no power-profiles-daemon on the bus; PPD sync disabled")
+	if err := conn.BusObject().Call("org.freedesktop.DBus.GetNameOwner", 0, BusName).Store(&owner); err != nil {
+		slog.Info("no power-profiles-daemon on the bus; PPD sync starts when one appears")
 		return nil
 	}
-	slog.Info("power-profiles-daemon found", "owner", owner)
-	return &Client{conn: conn, obj: conn.Object(busName, objPath)}
+	p := provider(conn, owner)
+	slog.Info("power-profiles-daemon found", "owner", owner, "provider", p)
+	return &Client{conn: conn, obj: conn.Object(BusName, objPath), Provider: p}
+}
+
+// ProviderName names the program that owns the name now, "" when none does.
+func ProviderName(conn *dbus.Conn) string {
+	var owner string
+	if conn.BusObject().Call("org.freedesktop.DBus.GetNameOwner", 0, BusName).Store(&owner) != nil {
+		return ""
+	}
+	return provider(conn, owner)
+}
+
+// provider reads the owner's process name; the bus name when it cannot.
+func provider(conn *dbus.Conn, owner string) string {
+	var pid uint32
+	if conn.BusObject().Call("org.freedesktop.DBus.GetConnectionUnixProcessID", 0, owner).Store(&pid) != nil {
+		return BusName
+	}
+	b, err := os.ReadFile(fmt.Sprintf("/proc/%d/comm", pid))
+	name := strings.TrimSpace(string(b))
+	if err != nil || name == "" {
+		return BusName
+	}
+	// comm keeps 15 characters (power-profiles-daemon -> power-profiles-)
+	if len(name) == 15 {
+		if cmd, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", pid)); err == nil {
+			if argv0 := filepath.Base(strings.SplitN(string(cmd), "\x00", 2)[0]); strings.HasPrefix(argv0, name) {
+				name = argv0
+			}
+		}
+	}
+	return name
+}
+
+// Present reports whether a PPD owns the name, without logging.
+func Present(conn *dbus.Conn) bool {
+	var has bool
+	err := conn.BusObject().Call("org.freedesktop.DBus.NameHasOwner", 0, BusName).Store(&has)
+	return err == nil && has
 }
 
 // Active returns the current PPD profile.

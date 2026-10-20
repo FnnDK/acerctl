@@ -162,6 +162,9 @@ func cmdStatus(args []string) error {
 	row("Power", fmt.Sprintf("%s, battery %d %%", src, num(mode["BatteryPercent"].Value())))
 	if _, ok := caps["profiles"]; ok {
 		row("Mode", profileLine(mode))
+		if _, ok := mode["PPD"]; ok { // absent on older daemons
+			row("PPD sync", ppdLine(mode))
+		}
 	}
 	if _, ok := caps["fans"]; ok {
 		row("Fans", fanLine(plainMap(fans["State"])))
@@ -198,6 +201,14 @@ func cmdStatus(args []string) error {
 	}
 	row("Scenario", fmt.Sprintf("%s (App Sync %s)", active, sync))
 	return nil
+}
+
+// ppdLine tells whether the desktop power mode follows the Acer mode.
+func ppdLine(mode map[string]dbus.Variant) string {
+	if p := str(mode["PPD"].Value()); p != "" {
+		return fmt.Sprintf("on (%s): the desktop power mode follows the mode", p)
+	}
+	return "off: no tuned-ppd or power-profiles-daemon on the bus, the desktop power mode does not follow"
 }
 
 func profileLine(mode map[string]dbus.Variant) string {

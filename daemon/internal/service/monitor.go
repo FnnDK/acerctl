@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/godbus/dbus/v5"
+
+	"acerctl/daemon/internal/ppd"
 )
 
 const minInterval = 500 * time.Millisecond
@@ -100,7 +102,8 @@ func (d *Daemon) emitTo(dest, iface, member string, args ...interface{}) {
 	}
 }
 
-// watchNameOwners drops subscribers that left the bus.
+// watchNameOwners drops subscribers that left the bus and picks up a PPD
+// that appears after startup.
 func (d *Daemon) watchNameOwners(ctx context.Context) {
 	if err := d.conn.AddMatchSignal(
 		dbus.WithMatchInterface("org.freedesktop.DBus"),
@@ -111,6 +114,10 @@ func (d *Daemon) watchNameOwners(ctx context.Context) {
 	}
 	ch := make(chan *dbus.Signal, 32)
 	d.conn.Signal(ch)
+	// A PPD that took its name before the match was in place sent no signal.
+	if d.ppd.Load() == nil && ppd.Present(d.conn) {
+		go d.ppdAppeared(ctx)
+	}
 	for {
 		select {
 		case <-ctx.Done():
@@ -121,7 +128,12 @@ func (d *Daemon) watchNameOwners(ctx context.Context) {
 			}
 			name, _ := s.Body[0].(string)
 			newOwner, _ := s.Body[2].(string)
-			if newOwner == "" {
+			switch {
+			case name == ppd.BusName && newOwner == "":
+				d.setProp(ifMode, "PPD", "") // the PPD left: no sync until it is back
+			case name == ppd.BusName:
+				go d.ppdAppeared(ctx)
+			case newOwner == "":
 				d.removeSubscriber(name)
 			}
 		}

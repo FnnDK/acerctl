@@ -117,6 +117,14 @@ export function settings(): Page {
         [t('set.kernel'), esc(md.kernel ?? '')],
         [t('set.modules'), mods],
       ]
+      // the PPD only matters with firmware modes; older daemons lack Mode.PPD
+      const mode = s.mode ?? {}
+      if (caps().profiles?.length && 'PPD' in mode) {
+        const ppd = mode.PPD
+          ? `<span class="badge ok">${t('set.ppd_on')}</span><span class="faint">${esc(mode.PPD)}</span>`
+          : `<span class="badge warn">${t('set.ppd_off')}</span><span class="faint">${t('set.ppd_none')}</span>`
+        rows.push([t('set.ppd'), `<div class="mods"><span>${ppd}</span></div>`])
+      }
       const html = rows.map(([k, v]) => `<tr><td class="muted">${k}</td><td>${v || '–'}</td></tr>`).join('')
       const tb = root.querySelector('[data-about]')!
       if (tb.innerHTML !== html) tb.innerHTML = html

@@ -2,7 +2,7 @@
 Description=acerd, Acer Nitro/Predator control daemon (io.github.fnndk.Acerd1)
 Documentation=file:///usr/share/doc/acerctl/api-dbus.md
 # Companion modules first; tuned/PPD before us so our profile is applied last.
-After=acer-wmi-modules.service tuned.service power-profiles-daemon.service dbus.service
+After=acer-wmi-modules.service tuned.service tuned-ppd.service power-profiles-daemon.service dbus.service
 Wants=acer-wmi-modules.service
 
 [Service]

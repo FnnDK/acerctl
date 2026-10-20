@@ -10,6 +10,7 @@ import (
 	"os"
 	"reflect"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/godbus/dbus/v5"
@@ -72,7 +73,8 @@ type Daemon struct {
 	ctx     context.Context
 	conn    *dbus.Conn
 	props   *prop.Properties
-	ppd     *ppd.Client
+	ppd     atomic.Pointer[ppd.Client] // nil until a PPD is on the bus
+	applyMu sync.Mutex                 // one mode change at a time
 	sampler *monitor.Sampler
 
 	mu          sync.Mutex
@@ -119,7 +121,13 @@ func (d *Daemon) Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("connect bus: %w", err)
 	}
-	defer d.conn.Close()
+	defer func() {
+		// A mode change in flight finishes on an open bus; later ones see
+		// the cancelled context and stop before touching it.
+		d.applyMu.Lock()
+		d.conn.Close()
+		d.applyMu.Unlock()
+	}()
 
 	reply, err := d.conn.RequestName(busName, dbus.NameFlagDoNotQueue)
 	if err != nil {
@@ -128,7 +136,13 @@ func (d *Daemon) Run(ctx context.Context) error {
 	if reply != dbus.RequestNameReplyPrimaryOwner {
 		return fmt.Errorf("name %s already taken", busName)
 	}
-	d.ppd = ppd.Connect(d.conn)
+	d.ppd.Store(ppd.Connect(d.conn))
+	// The PPD (power-profiles-daemon or tuned-ppd) is only mirrored onto
+	// firmware profiles; without them it is left entirely to the desktop.
+	// Subscribe before the export, so no change is missed once clients see us.
+	if c := d.ppd.Load(); c != nil && d.hw.Profiles != nil {
+		d.watchPPD(ctx, c)
+	}
 
 	d.readInitial()
 	if err := d.export(); err != nil {
@@ -140,11 +154,6 @@ func (d *Daemon) Run(ctx context.Context) error {
 	go d.refreshLoop(ctx)
 	go d.modeLoop(ctx)
 	go d.watchNameOwners(ctx)
-	// The PPD (power-profiles-daemon or tuned-ppd) is only mirrored onto
-	// firmware profiles; without them it is left entirely to the desktop.
-	if d.ppd != nil && d.hw.Profiles != nil {
-		go d.watchPPD(ctx)
-	}
 	if !d.cfg.Session {
 		go d.watchSleep(ctx)
 	}
@@ -182,6 +191,7 @@ func (d *Daemon) export() error {
 			"BatteryPercent": {Value: d.power.Percent, Emit: prop.EmitTrue},
 			"Allowed":        {Value: nonNil(d.allowed), Emit: prop.EmitTrue},
 			"Extras":         {Value: nonNil(d.extras), Emit: prop.EmitTrue},
+			"PPD":            {Value: d.ppdProvider(), Emit: prop.EmitTrue},
 		},
 		ifFans: {
 			"State": {Value: d.readFans(true), Emit: prop.EmitTrue},
@@ -464,12 +474,16 @@ func (d *Daemon) watchSysfsMode() {
 
 // watchPPD turns profile changes made through the PPD (GNOME menu) into the
 // best Acer mode for the current power source.
-func (d *Daemon) watchPPD(ctx context.Context) {
-	ch, err := d.ppd.Watch()
+func (d *Daemon) watchPPD(ctx context.Context, c *ppd.Client) {
+	ch, err := c.Watch()
 	if err != nil {
 		slog.Warn("cannot watch PPD", "err", err)
 		return
 	}
+	go d.followPPD(ctx, ch)
+}
+
+func (d *Daemon) followPPD(ctx context.Context, ch <-chan string) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -499,21 +513,72 @@ func (d *Daemon) watchPPD(ctx context.Context) {
 	}
 }
 
+// ppdProvider is Mode.PPD: who the mode is kept in sync with, "" when nobody.
+func (d *Daemon) ppdProvider() string {
+	if c := d.ppd.Load(); c != nil && d.hw.Profiles != nil {
+		return c.Provider
+	}
+	return ""
+}
+
+// ppdAppeared connects to a PPD that took its bus name after startup
+// (tuned-ppd can start in the same instant as the daemon at boot) and moves
+// it to the current mode, as a start with the PPD present would have done.
+func (d *Daemon) ppdAppeared(ctx context.Context) {
+	if d.hw.Profiles == nil {
+		return
+	}
+	if d.ppd.Load() != nil {
+		// a restart: the client talks to the well-known name, only the owner changed
+		d.setProp(ifMode, "PPD", ppd.ProviderName(d.conn))
+		return
+	}
+	c := ppd.Connect(d.conn)
+	if c == nil || !d.ppd.CompareAndSwap(nil, c) {
+		return
+	}
+	d.setProp(ifMode, "PPD", c.Provider)
+	d.watchPPD(ctx, c)
+	// Read the mode under applyMu: a desktop change that got there first
+	// must not be undone by the stale value.
+	d.applyMu.Lock()
+	defer d.applyMu.Unlock()
+	d.mu.Lock()
+	cur := d.current
+	d.mu.Unlock()
+	if cur == "" || ctx.Err() != nil {
+		return
+	}
+	if err := d.applyModeLocked(cur, false); err != nil {
+		slog.Error("sync with the new PPD failed", "err", err)
+	}
+}
+
 // applyMode is the single writer of platform_profile: it first moves the
 // PPD to the nearest profile (the tuned write that follows is ignored), then
 // writes the real mode, then remembers it per source when asked.
 func (d *Daemon) applyMode(profile string, remember bool) error {
+	d.applyMu.Lock()
+	defer d.applyMu.Unlock()
+	if d.ctx.Err() != nil {
+		return fmt.Errorf("shutting down")
+	}
+	return d.applyModeLocked(profile, remember)
+}
+
+// applyModeLocked is applyMode with applyMu held.
+func (d *Daemon) applyModeLocked(profile string, remember bool) error {
 	if d.hw.Profiles == nil {
 		return fmt.Errorf("no thermal profiles on this machine")
 	}
-	if d.ppd != nil {
+	if c := d.ppd.Load(); c != nil {
 		target := rules.NearestPPD(profile)
-		if cur, err := d.ppd.Active(); err == nil && cur != target {
+		if cur, err := c.Active(); err == nil && cur != target {
 			d.mu.Lock()
 			d.expectPPD = target
 			d.ignoreSysfs = time.Now().Add(settleTimeout + time.Second)
 			d.mu.Unlock()
-			if err := d.ppd.Set(target); err != nil {
+			if err := c.Set(target); err != nil {
 				slog.Warn("PPD set failed", "profile", target, "err", err)
 			} else {
 				d.waitSysfsSettle()
