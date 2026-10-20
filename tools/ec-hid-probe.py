@@ -10,7 +10,8 @@ read back with a get-feature on the same report ID:
   response: A0 | status(lo) status(hi) (0xE000 = OK) | id echo (2 bytes) | data...
 
 Only query sub-functions are sent: everything that sets a value (sub 0x01) is
-refused. The battery serial number in the battery information answer is masked.
+refused, except for id 0x0008, where the sub byte selects what to read. The
+battery serial number in the battery information answer is masked.
 Run as root on the host:
 
   sudo python3 -I tools/ec-hid-probe.py             # all queries
@@ -39,7 +40,19 @@ QUERIES = [
     # The last argument (battery index?) is not confirmed.
     ('battery information',          0x0B00, 0x02, [0, 0, 0]),
     ('battery boundary',             0x0B03, 0x02, [0, 0, 0]),
+    # Not confirmed on hardware yet: expected layouts are in the summary code.
+    ('OC profile',                   0x0002, 0x02, [0]),
+    ('keyboard backlight',           0x000A, 0x02, [2]),   # device 2
+    ('panel DFR mode',               0x000A, 0x02, [3]),   # device 3
+    ('system health 1',              0x0008, 0x01, [0]),
+    ('system health 2',              0x0008, 0x02, [0]),
+    ('BSOC table row 1',             0x000B, 0x02, [1, 1]),
 ]
+
+# Commands whose sub byte 0x01 is a read selector rather than a set.
+SUB1_READS = {0x0008}
+# Commands sent with the unused bytes set to 0xFF instead of 0x00.
+PAD_FF = {0x000B}
 
 # Modes offered at each capability level (byte 5 of the capability answer).
 # The byte each mode takes in the set command is not confirmed yet.
@@ -74,9 +87,9 @@ def find_device():
 
 
 def request(cmd_id, sub, args):
-    if sub == 0x01:
+    if sub == 0x01 and cmd_id not in SUB1_READS:
         raise ValueError('set sub-functions are not allowed')
-    buf = bytearray(REPORT_LEN)
+    buf = bytearray([0xFF if cmd_id in PAD_FF else 0x00] * REPORT_LEN)
     body = [REPORT_ID, 0x00, 0xA0, cmd_id & 0xFF, cmd_id >> 8, sub] + args
     buf[:len(body)] = bytes(body)
     return buf
@@ -84,6 +97,10 @@ def request(cmd_id, sub, args):
 
 def hexs(b):
     return ' '.join('%02x' % x for x in b)
+
+
+def le16(b, o):
+    return b[o] | b[o + 1] << 8
 
 
 def main():
@@ -120,6 +137,7 @@ def main():
                 continue
             try:
                 fcntl.ioctl(fd, HIDIOCSFEATURE, bytes(req))
+                time.sleep(0.02)   # give the EC time to prepare the answer
                 rsp = bytearray(REPORT_LEN)
                 rsp[0] = REPORT_ID
                 fcntl.ioctl(fd, HIDIOCGFEATURE, rsp)
@@ -142,20 +160,48 @@ def main():
         if fd is not None:
             os.close(fd)
 
-    cap = answers.get('system usage mode capability')
     cur = answers.get('current system usage mode')
     bat = answers.get('battery information')
     bnd = answers.get('battery boundary')
     if answers:
         out('\n## summary')
-    if cap:
-        out('mode capability level: %d -> %s' % (cap[5], MODE_SETS.get(cap[5], 'unknown level')))
+    new_layout = False
+    ver = answers.get('HID spec version')
+    if ver:
+        # The version is u16 5-6 when bytes 7-8 are 0xFFFF, otherwise u16 7-8
+        # (with byte 5 = 0, the sub echo). Shown as low byte . high byte.
+        # Expected: from 0.6 on, or with a non-zero low byte, the id 0x0000
+        # answers echo the sub in byte 5 and carry the value in bytes 7-8
+        # instead of 5-6 (the Aspire AG15-71P, old layout, has 00 04 in 5-6).
+        version = (le16(ver, 5) if le16(ver, 7) == 0xFFFF else
+                   le16(ver, 7) if ver[5] == 0 else None)
+        if version is None:
+            out('data version: unrecognized answer')
+        else:
+            new_layout = (version & 0xFF) != 0 or version >> 8 > 5
+            out('data version: %d.%d (0x%04X) -> %s layout for id 0x0000 answers' % (
+                version & 0xFF, version >> 8, version, 'new' if new_layout else 'old'))
+    sub_of = {q[0]: q[2] for q in QUERIES}
+
+    def system_value(label):
+        r = answers.get(label)
+        if r is None:
+            return None
+        if new_layout:
+            return le16(r, 7) if r[5] == sub_of[label] else None
+        return le16(r, 5)
+
+    level = system_value('system usage mode capability')
+    if level is not None:
+        out('mode capability level: %d -> %s' % (level, MODE_SETS.get(level, 'unknown level')))
     if cur:
         out('current mode byte: 0x%02X' % cur[5])
-    ac = answers.get('AC status')
-    if ac:
-        # 0x04 on the charger and 0x00 on battery on the Aspire AG15-71P.
-        out('AC status byte: 0x%02X' % ac[5])
+    for label in ('battery boost status', 'AC status', 'OC profile capability',
+                  'system usage mode limit', 'PD adaptor capability'):
+        # AC status: 0x04 on the charger and 0x00 on battery on the Aspire AG15-71P.
+        v = system_value(label)
+        if v is not None:
+            out('%s: 0x%04X' % (label, v))
     if bat:
         # Smart Battery registers as LE u16, offsets matched against
         # /sys/class/power_supply and the WMI battery readings on the Aspire
@@ -170,6 +216,33 @@ def main():
     if bnd:
         # Enabled flag, upper and lower limit (only zeros seen so far).
         out('battery boundary: enabled=%d upper=%d lower=%d' % (bnd[7] == 1, bnd[8], bnd[9]))
+
+    # Expected layouts below are not confirmed on hardware yet.
+    ocp = answers.get('OC profile')
+    if ocp:
+        # Twelve fields of unknown meaning: byte 6, u16 7..15, bytes 17..19, u16 20..24.
+        fields = ([ocp[6]] + [le16(ocp, o) for o in (7, 9, 11, 13, 15)] +
+                  list(ocp[17:20]) + [le16(ocp, o) for o in (20, 22, 24)])
+        out('OC profile fields: %s' % ' '.join(str(f) for f in fields))
+    kb = answers.get('keyboard backlight')
+    if kb and kb[6] == 2:
+        # Device 2: u16 7-8 a flag (1 when set), 9-10 brightness, 11-12 auto-off in seconds.
+        out('keyboard backlight: flag=%d brightness=%d auto-off=%d s' % (
+            le16(kb, 7), le16(kb, 9), le16(kb, 11)))
+    dfr = answers.get('panel DFR mode')
+    if dfr and dfr[6] == 3:
+        # Device 3: u16 7-8 the mode (1 or 2, meaning unknown).
+        out('panel DFR mode: %d' % le16(dfr, 7))
+    for label, off in (('system health 1', 6), ('system health 2', 8)):
+        h = answers.get(label)
+        if h:
+            out('%s: 0x%04X' % (label, le16(h, off)))
+    bsoc = answers.get('BSOC table row 1')
+    if bsoc:
+        # Byte 6 row count and byte 7 row echo (order not certain), then charge
+        # in %, current in units of 100 mA and power in units of 1 W.
+        out('BSOC table row 1: bytes 6-7 %s, %d %%, %d mA, %d mW' % (
+            hexs(bsoc[6:8]), bsoc[8], bsoc[9] * 100, bsoc[10] * 1000))
 
     if opt.output:
         with open(opt.output, 'w') as f:
