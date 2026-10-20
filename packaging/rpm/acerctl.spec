@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           acerctl
-Version:        0.1.6
+Version:        0.1.7
 Release:        1%{?dist}
 Summary:        Daemon and CLI for the firmware features of Acer laptops
 
@@ -188,6 +188,14 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/*.desktop
 %config(noreplace) %{_sysconfdir}/xdg/autostart/io.github.fnndk.AcerControlCenter.Tray.desktop
 
 %changelog
+* Tue Oct 20 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.7-1
+- acerd keeps the desktop power mode in sync when tuned-ppd starts in the same
+  instant at boot: the unit is ordered after tuned-ppd and acerd connects to a
+  power-profiles service that appears later
+- acerctl status and the app's About show whether the power mode is in sync
+- Setup is re-read when the app opens; the modules item tells a missing
+  package, missing kernel headers and a failed build apart
+
 * Mon Oct 19 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.6-1
 - acerd keeps the laptop awake (logind inhibitor) while the battery calibrates
 - App: the battery care card hides when the firmware offers neither the charge
