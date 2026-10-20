@@ -27,6 +27,7 @@
     "BatteryPercent": 80,
     "Current": "",
     "Extras": [],
+    "PPD": "",
     "PowerSource": "ac"
   },
   "Scenarios": {
@@ -124,6 +125,7 @@ $ acerctl battery calibrate start
     "BatteryPercent": 80,
     "Current": "",
     "Extras": [],
+    "PPD": "",
     "PowerSource": "ac"
   },
   "Scenarios": {
