@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           acerctl
-Version:        0.1.7
+Version:        0.1.8
 Release:        1%{?dist}
 Summary:        Daemon and CLI for the firmware features of Acer laptops
 
@@ -188,7 +188,9 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/*.desktop
 %config(noreplace) %{_sysconfdir}/xdg/autostart/io.github.fnndk.AcerControlCenter.Tray.desktop
 
 %changelog
-* Tue Oct 20 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.7-1
+* Tue Oct 20 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.8-1
+- 0.1.7 was tagged but never released (its build failed on the test
+  transcripts); 0.1.8 carries its changes:
 - acerd keeps the desktop power mode in sync when tuned-ppd starts in the same
   instant at boot: the unit is ordered after tuned-ppd and acerd connects to a
   power-profiles service that appears later

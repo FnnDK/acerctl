@@ -15,7 +15,7 @@
 set -eu
 
 # the release it installs, bumped with the specs (the release workflow checks it)
-VERSION=0.1.7
+VERSION=0.1.8
 REPO=https://github.com/FnnDK/acerctl
 UNINSTALL=https://raw.githubusercontent.com/FnnDK/acerctl/main/packaging/uninstall.sh
 APPS="acer-control-center nitro-control-center predator-control-center"
