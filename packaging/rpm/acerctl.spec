@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           acerctl
-Version:        0.1.8
+Version:        0.1.9
 Release:        1%{?dist}
 Summary:        Daemon and CLI for the firmware features of Acer laptops
 
@@ -188,6 +188,11 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/*.desktop
 %config(noreplace) %{_sysconfdir}/xdg/autostart/io.github.fnndk.AcerControlCenter.Tray.desktop
 
 %changelog
+* Wed Oct 21 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.9-1
+- acerd retries the firmware's profile list for up to 2 s before taking the
+  driver's, so a failed read right after boot no longer offers Turbo on
+  laptops whose firmware has none
+
 * Tue Oct 20 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.8-1
 - 0.1.7 was tagged but never released (its build failed on the test
   transcripts); 0.1.8 carries its changes:
