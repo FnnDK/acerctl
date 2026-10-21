@@ -87,8 +87,9 @@
 struct extras_data {
 	bool has_kbd_timeout;
 	bool has_usb_charging;
-	bool has_profiles;
+	bool has_gaming;
 	bool has_battery;
+	int profiles_err;	/* of the read at probe, for the log only */
 	u8 profiles_mask;
 };
 
@@ -499,9 +500,16 @@ static umode_t extras_attr_is_visible(struct kobject *kobj,
 		return d->has_kbd_timeout ? attr->mode : 0;
 	if (attr == &dev_attr_usb_charging.attr)
 		return d->has_usb_charging ? attr->mode : 0;
+	/*
+	 * Shown whenever the gaming interface exists, not only when the read at
+	 * probe worked: right after boot the firmware can fail that call (seen
+	 * on the ANV15-52 with the other Acer modules probing in the same
+	 * second), and every read asks the firmware again anyway. Where the
+	 * firmware has no profile mask, reads fail with -EOPNOTSUPP.
+	 */
 	if (attr == &dev_attr_supported_profiles.attr ||
 	    attr == &dev_attr_supported_profiles_mask.attr)
-		return d->has_profiles ? attr->mode : 0;
+		return d->has_gaming ? attr->mode : 0;
 	return attr->mode;
 }
 
@@ -535,8 +543,8 @@ static int extras_probe(struct platform_device *pdev)
 		d->has_kbd_timeout = kbd_get(NULL, &tmp) == 0 && kbd_backlight_in_dmi();
 		d->has_usb_charging = usb_get(&tmp) == 0;
 	}
-	if (wmi_has_guid(GAMING_GUID) && profiles_get(&d->profiles_mask) == 0)
-		d->has_profiles = true;
+	d->has_gaming = wmi_has_guid(GAMING_GUID);
+	d->profiles_err = d->has_gaming ? profiles_get(&d->profiles_mask) : -ENODEV;
 	if (wmi_has_guid(BATTERY_GUID) && battery_info(SBS_TEMPERATURE, &v) == 0 &&
 	    v >= 2000 && v <= U16_MAX)
 		d->has_battery = true;
@@ -551,11 +559,17 @@ static int extras_probe(struct platform_device *pdev)
 				 PTR_ERR(hwmon));
 	}
 
-	dev_info(&pdev->dev,
-		 "kbd timeout: %s, usb charging: %s, profiles: %s (mask 0x%02x), battery: %s\n",
-		 d->has_kbd_timeout ? "yes" : "no", d->has_usb_charging ? "yes" : "no",
-		 d->has_profiles ? "yes" : "no", d->profiles_mask,
-		 d->has_battery ? "yes" : "no");
+	if (d->profiles_err)
+		dev_info(&pdev->dev,
+			 "kbd timeout: %s, usb charging: %s, profiles: not read (%d)%s, battery: %s\n",
+			 d->has_kbd_timeout ? "yes" : "no", d->has_usb_charging ? "yes" : "no",
+			 d->profiles_err, d->has_gaming ? ", asked again on each read" : "",
+			 d->has_battery ? "yes" : "no");
+	else
+		dev_info(&pdev->dev,
+			 "kbd timeout: %s, usb charging: %s, profiles: mask 0x%02x, battery: %s\n",
+			 d->has_kbd_timeout ? "yes" : "no", d->has_usb_charging ? "yes" : "no",
+			 d->profiles_mask, d->has_battery ? "yes" : "no");
 	return 0;
 }
 

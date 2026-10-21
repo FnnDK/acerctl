@@ -2,7 +2,9 @@ package hw
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"os/exec"
 	"path/filepath"
@@ -98,6 +100,35 @@ type sysfsProfiles struct {
 	fromFirmware bool
 }
 
+// profilesRetry bounds readSupported: right after boot the firmware can fail
+// the supported-profiles call, and the driver's list it would fall back to
+// offers every profile, Turbo included, whatever the firmware has.
+var profilesRetry = struct {
+	tries int
+	delay time.Duration
+}{5, 400 * time.Millisecond}
+
+var profilesRead = readStr // replaced in tests
+
+// readSupported reads acer-wmi-extras' supported_profiles, retrying errors
+// that can pass; a missing file (module not loaded) and "not supported"
+// (no profile mask in this firmware) are final.
+func readSupported(path string) (string, error) {
+	var s string
+	var err error
+	for i := 0; i < profilesRetry.tries; i++ {
+		if i > 0 {
+			time.Sleep(profilesRetry.delay)
+		}
+		s, err = profilesRead(path)
+		if err == nil || errors.Is(err, fs.ErrNotExist) || errors.Is(err, unix.EOPNOTSUPP) {
+			return s, err
+		}
+		slog.Info("supported_profiles not readable yet", "attempt", i+1, "err", err)
+	}
+	return s, err
+}
+
 func probeProfiles() *sysfsProfiles {
 	var path string
 	if m := glob(ppClassGlob); len(m) > 0 {
@@ -108,7 +139,8 @@ func probeProfiles() *sysfsProfiles {
 		return nil
 	}
 	p := &sysfsProfiles{path: path}
-	if s, err := readStr(filepath.Join(extrasDir, "supported_profiles")); err == nil && s != "" {
+	s, err := readSupported(filepath.Join(extrasDir, "supported_profiles"))
+	if err == nil && s != "" {
 		p.supported = strings.Fields(s)
 		p.fromFirmware = true
 		return p
@@ -119,7 +151,11 @@ func probeProfiles() *sysfsProfiles {
 	}
 	if s, err := readStr(choices); err == nil {
 		p.supported = strings.Fields(s)
-		slog.Warn("acer-wmi-extras absent: profile list comes from the driver, not the firmware", "profiles", p.supported)
+		if errors.Is(err, fs.ErrNotExist) {
+			slog.Warn("acer-wmi-extras absent: profile list comes from the driver, not the firmware", "profiles", p.supported)
+		} else {
+			slog.Warn("the firmware's profile list could not be read: profile list comes from the driver", "err", err, "profiles", p.supported)
+		}
 		return p
 	}
 	return nil
