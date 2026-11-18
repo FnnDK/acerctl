@@ -38,7 +38,7 @@ busctl --user call io.github.fnndk.Acerd1 /io/github/fnndk/Acerd1 io.github.fnnd
 
 ## Known models
 
-`internal/hw/testdata/models` holds a fixture per known model (Nitro ANV15-52, Aspire AG15-71P, Predator PH16-71; its README says where each comes from). `go test ./internal/hw -run TestModels` runs the hardware layer on each; `sh tools/models-test.sh DIST` runs the installed packages on each in Fedora 44 and Ubuntu 24.04 containers (6 combinations, part of `tools/ci.sh` and the release workflow). After an intended change, `sh tools/models-test.sh --update` rewrites the expected results; review the diff before committing.
+`internal/hw/testdata/models` holds a fixture per known model (Nitro ANV15-52, Nitro AN515-58, Aspire AG15-71P, Predator PH16-71; its README says where each comes from). `go test ./internal/hw -run TestModels` runs the hardware layer on each; `sh tools/models-test.sh DIST` runs the installed packages on each in Fedora 44 and Ubuntu 24.04 containers (8 combinations, part of `tools/ci.sh` and the release workflow). After an intended change, `sh tools/models-test.sh --update` rewrites the expected results; review the diff before committing.
 
 ## CLI
 

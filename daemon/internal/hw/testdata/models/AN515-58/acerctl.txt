@@ -1,0 +1,288 @@
+# status
+{
+  "Battery": {
+    "Calibrating": false,
+    "ChargeLimit": true,
+    "Health": {
+      "current": 0,
+      "cycles": 0,
+      "design": 58751000,
+      "full": 41071800,
+      "health_pct": 69,
+      "status": "Not charging",
+      "temp": 27.9,
+      "voltage": 16281
+    },
+    "UsbCharging": 0
+  },
+  "Fans": {
+    "State": {
+      "cpu": {
+        "mode": "auto",
+        "rpm": 4477,
+        "speed": 30
+      },
+      "gpu": {
+        "mode": "auto",
+        "rpm": 5000,
+        "speed": 80
+      }
+    }
+  },
+  "Lighting": {
+    "Devices": {},
+    "Keyboard": {
+      "on": true,
+      "timeout_s": 30
+    }
+  },
+  "Mode": {
+    "Allowed": [
+      "quiet",
+      "balanced",
+      "balanced-performance"
+    ],
+    "BatteryPercent": 89,
+    "Current": "balanced",
+    "Extras": [],
+    "PPD": "",
+    "PowerSource": "ac"
+  },
+  "Scenarios": {
+    "Active": "",
+    "AppSync": false,
+    "List": []
+  },
+  "System": {
+    "Capabilities": {
+      "battery": {
+        "calibration": true,
+        "charge_limit": true,
+        "sensors": true
+      },
+      "cpu_power_limit": false,
+      "fans": {
+        "curve": false,
+        "ids": [
+          "cpu",
+          "gpu"
+        ],
+        "modes": [
+          "auto",
+          "max",
+          "manual"
+        ],
+        "range": {
+          "cpu": [
+            0,
+            100
+          ],
+          "gpu": [
+            0,
+            100
+          ]
+        }
+      },
+      "gpu": {
+        "nvml": false,
+        "oc": false
+      },
+      "kbd_backlight": {
+        "rgb": false,
+        "timeouts": [
+          0,
+          30
+        ],
+        "zones": 0
+      },
+      "profiles": [
+        "quiet",
+        "balanced",
+        "balanced-performance"
+      ],
+      "profiles_from_firmware": true,
+      "sense_key": true,
+      "usb_charging": [
+        0,
+        10,
+        20,
+        30
+      ]
+    },
+    "Model": {
+      "bios": "V2.21",
+      "kernel": "7.3.0-4-cachyos",
+      "modules": {
+        "acer_wmi": "loaded",
+        "acer_wmi_battery": "loaded",
+        "acer_wmi_extras": "loaded"
+      },
+      "product": "Nitro AN515-58",
+      "vendor": "Acer"
+    },
+    "SenseKey": "cycle",
+    "Setup": [],
+    "Version": "VERSION"
+  }
+}
+# commands
+$ acerctl setup
+nothing to do: everything the firmware offers is set up
+[exit 0]
+$ acerctl mode quiet
+[exit 0]
+$ acerctl mode performance
+acerctl: not supported: profile performance is not available on this hardware (performance is Acer's Turbo; Acer's Performance mode is balanced-performance)
+[exit 1]
+$ acerctl fan all max
+[exit 0]
+$ acerctl fan cpu 40
+[exit 0]
+$ acerctl fan all auto
+[exit 0]
+$ acerctl kbd timeout 0
+[exit 0]
+$ acerctl usb-charging 20
+[exit 0]
+$ acerctl battery limit off
+[exit 0]
+$ acerctl battery limit on
+[exit 0]
+$ acerctl battery calibrate start
+[exit 0]
+# status after
+{
+  "Battery": {
+    "Calibrating": true,
+    "ChargeLimit": true,
+    "Health": {
+      "current": 0,
+      "cycles": 0,
+      "design": 58751000,
+      "full": 41071800,
+      "health_pct": 69,
+      "status": "Not charging",
+      "temp": 27.9,
+      "voltage": 16281
+    },
+    "UsbCharging": 20
+  },
+  "Fans": {
+    "State": {
+      "cpu": {
+        "mode": "auto",
+        "rpm": 4477,
+        "speed": 40
+      },
+      "gpu": {
+        "mode": "auto",
+        "rpm": 5000,
+        "speed": 80
+      }
+    }
+  },
+  "Lighting": {
+    "Devices": {},
+    "Keyboard": {
+      "on": true,
+      "timeout_s": 0
+    }
+  },
+  "Mode": {
+    "Allowed": [
+      "quiet",
+      "balanced",
+      "balanced-performance"
+    ],
+    "BatteryPercent": 89,
+    "Current": "quiet",
+    "Extras": [],
+    "PPD": "",
+    "PowerSource": "ac"
+  },
+  "Scenarios": {
+    "Active": "",
+    "AppSync": false,
+    "List": []
+  },
+  "System": {
+    "Capabilities": {
+      "battery": {
+        "calibration": true,
+        "charge_limit": true,
+        "sensors": true
+      },
+      "cpu_power_limit": false,
+      "fans": {
+        "curve": false,
+        "ids": [
+          "cpu",
+          "gpu"
+        ],
+        "modes": [
+          "auto",
+          "max",
+          "manual"
+        ],
+        "range": {
+          "cpu": [
+            0,
+            100
+          ],
+          "gpu": [
+            0,
+            100
+          ]
+        }
+      },
+      "gpu": {
+        "nvml": false,
+        "oc": false
+      },
+      "kbd_backlight": {
+        "rgb": false,
+        "timeouts": [
+          0,
+          30
+        ],
+        "zones": 0
+      },
+      "profiles": [
+        "quiet",
+        "balanced",
+        "balanced-performance"
+      ],
+      "profiles_from_firmware": true,
+      "sense_key": true,
+      "usb_charging": [
+        0,
+        10,
+        20,
+        30
+      ]
+    },
+    "Model": {
+      "bios": "V2.21",
+      "kernel": "7.3.0-4-cachyos",
+      "modules": {
+        "acer_wmi": "loaded",
+        "acer_wmi_battery": "loaded",
+        "acer_wmi_extras": "loaded"
+      },
+      "product": "Nitro AN515-58",
+      "vendor": "Acer"
+    },
+    "SenseKey": "cycle",
+    "Setup": [],
+    "Version": "VERSION"
+  }
+}
+# files written
+/sys/bus/wmi/drivers/acer-wmi-battery/calibration_mode = 1
+/sys/bus/wmi/drivers/acer-wmi-battery/health_mode = 1
+/sys/class/hwmon/hwmon8/pwm1 = 102
+/sys/class/hwmon/hwmon8/pwm1_enable = 2
+/sys/class/hwmon/hwmon8/pwm2_enable = 2
+/sys/class/platform-profile/platform-profile-0/profile = quiet
+/sys/devices/platform/acer-wmi-extras/kbd_backlight_timeout = 0
+/sys/devices/platform/acer-wmi-extras/usb_charging = 20
