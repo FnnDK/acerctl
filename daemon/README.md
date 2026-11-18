@@ -49,8 +49,9 @@ acerctl mode quiet            # eco|low-power, quiet, balanced, balanced-perform
 acerctl fan gpu 60            # manual; auto|max too; id all
 acerctl scenario save Game --from-current --mode-ac balanced-performance --fan cpu=max --app eldenring.exe
 acerctl appsync on
-acerctl setup                 # what is left: acer_wmi option, Secure Boot key, modules
+acerctl setup                 # what is left: acer_wmi blocked, acer_wmi option, Secure Boot key, modules
 acerctl setup apply           # make it (one password), then restart
+acerctl setup apply blacklist # remove another tool's acer_wmi blacklist (only when named)
 acerctl --json status         # for scripts
 ```
 
