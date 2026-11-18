@@ -233,3 +233,4 @@ sh tools/models-test.sh --update   # after an intended change; review the diff o
 - Names: `acerctl` (project/CLI), `acerd` (daemon), `nitro-control-center` / `predator-control-center` / `acer-control-center` (GUI flavors), namespace `io.github.fnndk`.
 - Features beyond the original app (e.g. Performance on battery) are allowed, but always **flagged as extra** in the API (`Mode.Extras`) and in the GUI.
 - Before persisting options that create `platform_profile`, check the `tuned` profile.
+- Changes land through pull requests (since 2026-11-18): a branch per piece of work, no direct commits or pushes to `main`; the PR is opened once the user confirms, and lists what changed, why, the tests and what was not tested, with screenshots when something visible changed.
