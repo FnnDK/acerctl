@@ -1,0 +1,4 @@
+# Top of the DKMS source tree (packaging/deb/acerctl-dkms): both modules in
+# one kbuild run, so what dkms adds to MAKE[0] (-j, KERNELRELEASE= and, on
+# clang-built kernels, LLVM=1) reaches both.
+obj-m := acer-wmi-extras/ acer-wmi-battery/
