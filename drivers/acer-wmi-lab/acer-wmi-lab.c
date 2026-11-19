@@ -26,8 +26,19 @@
 #include <linux/mutex.h>
 #include <linux/slab.h>
 #include <linux/string.h>
+#include <linux/version.h>
+/* hex helpers split out of linux/kernel.h in 6.4 */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6,4,0)
+#include <linux/kernel.h>
+#else
 #include <linux/hex.h>
+#endif
+/* moved from asm/ to linux/ in 6.12 */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6,12,0)
+#include <asm/unaligned.h>
+#else
 #include <linux/unaligned.h>
+#endif
 
 #define LAB_MAX_IN	512
 #define LAB_MAX_RESULT	PAGE_SIZE

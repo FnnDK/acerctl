@@ -42,7 +42,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [debian:12, debian:13, ubuntu:22.04, ubuntu:24.04, ubuntu:24.04-hwe, ubuntu:26.04, fedora:44]
+        target: [debian:12, debian:13, ubuntu:22.04, ubuntu:24.04, ubuntu:24.04-hwe, ubuntu:26.04, fedora:44, archlinux:latest, cachyos:latest]
     steps:
       - uses: actions/checkout@v7
       - run: sh tools/ci.sh modules ${{ matrix.target }}
