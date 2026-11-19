@@ -4,13 +4,17 @@
 # machine. Run it as root on the laptop and attach the resulting .tar.gz to a
 # "Hardware report" issue (see docs/hardware-reports.md):
 #
-#   sudo sh tools/survey.sh --probes    # recommended: plus read-only firmware calls
-#   sudo sh tools/survey.sh             # data only, nothing to build
+#   sudo sh tools/survey.sh               # asks: full (the default) or files only
+#   sudo sh tools/survey.sh --probes      # full, without asking
+#   sudo sh tools/survey.sh --no-probes   # files only, without asking
 #
 # Guarantees:
 # - Read-only. Nothing is written to the firmware and no setting is changed.
-#   --probes calls only "Get" WMI methods through drivers/acer-wmi-lab, which
-#   is loaded for the duration of the run and unloaded afterwards.
+#   The full report adds calls to "Get" WMI methods only, through
+#   drivers/acer-wmi-lab, which is loaded for the calls and unloaded
+#   afterwards; a running acerd is paused (frozen by systemd) meanwhile and
+#   resumed, also when the script is interrupted. The files-only report only
+#   reads files and runs standard tools: nothing is built, loaded or paused.
 # - No personal data: no hostname, user name, serial numbers, UUIDs, MAC
 #   addresses or the MSDM table (Windows product key). Every file is plain
 #   text or a raw firmware table and can be reviewed before sending.
@@ -23,19 +27,23 @@ ISSUE_URL=https://github.com/FnnDK/acerctl/issues/new?template=hardware-report.y
 
 usage() {
   cat <<EOF
-usage: sudo sh $0 [--probes] [--lab-module FILE.ko] [-o DIR]
-  --probes             recommended: also run read-only firmware calls (builds and loads
+usage: sudo sh $0 [--probes | --no-probes] [--lab-module FILE.ko] [-o DIR]
+Without --probes or --no-probes it asks which report to make; full is the default.
+  --probes             full report: also run read-only firmware calls (builds and loads
                        drivers/acer-wmi-lab temporarily; needs make, a C
-                       compiler and the kernel headers, or --lab-module)
+                       compiler and the kernel headers, or --lab-module;
+                       pauses a running acerd meanwhile)
+  --no-probes          files only: nothing is built, loaded or paused
   --lab-module FILE    use an already built acer-wmi-lab.ko (implies --probes)
   -o DIR               where to write the report (default: current directory)
 EOF
 }
 
-PROBES=0 LAB_KO="" DEST=$PWD
+PROBES="" LAB_KO="" DEST=$PWD
 while [ $# -gt 0 ]; do
   case "$1" in
     --probes) PROBES=1 ;;
+    --no-probes) PROBES=0 ;;
     --lab-module) shift; LAB_KO=${1:-}; PROBES=1 ;;
     -o) shift; DEST=${1:-$PWD} ;;
     -h|--help) usage; exit 0 ;;
@@ -44,6 +52,35 @@ while [ $# -gt 0 ]; do
   shift
 done
 [ "$(id -u)" = 0 ] || echo "warning: not root; DMI, ACPI tables, BMOF and dmesg will be missing" >&2
+
+# Without --probes or --no-probes, ask; Enter (or no terminal) means full.
+if [ -z "$PROBES" ]; then
+  PROBES=1
+  if [ -t 0 ]; then
+    paused=""
+    pgrep -x acerd >/dev/null 2>&1 && paused="
+     acerd is paused while they run, and resumed afterwards."
+    cat <<EOF
+Which report?
+
+  1) Full (recommended): what 2 reads plus about 90 read-only firmware
+     calls, the most useful part. The calls go through a research module
+     (drivers/acer-wmi-lab), built and loaded only for them.$paused
+  2) Files only: /sys, /proc and the firmware tables; nothing is built,
+     loaded or paused.
+
+EOF
+    while :; do
+      printf 'Choice [1]: '
+      read -r ans || { echo; exit 1; }
+      case "$ans" in
+        ''|1) break ;;
+        2) PROBES=0; break ;;
+        *) echo "Type 1 or 2 (Enter is 1)." ;;
+      esac
+    done
+  fi
+fi
 
 MODEL=$(tr -c 'A-Za-z0-9._\n-' '_' < /sys/class/dmi/id/product_name 2>/dev/null || echo unknown)
 NAME=acer-report-$MODEL-$(date +%Y%m%d-%H%M%S)
@@ -92,9 +129,10 @@ other_tools() {
     u=$(systemctl list-unit-files --no-legend 2>/dev/null | awk '{print $1}' | grep -iE 'damx|linuwu|facer|predator|nitrosense' | paste -sd ' ' -)
     [ -n "$u" ] && printf 'units: %s; ' "$u"
   fi
-  f=$(for x in /etc/modprobe.d/* /etc/modules-load.d/* /usr/lib/modules-load.d/*; do
+  # Not "f": sec() runs this and still needs its own f afterwards.
+  fl=$(for x in /etc/modprobe.d/* /etc/modules-load.d/* /usr/lib/modules-load.d/*; do
         [ -f "$x" ] && grep -qiE 'linuwu|facer' "$x" && printf '%s\n' "$x"; done | paste -sd ' ' -)
-  [ -n "$f" ] && printf 'files: %s; ' "$f"
+  [ -n "$fl" ] && printf 'files: %s; ' "$fl"
   return 0
 }
 sec system.txt other_tools
@@ -252,13 +290,40 @@ probe() {
   done
 }
 
-PROBE_NOTE="not requested (run again with --probes: it is the most useful part)"
-LOADED_BY_US=0
+# acerd makes WMI calls of its own, and concurrent calls can corrupt each
+# other's results on some firmware: freeze it during the probes. Frozen, it
+# keeps its D-Bus name, so the app or the tray cannot start another one (their
+# calls wait), and nothing in its state changes, unlike a stop and start.
+ACERD_FROZEN=0 LOADED_BY_US=0 BUILD=""
+pause_acerd() {
+  pgrep -x acerd >/dev/null 2>&1 || return 0
+  if have systemctl && systemctl -q is-active acerd.service 2>/dev/null &&
+     systemctl freeze acerd.service 2>/dev/null; then
+    ACERD_FROZEN=1
+    echo "acerd paused for the firmware calls"
+    return 0
+  fi
+  PROBE_NOTE="skipped: acerd is running and could not be paused (stop it with 'sudo systemctl stop acerd' and run again)"
+  return 1
+}
+# After the probes, and on any exit (Ctrl+C included).
+cleanup() {
+  [ "$LOADED_BY_US" = 1 ] && rmmod acer_wmi_lab 2>/dev/null
+  LOADED_BY_US=0
+  if [ "$ACERD_FROZEN" = 1 ]; then
+    systemctl thaw acerd.service && echo "acerd resumed"
+    ACERD_FROZEN=0
+  fi
+  [ -n "$BUILD" ] && rm -rf "$BUILD"
+  BUILD=""
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM HUP
+
+PROBE_NOTE="not requested (files only; run again and pick the full report: the calls are the most useful part)"
 if [ "$PROBES" = 1 ]; then
-  if pgrep -x acerd >/dev/null 2>&1; then
-    # Concurrent WMI calls corrupt each other's results on some firmware.
-    PROBE_NOTE="skipped: acerd is running (stop it with 'systemctl stop acerd' and run again)"
-  elif [ -d /sys/module/linuwu_sense ] || [ -d /sys/module/facer ]; then
+  if [ -d /sys/module/linuwu_sense ] || [ -d /sys/module/facer ]; then
     PROBE_NOTE="skipped: another Acer WMI module is loaded (linuwu_sense/facer); unload it or its service and run again"
   else
     if [ ! -w "$CALL" ] && [ -z "$LAB_KO" ]; then
@@ -280,22 +345,27 @@ if [ "$PROBES" = 1 ]; then
         fi
       fi
     fi
-    if [ ! -w "$CALL" ] && [ -n "$LAB_KO" ]; then
-      if insmod "$LAB_KO" 2> "$OUT/lab-load.log"; then
+    if { [ -w "$CALL" ] || [ -n "$LAB_KO" ]; } && pause_acerd; then
+      if [ ! -w "$CALL" ]; then
+        # Set first: a Ctrl+C right after insmod must still unload it.
         LOADED_BY_US=1
-      elif [ "$(val /sys/module/module/parameters/sig_enforce)" = Y ]; then
-        PROBE_NOTE="skipped: Secure Boot only accepts signed modules (sign acer-wmi-lab.ko with an enrolled MOK, or disable Secure Boot for the test)"
-      else
-        PROBE_NOTE="skipped: insmod failed (see lab-load.log)"
+        if ! insmod "$LAB_KO" 2> "$OUT/lab-load.log"; then
+          LOADED_BY_US=0
+          if [ "$(val /sys/module/module/parameters/sig_enforce)" = Y ]; then
+            PROBE_NOTE="skipped: Secure Boot only accepts signed modules (sign acer-wmi-lab.ko with an enrolled MOK, or disable Secure Boot for the test)"
+          else
+            PROBE_NOTE="skipped: insmod failed (see lab-load.log)"
+          fi
+        fi
+      fi
+      if [ -w "$CALL" ]; then
+        echo "running read-only firmware calls"
+        probe
+        PROBE_NOTE="run: $(grep -c '^###' "$OUT/probes.txt") calls, $(grep -c 'AE_OK' "$OUT/probes.txt") returned AE_OK"
+        [ "$ACERD_FROZEN" = 1 ] && PROBE_NOTE="$PROBE_NOTE; acerd paused meanwhile"
       fi
     fi
-    if [ -w "$CALL" ]; then
-      echo "running read-only firmware calls"
-      probe
-      PROBE_NOTE="run: $(grep -c '^###' "$OUT/probes.txt") calls, $(grep -c 'AE_OK' "$OUT/probes.txt") returned AE_OK"
-    fi
-    [ "$LOADED_BY_US" = 1 ] && rmmod acer_wmi_lab 2>/dev/null
-    [ -n "${BUILD:-}" ] && rm -rf "$BUILD"
+    cleanup
   fi
 fi
 
@@ -401,7 +471,7 @@ acpi/               DSDT and SSDT tables (MSDM, with the Windows key, is not cop
 acer_wmi.txt, platform_profile.txt, hwmon.txt, power_supply.txt, leds.txt,
 misc.txt, input.txt, hid.txt, dmesg.txt
                     what the kernel already exposes for this laptop
-probes.txt          read-only WMI calls (only with --probes)
+probes.txt          read-only WMI calls (full report only)
 issue-url.txt       link to a new "Hardware report" issue with the text fields filled in
 
 Not collected: hostname, user name, serial numbers, UUIDs, MAC addresses.
@@ -433,7 +503,7 @@ echo
 cat "$OUT/summary.txt"
 echo
 echo "report: $OUT.tar.gz"
-[ "$PROBES" = 1 ] || echo "tip: run 'sudo sh $0 --probes' instead; the firmware probes are the most useful part of the report"
+[ "$PROBES" = 1 ] || echo "tip: the full report ('sudo sh $0 --probes') adds the firmware calls, the most useful part"
 echo "review it if you like, then open this link (model and summary already filled in)"
 echo "and drag the .tar.gz into the form:"
 echo
