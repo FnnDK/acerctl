@@ -33,6 +33,9 @@ One daemon, app and CLI for operating modes, fans, battery, keyboard and sensors
 <a href="#license">License</a>
 </p>
 
+> [!WARNING]
+> **Using Div-Acer-Manager-Max or Linuwu-Sense?** They replace the kernel's `acer_wmi` driver, which acerctl is built on, and blacklist it (`/etc/modprobe.d/blacklist-acer_wmi.conf`). Next to them acerctl has no fan control, and their firmware calls can garble each other's answers. Uninstall them, delete that file and restart before installing acerctl.
+
 <p align="center"><img src="docs/screenshots/nitro/home.png" width="860" alt="Nitro Control Center dashboard"></p>
 
 ## Overview
