@@ -370,7 +370,7 @@ The RPM specs are in `packaging/rpm/`; `acerctl-<version>.tar.gz` in each releas
 <details>
 <summary><b>Building a module by hand</b></summary>
 
-Requires `kernel-devel` for the running kernel, `gcc` and `make`. With Secure Boot, sign with an enrolled MOK (the akmods one on Fedora):
+Requires `kernel-devel` for the running kernel, `gcc` and `make`. A kernel built with clang, such as CachyOS's, needs `clang`, `llvm` and `lld` instead of `gcc` (the modules' Makefiles then pass `LLVM=1` themselves). With Secure Boot, sign with an enrolled MOK (the akmods one on Fedora):
 
 ```bash
 make -C drivers/acer-wmi-extras
