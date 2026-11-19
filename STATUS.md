@@ -104,7 +104,7 @@ Reference machine: Acer **Nitro ANV15-52** (i7-13620H, RTX 4060, BIOS V1.31), Fe
 8. **Package repositories** for automatic updates: COPR (on hold) and an apt repository (hosting not decided).
 9. Optional: move the reference machine from the script install to the RPMs (`sudo sh packaging/install.sh --nitro`: it removes the script install first).
 10. Aspire backlog: the EC HID battery boundary (custom start/stop thresholds, id 0x0B03; Get works, Set not validated).
-11. **Nitro AN515-58 (issue #2, 2026-11-18):** ask the reporter (in English) for `tools/survey.sh --probes` with `acerd` stopped (`systemctl stop acerd`), whether the keyboard is red-only or RGB, and to try the new `blacklist` setup item if they leave DAMX; then fill the fixture's extras values from the probes and add the model to the README's Tested models. Until the probes, no README row: only the presence of each interface is known.
+11. **Nitro AN515-58 (issue #2, 2026-11-18):** asked the reporter on 2026-11-19 (issue comment) for `tools/survey.sh --probes` with `acerd` stopped, whether the keyboard is red-only or RGB, and to drop DAMX and its blacklist; waiting for the answer. When the probes come in, fill the fixture's extras values from the probes and add the model to the README's Tested models. Until the probes, no README row: only the presence of each interface is known.
 
 **Earlier notes**
 
