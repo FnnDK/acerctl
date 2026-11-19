@@ -1,10 +1,13 @@
 package hw
 
 import (
+	"bytes"
 	"errors"
 	"io/fs"
+	"log/slog"
 	"path/filepath"
 	"slices"
+	"strings"
 	"syscall"
 	"testing"
 )
@@ -89,6 +92,38 @@ func TestProbeNoTurboAfterBootFailure(t *testing.T) {
 		}
 		if tc.fromFirmware && slices.Contains(got, "performance") {
 			t.Errorf("%s: Turbo (performance) offered: %v", tc.name, got)
+		}
+	}
+}
+
+// TestProbeProfilesWarning: taking the driver's list, the probe says why, as
+// the module being absent and the firmware failing the read need different
+// fixes.
+func TestProbeProfilesWarning(t *testing.T) {
+	old, oldRead, oldLog := profilesRetry, profilesRead, slog.Default()
+	profilesRetry.delay = 0
+	t.Cleanup(func() { profilesRetry, profilesRead = old, oldRead; slog.SetDefault(oldLog) })
+
+	dir := t.TempDir()
+	copyTree(t, "testdata/models/ANV15-52/root", dir)
+	Root = dir
+	t.Cleanup(func() { Root = "" })
+
+	for _, tc := range []struct {
+		name, want string
+		err        error
+	}{
+		{"module not loaded", "acer-wmi-extras absent", &fs.PathError{Op: "open", Err: fs.ErrNotExist}},
+		{"read failing", "could not be read", syscall.EIO},
+	} {
+		profilesRead = func(string) (string, error) { return "", tc.err }
+		var log bytes.Buffer
+		slog.SetDefault(slog.New(slog.NewTextHandler(&log, nil)))
+		if p := probeProfiles(); p == nil || p.fromFirmware {
+			t.Fatalf("%s: got %+v", tc.name, p)
+		}
+		if !strings.Contains(log.String(), tc.want) {
+			t.Errorf("%s: log lacks %q:\n%s", tc.name, tc.want, log.String())
 		}
 	}
 }

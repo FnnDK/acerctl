@@ -7,8 +7,8 @@ import (
 )
 
 // ApplySetup makes the system changes the app lists from System.Setup (ids
-// in the "needed" state; signing_key also in "reboot", which replaces the
-// pending request with a new code). It returns the one-time code the
+// in the "needed" or "ask" state; signing_key also in "reboot", which
+// replaces the pending request with a new code). It returns the one-time code the
 // firmware asks for at the next boot when the signing key was enrolled.
 // These change the boot configuration, so polkit always asks for a password.
 func (s *systemIface) ApplySetup(sender dbus.Sender, ids []string) (string, *dbus.Error) {
@@ -22,7 +22,7 @@ func (s *systemIface) ApplySetup(sender dbus.Sender, ids []string) (string, *dbu
 	}
 	for _, id := range ids {
 		state, ok := items[id]
-		if !ok || !(state == "needed" || (id == "signing_key" && state == "reboot")) {
+		if !ok || !(state == "needed" || state == "ask" || (id == "signing_key" && state == "reboot")) {
 			return "", errInvalid("%s: nothing to apply (state %q)", id, state)
 		}
 	}

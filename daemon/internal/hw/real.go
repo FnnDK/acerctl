@@ -149,8 +149,9 @@ func probeProfiles() *sysfsProfiles {
 	if path == ppLegacy {
 		choices = ppLegacy + "_choices"
 	}
-	if s, err := readStr(choices); err == nil {
-		p.supported = strings.Fields(s)
+	// err stays the supported_profiles one: it tells which warning applies
+	if cs, cerr := readStr(choices); cerr == nil {
+		p.supported = strings.Fields(cs)
 		if errors.Is(err, fs.ErrNotExist) {
 			slog.Warn("acer-wmi-extras absent: profile list comes from the driver, not the firmware", "profiles", p.supported)
 		} else {

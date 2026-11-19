@@ -3,7 +3,8 @@
 # and .debs in DIST, from tools/release.sh and tools/build-rpms.sh) installed
 # in Fedora 44 and Ubuntu 24.04 containers, and in each one acerd run against
 # the fixture tree of every known model (daemon/internal/hw/testdata/models:
-# Nitro ANV15-52, Aspire AG15-71P, Predator PH16-71). For each pair:
+# Nitro ANV15-52, Nitro AN515-58, Aspire AG15-71P, Predator PH16-71). For
+# each pair:
 #   - transcript: tools/models-run.sh on the system bus, with the packaged
 #     binaries and D-Bus policy, against the model's acerctl.txt;
 #   - boot modules: the companion modules built by akmods (Fedora) or DKMS

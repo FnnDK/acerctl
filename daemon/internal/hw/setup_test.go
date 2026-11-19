@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -88,7 +89,7 @@ func TestOneTimeCode(t *testing.T) {
 
 func TestSimSetup(t *testing.T) {
 	s := SimSetup()
-	if len(s.Items()) != 2 {
+	if len(s.Items()) != 3 {
 		t.Fatalf("items %v", s.Items())
 	}
 	code, err := s.Apply("signing_key")
@@ -99,5 +100,84 @@ func TestSimSetup(t *testing.T) {
 		if it.ID == "signing_key" && it.State != "reboot" {
 			t.Fatalf("state %q after apply", it.State)
 		}
+	}
+}
+
+func TestBlacklistItem(t *testing.T) {
+	Root = t.TempDir()
+	defer func() { Root = "" }()
+	mk := func(path, content string) {
+		p := filepath.Join(Root, path)
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	item := func() SetupItem {
+		it, _ := blacklistItem()
+		return it
+	}
+	damx := "/etc/modprobe.d/blacklist-acer_wmi.conf"
+	mk(damx, "blacklist acer_wmi\n")
+	if it := item(); it.ID != "" {
+		t.Fatalf("no Acer WMI device, got %+v", it)
+	}
+	mk("/sys/bus/wmi/devices/7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56-8/modalias", "wmi:7A4DDFE7-5B5D-40B4-8595-4408E0CC7F56\n")
+	mk("/proc/cmdline", "quiet splash root=x\n")
+	mk("/etc/modprobe.d/other.conf", "# blacklist acer_wmi\ninstall acer_wmi /sbin/modprobe --ignore-install acer_wmi\noptions snd_hda_intel power_save=1\n")
+	if it := item(); it.State != "ask" || it.Detail != damx {
+		t.Fatalf("DAMX file: got %+v", it)
+	}
+
+	// a file of the same name in /etc hides the package's one
+	mk("/usr/lib/modprobe.d/blacklist-acer_wmi.conf", "blacklist acer_wmi\n")
+	if it := item(); it.State != "ask" || it.Detail != damx {
+		t.Fatalf("hidden package file: got %+v", it)
+	}
+	mk("/usr/lib/modprobe.d/tool.conf", "install acer-wmi /bin/false\n")
+	if it := item(); it.State != "manual" || it.Detail != damx+" /usr/lib/modprobe.d/tool.conf" {
+		t.Fatalf("package file: got %+v", it)
+	}
+	if err := unblockAcerWMI(); err == nil {
+		t.Fatal("unblocked although a package file still blocks acer_wmi")
+	}
+	os.Remove(filepath.Join(Root, "/usr/lib/modprobe.d/tool.conf"))
+	mk("/proc/cmdline", "quiet modprobe.blacklist=nouveau,acer_wmi\n")
+	if it := item(); it.State != "manual" || it.Detail != damx+" modprobe.blacklist=nouveau,acer_wmi" {
+		t.Fatalf("command line: got %+v", it)
+	}
+	mk("/proc/cmdline", "quiet splash\n")
+
+	// the DAMX file goes; elsewhere only the blocking line becomes a comment
+	mk("/etc/modprobe.d/mixed.conf", "options acer_wmi force_caps=0x1C26\nblacklist acer_wmi\n")
+	if err := unblockAcerWMI(); err != nil {
+		t.Fatal(err)
+	}
+	// it hides the package's file of the same name, so it stays, commented
+	if b, _ := readFile(damx); string(b) != "# Disabled by acerd (acerctl setup) so that acer_wmi loads: blacklist acer_wmi\n" {
+		t.Fatalf("%s:\n%s", damx, b)
+	}
+	b, _ := readFile("/etc/modprobe.d/mixed.conf")
+	want := "options acer_wmi force_caps=0x1C26\n# Disabled by acerd (acerctl setup) so that acer_wmi loads: blacklist acer_wmi\n"
+	if string(b) != want {
+		t.Fatalf("mixed.conf:\n%s", b)
+	}
+	if b, _ := readFile("/etc/modprobe.d/other.conf"); !strings.Contains(string(b), "\ninstall acer_wmi /sbin/modprobe") {
+		t.Fatalf("other.conf changed:\n%s", b)
+	}
+	if it := item(); it.ID != "" { // under a fixture tree there is no reboot state
+		t.Fatalf("after unblocking: got %+v", it)
+	}
+
+	// with nothing to hide, a blacklist-only file goes
+	os.Remove(filepath.Join(Root, "/usr/lib/modprobe.d/blacklist-acer_wmi.conf"))
+	mk(damx, "blacklist acer_wmi\n")
+	if err := unblockAcerWMI(); err != nil {
+		t.Fatal(err)
+	}
+	if exists(damx) {
+		t.Fatal("the blacklist-only file is still there")
 	}
 }
