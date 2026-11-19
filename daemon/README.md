@@ -38,7 +38,7 @@ busctl --user call io.github.fnndk.Acerd1 /io/github/fnndk/Acerd1 io.github.fnnd
 
 ## Known models
 
-`internal/hw/testdata/models` holds a fixture per known model (Nitro ANV15-52, Aspire AG15-71P, Predator PH16-71; its README says where each comes from). `go test ./internal/hw -run TestModels` runs the hardware layer on each; `sh tools/models-test.sh DIST` runs the installed packages on each in Fedora 44 and Ubuntu 24.04 containers (6 combinations, part of `tools/ci.sh` and the release workflow). After an intended change, `sh tools/models-test.sh --update` rewrites the expected results; review the diff before committing.
+`internal/hw/testdata/models` holds a fixture per known model (Nitro ANV15-52, Nitro AN515-58, Aspire AG15-71P, Predator PH16-71; its README says where each comes from). `go test ./internal/hw -run TestModels` runs the hardware layer on each; `sh tools/models-test.sh DIST` runs the installed packages on each in Fedora 44 and Ubuntu 24.04 containers (8 combinations, part of `tools/ci.sh` and the release workflow). After an intended change, `sh tools/models-test.sh --update` rewrites the expected results; review the diff before committing.
 
 ## CLI
 
@@ -49,8 +49,9 @@ acerctl mode quiet            # eco|low-power, quiet, balanced, balanced-perform
 acerctl fan gpu 60            # manual; auto|max too; id all
 acerctl scenario save Game --from-current --mode-ac balanced-performance --fan cpu=max --app eldenring.exe
 acerctl appsync on
-acerctl setup                 # what is left: acer_wmi option, Secure Boot key, modules
+acerctl setup                 # what is left: acer_wmi blocked, acer_wmi option, Secure Boot key, modules
 acerctl setup apply           # make it (one password), then restart
+acerctl setup apply blacklist # remove another tool's acer_wmi blacklist (only when named)
 acerctl --json status         # for scripts
 ```
 

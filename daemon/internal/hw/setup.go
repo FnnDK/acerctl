@@ -16,9 +16,11 @@ import (
 // for the user (System.Setup, docs/api-dbus.md §2). Every state is read from
 // the system itself, so it survives daemon restarts.
 type SetupItem struct {
-	ID string // acer_wmi, signing_key or modules
-	// State: "needed" (ApplySetup does it), "reboot" (done, takes effect at
-	// the next boot) or "manual" (the user has to act; Detail says why).
+	ID string // blacklist, acer_wmi, signing_key or modules
+	// State: "needed" (ApplySetup does it), "ask" (ApplySetup does it, but
+	// only when the user picks this item on its own: it undoes what another
+	// tool set up), "reboot" (done, takes effect at the next boot) or
+	// "manual" (the user has to act; Detail says why).
 	State  string
 	Detail string
 }
@@ -63,6 +65,9 @@ type realSetup struct{}
 
 func (realSetup) Items() []SetupItem {
 	var items []SetupItem
+	if it, ok := blacklistItem(); ok {
+		items = append(items, it)
+	}
 	if it, ok := acerWMIItem(); ok {
 		items = append(items, it)
 	}
@@ -74,6 +79,8 @@ func (realSetup) Items() []SetupItem {
 
 func (realSetup) Apply(id string) (string, error) {
 	switch id {
+	case "blacklist":
+		return "", unblockAcerWMI()
 	case "acer_wmi":
 		return "", writeAcerWMIOptions(acerWMIOptions())
 	case "signing_key":
@@ -148,6 +155,177 @@ func writeAcerWMIOptions(opts string) error {
 		return nil
 	}
 	return os.WriteFile(rooted(setupModprobe), []byte(content), 0o644)
+}
+
+// ---- acer_wmi blocked by another tool --------------------------------------
+
+// modprobeDirs are the directories kmod reads, in its order: a file hides the
+// files of the same name in the directories after it. Only the first is the
+// administrator's; acerd's unit may write there (ReadWritePaths).
+var modprobeDirs = []string{"/etc/modprobe.d", "/run/modprobe.d", "/usr/local/lib/modprobe.d", "/usr/lib/modprobe.d"}
+
+// otherAcerModules replace acer_wmi (Linuwu-Sense, which Div-Acer-Manager-Max
+// installs together with a blacklist-acer_wmi.conf) or drive the same WMI
+// interfaces (facer, from cleyton1986/predator-sense).
+var otherAcerModules = []string{"linuwu_sense", "facer"}
+
+// blacklistItem: acer_wmi is kept from loading at boot, so there are no
+// thermal modes, fans, Fn keys or radio switches from it. Both external
+// hardware reports so far (issues #1 and #2) had Div-Acer-Manager-Max's
+// /etc/modprobe.d/blacklist-acer_wmi.conf left behind. Removing it breaks
+// that tool, so the item is "ask": ApplySetup only does it when the user
+// picks it on its own. A block outside /etc/modprobe.d (a package's file,
+// the kernel command line) is "manual". Once nothing blocks it any more,
+// "reboot" until acer_wmi loads.
+func blacklistItem() (SetupItem, bool) {
+	if !hasAcerWMI() {
+		return SetupItem{}, false
+	}
+	files, other := acerWMIBlocks()
+	switch {
+	case len(other) > 0:
+		return SetupItem{ID: "blacklist", State: "manual", Detail: strings.Join(append(files, other...), " ")}, true
+	case len(files) > 0:
+		return SetupItem{ID: "blacklist", State: "ask", Detail: strings.Join(files, " ")}, true
+	}
+	if acerWMIWaitsForBoot() {
+		return SetupItem{ID: "blacklist", State: "reboot"}, true
+	}
+	return SetupItem{}, false
+}
+
+// acerWMIBlocks lists what keeps acer_wmi from loading: modprobe.d files with
+// a blacklist (or an install command that does nothing) for it, split into
+// the ones in /etc/modprobe.d (files) and the others (other), which also
+// gets the kernel command line parameter that blacklists it.
+func acerWMIBlocks() (files, other []string) {
+	seen := map[string]bool{}
+	for i, dir := range modprobeDirs {
+		for _, f := range glob(filepath.Join(dir, "*.conf")) {
+			name := filepath.Base(f)
+			if seen[name] {
+				continue
+			}
+			seen[name] = true
+			b, err := readFile(f)
+			if err != nil || len(acerWMIBlockLines(string(b))) == 0 {
+				continue
+			}
+			if i == 0 {
+				files = append(files, f)
+			} else {
+				other = append(other, f)
+			}
+		}
+	}
+	if cmdline, err := readStr("/proc/cmdline"); err == nil {
+		for _, p := range strings.Fields(cmdline) {
+			k, v, _ := strings.Cut(p, "=")
+			if k != "modprobe.blacklist" && k != "module_blacklist" {
+				continue
+			}
+			for _, m := range strings.Split(v, ",") {
+				if isAcerWMIName(m) {
+					other = append(other, p)
+					break
+				}
+			}
+		}
+	}
+	return files, other
+}
+
+func isAcerWMIName(m string) bool { return m == "acer_wmi" || m == "acer-wmi" }
+
+// acerWMIBlockLines returns the indexes of the lines of a modprobe.d file that
+// keep acer_wmi from loading: "blacklist acer_wmi" (no loading by alias, the
+// way the WMI bus loads it) or "install acer_wmi" with true/false as the
+// command (loading does nothing). Other install commands still load it.
+func acerWMIBlockLines(conf string) []int {
+	var idx []int
+	for i, line := range strings.Split(conf, "\n") {
+		f := strings.Fields(line)
+		if len(f) < 2 || !isAcerWMIName(f[1]) {
+			continue
+		}
+		switch {
+		case f[0] == "blacklist":
+			idx = append(idx, i)
+		case f[0] == "install" && len(f) >= 3:
+			if c := filepath.Base(f[2]); c == "true" || c == "false" {
+				idx = append(idx, i)
+			}
+		}
+	}
+	return idx
+}
+
+// acerWMIWaitsForBoot: nothing blocks acer_wmi, but it is not loaded and
+// neither is a module that replaces it, so the next boot loads it (the
+// "reboot" after unblockAcerWMI). Not under a fixture tree, which has no
+// modinfo to tell a kernel without the driver.
+func acerWMIWaitsForBoot() bool {
+	if Root != "" || exists("/sys/module/acer_wmi") {
+		return false
+	}
+	for _, m := range otherAcerModules {
+		if exists("/sys/module/" + m) {
+			return false
+		}
+	}
+	return exec.Command("modinfo", "-n", "acer_wmi").Run() == nil
+}
+
+// unblockAcerWMI takes the acer_wmi blocks out of /etc/modprobe.d: a file
+// that holds nothing else (Div-Acer-Manager-Max's has a single line) is
+// removed; in any other file only those lines become comments. So does a
+// file that hides one of the same name in another directory, which removing
+// it would bring back.
+func unblockAcerWMI() error {
+	files, other := acerWMIBlocks()
+	if len(other) > 0 {
+		return fmt.Errorf("acer_wmi is also blocked in %s, which acerd does not edit", strings.Join(other, ", "))
+	}
+	for _, f := range files {
+		b, err := readFile(f)
+		if err != nil {
+			return err
+		}
+		kept, empty := withoutAcerWMIBlocks(string(b))
+		for _, dir := range modprobeDirs[1:] {
+			empty = empty && !exists(filepath.Join(dir, filepath.Base(f)))
+		}
+		if DryRun {
+			slog.Info("dry-run: skip unblocking acer_wmi", "path", f, "remove", empty)
+			continue
+		}
+		if empty {
+			err = os.Remove(rooted(f))
+		} else {
+			err = os.WriteFile(rooted(f), []byte(kept), 0o644)
+		}
+		if err != nil {
+			return err
+		}
+		slog.Info("setup: acer_wmi unblocked", "path", f, "removed", empty)
+	}
+	return nil
+}
+
+// withoutAcerWMIBlocks comments out the lines that block acer_wmi; empty
+// tells that the file then has no directive left.
+func withoutAcerWMIBlocks(conf string) (kept string, empty bool) {
+	lines := strings.Split(conf, "\n")
+	for _, i := range acerWMIBlockLines(conf) {
+		lines[i] = "# Disabled by acerd (acerctl setup) so that acer_wmi loads: " + strings.TrimSpace(lines[i])
+	}
+	empty = true
+	for _, l := range lines {
+		if s := strings.TrimSpace(l); s != "" && !strings.HasPrefix(s, "#") {
+			empty = false
+		}
+	}
+	return strings.Join(lines, "\n"), empty
 }
 
 // ---- modules and the signing key -------------------------------------------
@@ -339,10 +517,11 @@ type simSetup struct {
 	items []SetupItem
 }
 
-// SimSetup pretends both changes are needed (acerd --simulate-setup), for
-// developing the app's setup screen.
+// SimSetup pretends both changes are needed and acer_wmi is blacklisted
+// (acerd --simulate-setup), for developing the app's setup screen.
 func SimSetup() Setup {
 	return &simSetup{items: []SetupItem{
+		{ID: "blacklist", State: "ask", Detail: "/etc/modprobe.d/blacklist-acer_wmi.conf"},
 		{ID: "acer_wmi", State: "needed", Detail: "predator_v4=1"},
 		{ID: "signing_key", State: "needed"},
 	}}

@@ -356,7 +356,8 @@ input[type=range]:disabled { opacity: .4; }
 .setup-items { border-top: 1px solid var(--border); }
 .setup-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .setup-item > svg { width: 20px; height: 20px; flex: none; margin-top: 1px; color: var(--muted); }
-.setup-item.needed > svg { color: var(--warn); }
+.setup-item.needed > svg, .setup-item.ask > svg { color: var(--warn); }
+.setup-item .btn { margin-top: 8px; }
 .setup-item.reboot > svg { color: var(--ok); }
 .setup-item p { margin: 2px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
 .setup-code { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; margin-top: 12px; }

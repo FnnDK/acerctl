@@ -33,6 +33,9 @@ One daemon, app and CLI for operating modes, fans, battery, keyboard and sensors
 <a href="#license">License</a>
 </p>
 
+> [!WARNING]
+> **Using Div-Acer-Manager-Max or Linuwu-Sense?** They replace the kernel's `acer_wmi` driver, which acerctl is built on, and blacklist it (`/etc/modprobe.d/blacklist-acer_wmi.conf`). Next to them acerctl has no fan control, and their firmware calls can garble each other's answers. Uninstall them, delete that file and restart before installing acerctl.
+
 <p align="center"><img src="docs/screenshots/nitro/home.png" width="860" alt="Nitro Control Center dashboard"></p>
 
 ## Overview
@@ -243,7 +246,7 @@ On the laptops acerctl has been run on: <img src="assets/readme/yes.svg" width="
 
 ¹ Also in GNOME's Power settings ("Preserve Battery Health"). ² The firmware offers it and acerctl exposes it; a full calibration cycle has not been run yet. ³ CPU temperature and the battery sensors; this model has no fan readings and no discrete GPU. ⁴ Nothing for a scenario to set without modes, fans or keyboard backlight.
 
-Both, plus a Predator PH16-71 built from public reports, are also checked automatically on every change: the packages installed in Fedora 44 and Ubuntu 24.04 run against a copy of what each laptop exposes ([`daemon/README.md`](daemon/README.md#known-models), "Known models"). A [hardware report](docs/hardware-reports.md) from another model is how it gets added.
+Both, plus a Nitro AN515-58 from a user's [hardware report](https://github.com/FnnDK/acerctl/issues/2) and a Predator PH16-71 built from public reports, are also checked automatically on every change: the packages installed in Fedora 44 and Ubuntu 24.04 run against a copy of what each laptop exposes ([`daemon/README.md`](daemon/README.md#known-models), "Known models"). A [hardware report](docs/hardware-reports.md) from another model is how it gets added.
 
 ## Compared with other tools
 

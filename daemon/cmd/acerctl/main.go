@@ -307,11 +307,17 @@ func cmdReload(args []string) error {
 
 // The System.Setup items, worded as the app's setup dialog words them.
 var setupNames = map[string]string{
-	"acer_wmi": "Modes and fans", "signing_key": "Secure Boot key", "modules": "Kernel modules",
+	"blacklist": "acer_wmi driver", "acer_wmi": "Modes and fans", "signing_key": "Secure Boot key", "modules": "Kernel modules",
 }
 
 func setupText(id, state, detail string) string {
 	switch id + "." + state {
+	case "blacklist.ask":
+		return fmt.Sprintf("Blocked in %s, so it does not load at boot, and the modes, fans and Fn keys that depend on it are missing. The file usually comes from Div-Acer-Manager-Max or Linuwu-Sense, which replace the driver and stop working without it: remove the block only if you no longer use them (uninstall them too) with acerctl setup apply blacklist. It takes effect at the next boot.", detail)
+	case "blacklist.manual":
+		return fmt.Sprintf("Blocked by %s, so it does not load at boot, and the modes, fans and Fn keys that depend on it are missing. acerd does not edit packages' files or the kernel command line: if you no longer use the tool that blocked it, remove the block there and restart.", detail)
+	case "blacklist.reboot":
+		return "Nothing blocks it any more: it loads at the next boot."
 	case "acer_wmi.needed":
 		return fmt.Sprintf("The firmware has them, but the acer_wmi driver lacks the option that exposes them (%s). It will be saved and takes effect at the next boot.", detail)
 	case "acer_wmi.reboot":
@@ -351,7 +357,7 @@ func setupFresh() ([]map[string]string, error) {
 	items := setupItems(v)
 	pending := false
 	for _, it := range items {
-		pending = pending || it["state"] == "needed" || it["state"] == "manual"
+		pending = pending || it["state"] == "needed" || it["state"] == "ask" || it["state"] == "manual"
 	}
 	if !pending || cl.Call(client.IfSystem, "RefreshSetup", nil) != nil { // an older acerd lacks it
 		return items, nil
@@ -413,7 +419,7 @@ func cmdSetup(args []string) error {
 		fmt.Println("nothing to do: everything the firmware offers is set up")
 		return nil
 	}
-	needed := false
+	needed, ask := false, false
 	for i, it := range items {
 		if i > 0 {
 			fmt.Println()
@@ -424,16 +430,22 @@ func cmdSetup(args []string) error {
 		}
 		fmt.Printf("%s (%s): %s\n  %s\n", name, it["id"], it["state"], setupText(it["id"], it["state"], it["detail"]))
 		needed = needed || it["state"] == "needed"
+		ask = ask || it["state"] == "ask"
 	}
 	if needed {
 		fmt.Println("\nacerctl setup apply makes the changes marked needed, with one administrator password; they take effect after a restart.")
+	}
+	if ask {
+		fmt.Println("\nThe ones marked ask are only made when named: acerctl setup apply <id>.")
 	}
 	return nil
 }
 
 // setupApply calls ApplySetup with the given ids, or every item in the
-// "needed" state, and shows the code the firmware's enrollment screen asks for.
+// "needed" state (an "ask" one only when named), and shows the code the
+// firmware's enrollment screen asks for.
 func setupApply(ids []string) error {
+	var ask []string
 	if len(ids) == 0 {
 		items, err := setupFresh()
 		if err != nil {
@@ -444,12 +456,16 @@ func setupApply(ids []string) error {
 			switch it["state"] {
 			case "needed":
 				ids = append(ids, it["id"])
+			case "ask":
+				ask = append(ask, it["id"])
 			case "reboot":
 				reboot = true
 			}
 		}
 		if len(ids) == 0 {
-			if reboot {
+			if len(ask) > 0 {
+				fmt.Printf("nothing applied: %s only when named (acerctl setup lists why: acerctl setup apply %s)\n", strings.Join(ask, ", "), strings.Join(ask, " "))
+			} else if reboot {
 				fmt.Println("nothing to apply: restart to finish what was applied (systemctl reboot)")
 			} else {
 				fmt.Println("nothing to apply (acerctl setup lists what is left)")
@@ -465,6 +481,9 @@ func setupApply(ids []string) error {
 		return printJSON(map[string]interface{}{"applied": ids, "code": code})
 	}
 	fmt.Printf("applied: %s. Restart to finish (systemctl reboot).\n", strings.Join(ids, ", "))
+	if len(ask) > 0 {
+		fmt.Printf("not applied: %s, only when named (acerctl setup lists why).\n", strings.Join(ask, ", "))
+	}
 	if code != "" {
 		fmt.Printf("\nCode for the blue screen: %s\n", code)
 		fmt.Println("  1. Restart the laptop.")

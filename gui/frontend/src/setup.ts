@@ -1,7 +1,8 @@
 // System setup dialog: what acerd reports in System.Setup (the acer_wmi option,
 // the Secure Boot key, missing modules), applied with one password and one
-// restart. Opens by itself once per start while something is to do, and from
-// Settings.
+// restart. An "ask" item (acer_wmi blacklisted by another tool) has a button of
+// its own and is never part of the main one. Opens by itself once per start
+// while something is to do, and from Settings.
 
 import { App, el, errorText, esc, state, toast, type Dict } from './core'
 import { t } from './i18n'
@@ -9,7 +10,7 @@ import { icon } from './icons'
 
 export const setupItems = (): Dict[] => state.system?.Setup ?? []
 // something the user has to do now (not only waiting for a restart)
-export const setupPending = () => setupItems().some(it => it.state === 'needed' || it.state === 'manual')
+export const setupPending = () => setupItems().some(it => it.state === 'needed' || it.state === 'ask' || it.state === 'manual')
 
 let dialog: HTMLElement | null = null
 
@@ -22,7 +23,8 @@ function itemText(it: Dict): string {
 function itemsHtml(items: Dict[]): string {
   return items.map(it => {
     const ic = it.state === 'reboot' ? icon('check') : icon('info')
-    return `<div class="setup-item ${it.state}">${ic}<div><b>${t('setup.' + it.id)}</b><p>${itemText(it)}</p></div></div>`
+    const own = it.state === 'ask' ? `<button class="btn sm" data-apply="${esc(it.id)}">${t('setup.' + it.id + '.action')}</button>` : ''
+    return `<div class="setup-item ${it.state}" data-id="${esc(it.id)}">${ic}<div><b>${t('setup.' + it.id)}</b><p>${itemText(it)}</p>${own}</div></div>`
   }).join('')
 }
 
@@ -58,15 +60,18 @@ export function openSetup() {
     go.onclick = reboot
   }
 
-  const apply = async (ids: string[]) => {
+  const apply = async (ids: string[], after = done) => {
+    const own = [...body.querySelectorAll<HTMLButtonElement>('[data-apply]')]
     go.disabled = alt.disabled = true
+    own.forEach(o => o.disabled = true)
     try {
-      done(await App.ApplySetup(ids))
+      after(await App.ApplySetup(ids))
     } catch (e) {
       const { title, msg } = errorText(e)
       toast(title, msg, 'error')
     } finally {
       go.disabled = alt.disabled = false
+      own.forEach(o => o.disabled = false)
     }
   }
 
@@ -76,7 +81,13 @@ export function openSetup() {
   body.innerHTML = `<p class="muted">${items.length ? t('setup.sub') : t('setup.nothing')}</p>
     <div class="setup-items">${itemsHtml(items)}</div>
     ${needed.length ? `<div class="note mt">${icon('info')}<span>${needed.includes('signing_key') ? t('setup.note_key') : t('setup.note_reboot')}</span></div>` : ''}`
-  x.textContent = needed.length ? t('setup.later') : t('setup.close')
+  // with other steps still to do the dialog stays, and the item shows its restart state
+  body.querySelectorAll<HTMLButtonElement>('[data-apply]').forEach(o => {
+    const id = o.dataset.apply!
+    const row = o.closest('.setup-item') as HTMLElement
+    o.onclick = () => apply([id], needed.length ? () => { row.outerHTML = itemsHtml([{ id, state: 'reboot' }]) } : done)
+  })
+  x.textContent = needed.length || items.some(it => it.state === 'ask') ? t('setup.later') : t('setup.close')
   if (needed.length) {
     go.textContent = t('setup.apply')
     go.classList.remove('hidden')
