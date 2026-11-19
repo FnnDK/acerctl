@@ -1,8 +1,19 @@
 obj-m += acer-wmi-battery.o
+KDIR ?= /lib/modules/$(shell uname -r)/build
 PWD := $(CURDIR)
 
+# Kernels built with clang (CachyOS's default one) need the LLVM toolchain:
+# gcc rejects their flags. Checked when run directly, not when kbuild reads
+# this file back; an LLVM= given on the command line wins.
+ifeq ($(KERNELRELEASE),)
+ifneq ($(shell grep -s '^CONFIG_CC_IS_CLANG=y' $(KDIR)/.config),)
+LLVM ?= 1
+export LLVM
+endif
+endif
+
 all:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+	$(MAKE) -C $(KDIR) M=$(PWD) modules
 
 clean:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+	$(MAKE) -C $(KDIR) M=$(PWD) clean

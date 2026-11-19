@@ -264,8 +264,18 @@ if [ "$PROBES" = 1 ]; then
     if [ ! -w "$CALL" ] && [ -z "$LAB_KO" ]; then
       KDIR=/lib/modules/$(uname -r)/build
       [ -d "$KDIR" ] || KDIR=/usr/src/kernels/$(uname -r)
-      if ! have make || { ! have cc && ! have gcc; }; then
-        PROBE_NOTE="skipped: no make/C compiler here; build drivers/acer-wmi-lab elsewhere (e.g. a toolbox) and pass --lab-module"
+      NEED=""
+      have make || NEED=" make"
+      if grep -qs '^CONFIG_CC_IS_CLANG=y' "$KDIR/.config"; then
+        # built with clang (CachyOS): the Makefile builds with LLVM=1
+        have clang || NEED="$NEED clang"
+        have ld.lld || NEED="$NEED lld"
+        have llvm-ar || NEED="$NEED llvm"
+      elif ! have cc && ! have gcc; then
+        NEED="$NEED gcc"
+      fi
+      if [ -n "$NEED" ]; then
+        PROBE_NOTE="skipped: not found here:$NEED (install it, or build drivers/acer-wmi-lab elsewhere, e.g. a toolbox, and pass --lab-module)"
       elif [ ! -d "$KDIR" ]; then
         PROBE_NOTE="skipped: no kernel headers for $(uname -r) (install kernel-devel/linux-headers, or use --lab-module)"
       elif [ ! -f "$LAB_SRC/acer-wmi-lab.c" ]; then

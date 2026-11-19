@@ -93,6 +93,7 @@ for m in acer-wmi-extras acer-wmi-battery; do
   install -m0644 "$SRC/drivers/$m/$m.c" "$SRC/drivers/$m/Makefile" "$t/usr/src/acerctl-$VER/$m/"
 done
 fill "$SRC/packaging/deb/acerctl-dkms/dkms.conf" VERSION="$VER" > "$t/usr/src/acerctl-$VER/dkms.conf"
+install -m0644 "$SRC/packaging/deb/acerctl-dkms/Kbuild" "$t/usr/src/acerctl-$VER/"
 # acer-wmi-battery loads by its WMI alias; acer-wmi-extras has none
 install -dm0755 "$t/usr/lib/modules-load.d"
 echo acer_wmi_extras > "$t/usr/lib/modules-load.d/acerctl.conf"
