@@ -1,6 +1,8 @@
 #!/bin/sh
-# Builds the companion modules (acer-wmi-extras, acer-wmi-battery) against the
-# kernel headers of each supported distribution, in throwaway containers.
+# Builds the companion modules (acer-wmi-extras, acer-wmi-battery) and the
+# research module acer-wmi-lab (built by tools/survey.sh --probes) against the
+# kernel headers of each supported distribution, in throwaway containers, with
+# the kernel's own toolchain (LLVM=1 for a clang-built kernel, as CachyOS's).
 # Only compiles: nothing is loaded. Needs podman or docker (from a distrobox,
 # the host's podman); CONTAINER overrides.
 #   sh tools/modules-matrix.sh                 # every target below
@@ -16,7 +18,7 @@ if [ -z "${CONTAINER:-}" ]; then
   else echo "needs podman or docker"; exit 1; fi
 fi
 OUT=${OUT:-$R/.ci/modules}
-MODULES="acer-wmi-extras acer-wmi-battery"
+MODULES="acer-wmi-extras acer-wmi-battery acer-wmi-lab"
 
 # target: image|setup command|glob of the kernel build directory
 targets() {
@@ -28,6 +30,8 @@ ubuntu:24.04|apt-get update -qq && apt-get install -y -qq make gcc linux-headers
 ubuntu:24.04-hwe|apt-get update -qq && apt-get install -y -qq make gcc linux-headers-generic-hwe-24.04|/usr/src/linux-headers-*-generic
 ubuntu:26.04|apt-get update -qq && apt-get install -y -qq make gcc linux-headers-generic|/usr/src/linux-headers-*-generic
 fedora:44|dnf -y -q install make gcc kernel-devel|/usr/src/kernels/*
+archlinux:latest|pacman -Syu --noconfirm --needed make gcc linux-headers|/usr/lib/modules/*/build
+cachyos:latest|pacman -Syu --noconfirm --needed make clang llvm lld linux-cachyos-headers|/usr/lib/modules/*/build
 EOF
 }
 
@@ -42,11 +46,17 @@ targets | while IFS='|' read -r target setup kdirs; do
     case " $* " in *" $target "*) ;; *) continue ;; esac
   fi
   image=${target%-hwe}
-  case $image in fedora:*) image=registry.fedoraproject.org/$image ;; esac
+  case $image in
+    fedora:*) image=registry.fedoraproject.org/$image ;;
+    cachyos:*) image=docker.io/cachyos/$image ;;
+  esac
   log="$OUT/$(echo "$target" | tr ':/' '__').log"
-  # the newest kernel build directory the headers package installed
-  build="for k in $kdirs; do kdir=\$k; done; echo \"kernel: \${kdir##*/}\";
-    for m in $MODULES; do cp -r /src/\$m /tmp/\$m && make -s -C \"\$kdir\" M=/tmp/\$m modules || exit 1; done"
+  # the newest kernel build directory the headers package installed; a kernel
+  # built with clang needs the LLVM toolchain for its modules (gcc rejects its flags)
+  build="for k in $kdirs; do kdir=\$k; done; k=\${kdir%/build}; llvm=;
+    grep -qs '^CONFIG_CC_IS_CLANG=y' \"\$kdir/.config\" && llvm=LLVM=1;
+    echo \"kernel: \${k##*/}\${llvm:+ (\$llvm)}\";
+    for m in $MODULES; do cp -r /src/\$m /tmp/\$m && make -s -C \"\$kdir\" M=/tmp/\$m \$llvm modules || exit 1; done"
   if $CONTAINER run --rm -v "$OUT/src:/src:ro,z" "$image" sh -c "$setup >/dev/null 2>&1 && $build" >"$log" 2>&1; then
     printf '%-18s ok    %s\n' "$target" "$(grep -m1 '^kernel:' "$log")"
     # code warnings only; a different compiler or pahole in the container is expected
