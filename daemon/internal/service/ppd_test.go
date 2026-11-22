@@ -16,6 +16,7 @@ import (
 
 	"acerctl/daemon/internal/hw"
 	"acerctl/daemon/internal/ppd"
+	"acerctl/daemon/internal/rules"
 	"acerctl/daemon/internal/scenarios"
 	"acerctl/daemon/internal/state"
 )
@@ -56,6 +57,12 @@ type fakePPD struct {
 }
 
 func startFakePPD(t *testing.T, active string) *fakePPD {
+	return startSlowFakePPD(t, active, 0)
+}
+
+// startSlowFakePPD is a PPD whose profile switches take delay each, like
+// tuned-ppd waiting for a tuned switch.
+func startSlowFakePPD(t *testing.T, active string, delay time.Duration) *fakePPD {
 	t.Helper()
 	conn, err := dbus.ConnectSessionBus()
 	if err != nil {
@@ -67,6 +74,7 @@ func startFakePPD(t *testing.T, active string) *fakePPD {
 		"net.hadess.PowerProfiles": {
 			"ActiveProfile": {Value: active, Writable: true, Emit: prop.EmitTrue,
 				Callback: func(c *prop.Change) *dbus.Error {
+					time.Sleep(delay)
 					f.mu.Lock()
 					f.sets = append(f.sets, c.Value.(string))
 					f.mu.Unlock()
@@ -190,6 +198,39 @@ func TestPPDPresentAtStart(t *testing.T) {
 	}
 	desktopPicks(t, conn, "performance")
 	waitFor(t, "the mode following the desktop", func() bool { return currentMode(conn) == "balanced-performance" })
+}
+
+// TestPPDBurstSettles is the loop seen on the ANV15-52 on 2026-11-22: GNOME
+// menu clicks queued behind slow tuned switches, then the daemon replayed the
+// queue, each replayed profile came back as a new signal, and the daemon and
+// the PPD kept switching each other for good. After a burst of desktop
+// changes on a slow PPD the writes must stop, on the last profile picked.
+func TestPPDBurstSettles(t *testing.T) {
+	privateBus(t)
+	f := startSlowFakePPD(t, "balanced", 500*time.Millisecond)
+	conn := startDaemon(t)
+	for _, p := range []string{"performance", "power-saver", "performance", "balanced", "power-saver"} {
+		desktopPicks(t, conn, p)
+	}
+	// One daemon round is the 1 s wait, a PPD switch and the settle wait.
+	quiet := time.Second + 500*time.Millisecond + settleTimeout + time.Second
+	n, since := len(f.written()), time.Now()
+	waitFor(t, "the PPD writes to stop", func() bool {
+		if m := len(f.written()); m != n {
+			n, since = m, time.Now()
+		}
+		return time.Since(since) > quiet
+	})
+	ppdNow, err := ppd.Connect(conn).Active()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ppdNow != "power-saver" {
+		t.Errorf("PPD settled on %s, the desktop picked power-saver last (writes: %v)", ppdNow, f.written())
+	}
+	if m := currentMode(conn); rules.NearestPPD(m) != "power-saver" {
+		t.Errorf("mode settled on %s after the desktop picked power-saver", m)
+	}
 }
 
 // TestUnitOrderedAfterPPD keeps the boot ordering: both PPD implementations

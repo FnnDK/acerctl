@@ -97,7 +97,10 @@ func (c *Client) Set(profile string) error {
 	return c.obj.Call("org.freedesktop.DBus.Properties.Set", 0, iface, "ActiveProfile", dbus.MakeVariant(profile)).Err
 }
 
-// Watch delivers every ActiveProfile change on the returned channel.
+// Watch reports ActiveProfile changes on the returned channel, which holds
+// only the latest one: a value not read yet is replaced by a newer one. A
+// reader that is busy (a slow tuned switch) must not find a backlog of old
+// profiles when it comes back, only that the profile changed and to what.
 func (c *Client) Watch() (<-chan string, error) {
 	if err := c.conn.AddMatchSignal(
 		dbus.WithMatchObjectPath(objPath),
@@ -108,7 +111,7 @@ func (c *Client) Watch() (<-chan string, error) {
 	}
 	sigs := make(chan *dbus.Signal, 16)
 	c.conn.Signal(sigs)
-	out := make(chan string, 4)
+	out := make(chan string, 1)
 	go func() {
 		for s := range sigs {
 			if s.Path != objPath || len(s.Body) < 2 {
@@ -120,10 +123,26 @@ func (c *Client) Watch() (<-chan string, error) {
 			changed, _ := s.Body[1].(map[string]dbus.Variant)
 			if v, ok := changed["ActiveProfile"]; ok {
 				if p, ok := v.Value().(string); ok {
-					out <- p
+					latest(out, p)
 				}
 			}
 		}
 	}()
 	return out, nil
+}
+
+// latest puts v in the one-slot channel ch, dropping a value not read yet.
+// Only one goroutine may send on ch.
+func latest(ch chan string, v string) {
+	for {
+		select {
+		case ch <- v:
+			return
+		default:
+		}
+		select {
+		case <-ch:
+		default:
+		}
+	}
 }
