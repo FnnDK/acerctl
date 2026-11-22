@@ -83,7 +83,6 @@ type Daemon struct {
 	current     string
 	allowed     []string
 	extras      []string
-	expectPPD   string    // PPD profile the daemon itself asked for
 	ignoreSysfs time.Time // until then, platform_profile changes are tuned's, not the user's
 	resuming    bool      // from PrepareForSleep(true) until onResume is done
 
@@ -480,37 +479,64 @@ func (d *Daemon) watchPPD(ctx context.Context, c *ppd.Client) {
 		slog.Warn("cannot watch PPD", "err", err)
 		return
 	}
-	go d.followPPD(ctx, ch)
+	go d.followPPD(ctx, c, ch)
 }
 
-func (d *Daemon) followPPD(ctx context.Context, ch <-chan string) {
+// followPPD treats each signal only as "the PPD changed": what it acts on is
+// the profile the PPD has when its turn comes, read under applyMu. Signals
+// queued behind a slow tuned switch are old, and the daemon's own writes
+// come back as signals too; replaying them made the daemon and the PPD
+// switch each other forever (seen on 2026-11-22 after clicks queued behind a
+// 15 s tuned switch). With the PPD read fresh, an echo or an old value finds
+// the PPD already on the current mode and does nothing.
+func (d *Daemon) followPPD(ctx context.Context, c *ppd.Client, ch <-chan string) {
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case p := <-ch:
 			d.mu.Lock()
-			if p == d.expectPPD {
-				d.expectPPD = ""
-				d.mu.Unlock()
-				continue
-			}
 			if d.resuming {
 				d.mu.Unlock()
 				slog.Info("PPD changed while resuming; ignored", "ppd", p)
 				continue
 			}
-			d.ignoreSysfs = time.Now().Add(settleTimeout + time.Second)
-			power, allowed := d.power, d.allowed
+			if p != rules.NearestPPD(d.current) {
+				d.ignoreSysfs = time.Now().Add(settleTimeout + time.Second)
+			}
 			d.mu.Unlock()
-			mode := rules.FromPPD(p, power, allowed)
-			slog.Info("PPD profile changed elsewhere", "ppd", p, "mode", mode)
 			time.Sleep(time.Second) // tuned writes platform_profile; let it finish
-			if err := d.applyMode(mode, true); err != nil {
+			if ctx.Err() != nil {
+				return
+			}
+			if err := d.syncFromPPD(c); err != nil {
 				slog.Error("apply PPD-derived profile failed", "err", err)
 			}
 		}
 	}
+}
+
+// syncFromPPD moves the mode to the PPD's current profile when the two
+// disagree, the PPD being the side that changed.
+func (d *Daemon) syncFromPPD(c *ppd.Client) error {
+	d.applyMu.Lock()
+	defer d.applyMu.Unlock()
+	if d.ctx.Err() != nil {
+		return nil
+	}
+	p, err := c.Active()
+	if err != nil {
+		return fmt.Errorf("read PPD profile: %w", err)
+	}
+	d.mu.Lock()
+	cur, power, allowed, resuming := d.current, d.power, d.allowed, d.resuming
+	d.mu.Unlock()
+	if resuming || p == rules.NearestPPD(cur) {
+		return nil
+	}
+	mode := rules.FromPPD(p, power, allowed)
+	slog.Info("PPD profile changed elsewhere", "ppd", p, "mode", mode)
+	return d.applyModeFrom(mode, true, p)
 }
 
 // ppdProvider is Mode.PPD: who the mode is kept in sync with, "" when nobody.
@@ -568,14 +594,22 @@ func (d *Daemon) applyMode(profile string, remember bool) error {
 
 // applyModeLocked is applyMode with applyMu held.
 func (d *Daemon) applyModeLocked(profile string, remember bool) error {
+	return d.applyModeFrom(profile, remember, "")
+}
+
+// applyModeFrom is applyModeLocked for a mode derived from the PPD profile
+// ppdSaw ("" when the change did not come from the PPD). The PPD is then
+// moved only while it still shows ppdSaw: had the desktop picked again in
+// the meantime, writing the nearest profile would undo the newer choice,
+// which followPPD applies on its next round instead.
+func (d *Daemon) applyModeFrom(profile string, remember bool, ppdSaw string) error {
 	if d.hw.Profiles == nil {
 		return fmt.Errorf("no thermal profiles on this machine")
 	}
 	if c := d.ppd.Load(); c != nil {
 		target := rules.NearestPPD(profile)
-		if cur, err := c.Active(); err == nil && cur != target {
+		if cur, err := c.Active(); err == nil && cur != target && (ppdSaw == "" || cur == ppdSaw) {
 			d.mu.Lock()
-			d.expectPPD = target
 			d.ignoreSysfs = time.Now().Add(settleTimeout + time.Second)
 			d.mu.Unlock()
 			if err := c.Set(target); err != nil {
