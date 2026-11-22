@@ -8,7 +8,7 @@ Read `README.md` first: support depends on what the laptop's firmware offers, an
 
 - systemd, polkit and D-Bus (any mainstream desktop distribution);
 - the app needs the WebKitGTK 4.1 runtime: `webkit2gtk4.1` (Fedora), `libwebkit2gtk-4.1-0` (Debian/Ubuntu), `webkit2gtk-4.1` (Arch);
-- the kernel modules need `make`, `gcc` and the headers of the running kernel (`kernel-devel`, `linux-headers-$(uname -r)` or `linux-headers`). With Secure Boot, `packaging/build-sign.sh` signs them with the akmods key (Fedora, already enrolled when you use akmods); elsewhere, sign them with your own enrolled MOK (README, "Building a module by hand").
+- the kernel modules need `make`, `gcc` and the headers of the running kernel (`kernel-devel`, `linux-headers-$(uname -r)` or `linux-headers`); a kernel built with clang, such as CachyOS's, needs `clang`, `llvm` and `lld` instead of `gcc`. With Secure Boot, `packaging/build-sign.sh` signs them with the akmods key (Fedora, already enrolled when you use akmods); elsewhere, sign them with your own enrolled MOK (README, "Building a module by hand").
 
 ## Steps
 
