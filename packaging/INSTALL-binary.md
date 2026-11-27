@@ -33,4 +33,4 @@ On Nitro and Predator models, `platform_profile` and the fans also need `acer_wm
 
 ## Hardware reports
 
-`sudo sh tools/survey.sh --probes` writes a read-only report of the firmware and prints a link to open an issue with it (`docs/hardware-reports.md` in the repository). This is how support for new models is added.
+`sudo sh tools/survey.sh` writes a read-only report of the firmware and prints a link to open an issue with it (`docs/hardware-reports.md` in the repository). This is how support for new models is added.
