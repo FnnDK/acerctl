@@ -8,7 +8,7 @@
 %global debug_package %{nil}
 
 Name:           acerctl-kmod
-Version:        0.1.9
+Version:        0.1.10
 Release:        1%{?dist}
 Summary:        Kernel modules of acerctl (acer-wmi-extras, acer-wmi-battery)
 
@@ -53,6 +53,10 @@ done
 %{?akmod_install}
 
 %changelog
+* Thu Nov 26 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.10-1
+- Released with acerctl 0.1.10; no changes in the modules the akmod builds
+  (the clang-kernel support only changes direct builds and the DKMS package)
+
 * Wed Oct 21 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.9-1
 - acer-wmi-extras: supported_profiles is there whenever the gaming WMI
   interface is, not only when the firmware answered at load time

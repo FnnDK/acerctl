@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           acerctl
-Version:        0.1.9
+Version:        0.1.10
 Release:        1%{?dist}
 Summary:        Daemon and CLI for the firmware features of Acer laptops
 
@@ -188,6 +188,14 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/*.desktop
 %config(noreplace) %{_sysconfdir}/xdg/autostart/io.github.fnndk.AcerControlCenter.Tray.desktop
 
 %changelog
+* Thu Nov 26 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.10-1
+- acerd follows only the latest power-profiles-daemon profile instead of
+  replaying every change in order: desktop picks queued behind slow tuned
+  switches no longer make the mode switch by itself without end
+- Setup offers to remove an acer_wmi blacklist left by another tool, only
+  on the user's own choice
+- acerd logs why it falls back to the driver's profile list
+
 * Wed Oct 21 2026 FnnDK <fernando.resende.k@gmail.com> - 0.1.9-1
 - acerd retries the firmware's profile list for up to 2 s before taking the
   driver's, so a failed read right after boot no longer offers Turbo on
